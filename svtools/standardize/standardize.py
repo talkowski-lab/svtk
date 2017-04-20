@@ -15,11 +15,10 @@ Copyright © 2017 Matthew Stone <mstone5@mgh.harvard.edu>
 Distributed under terms of the MIT license.
 """
 
-from svtools.utils import is_smaller_chrom
 from .std_delly import standardize_delly
 
 
-def standardize_vcf(raw_vcf, std_vcf):
+def standardize_vcf(raw_vcf, std_vcf, std_fn=None, filter_fn=None):
     """
     Iterator over the construction of new standardized records.
 
@@ -29,18 +28,27 @@ def standardize_vcf(raw_vcf, std_vcf):
         Input VCF.
     std_vcf : pysam.VariantFile
         Output VCF. Required to construct new VariantRecords.
+    std_fn : (pysam.VariantRecord, pysam.VariantRecord) -> pysam.VariantRecord
+        Standardization function for converting each record
+    filter_fn : (pysam.VariantFile -> iter of pysam.VariantRecord)
+        Optional filtering of raw VCF
 
     Yields
     ------
     std_rec : pysam.VariantRecord
         Standardized VCF record.
     """
+    if filter_fn is not None:
+        raw_vcf = filter_fn(raw_vcf)
+
     for raw_rec in raw_vcf:
         std_rec = std_vcf.new_record()
         std_rec = standardize_record(raw_rec, std_rec)
         yield std_rec
 
 
+# TODO: pass standardization function instead of source name and allow
+# user specification of function with file at command line
 def standardize_record(raw_rec, std_rec, source='delly'):
     """
     Copies basic record data and standardizes INFO/FORMAT fields.
