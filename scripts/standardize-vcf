@@ -19,7 +19,7 @@ INFO fields, with specified constraints:
 import argparse
 import pkg_resources
 import yaml
-from svtools.standardize import standardize_vcf
+from svtools.standardize import standardize_vcf, VCFStandardizer
 from pysam import VariantFile
 
 # Use LibYAML bindings instead of pure Python, if available
@@ -54,8 +54,12 @@ def main():
 
     fout = VariantFile(args.fout, mode='w', header=header)
 
-    for std_rec in standardize_vcf(vcf, fout):
-        fout.write(std_rec)
+    standardizer = VCFStandardizer(vcf, fout)
+    for record in standardizer.standardize():
+        fout.write(record)
+
+    #  for std_rec in standardize_vcf(vcf, fout):
+        #  fout.write(std_rec)
 
     fout.close()
     vcf.close()
