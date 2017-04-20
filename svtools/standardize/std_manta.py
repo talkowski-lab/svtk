@@ -76,4 +76,3 @@ def standardize_manta(raw_rec, std_rec):
     std_rec.info['SOURCE'] = 'manta'
 
     return std_rec
-
