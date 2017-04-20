@@ -66,4 +66,6 @@ def standardize_delly(raw_rec, std_rec):
     else:
         std_rec.info['SVLEN'] = -1
 
+    std_rec.info['SOURCE'] = 'delly'
+
     return std_rec
