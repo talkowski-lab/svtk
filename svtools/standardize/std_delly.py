@@ -7,10 +7,17 @@ Copyright © 2017 Matthew Stone <mstone5@mgh.harvard.edu>
 Distributed under terms of the MIT license.
 """
 
+from .standardize import VCFStandardizer
 from svtools.utils import is_smaller_chrom
 
 
-def standardize_delly(raw_rec, std_rec):
+@VCFStandardizer.register('delly')
+class DellyStandardizer(VCFStandardizer):
+    def standardize_info(self, std_rec, raw_rec):
+        return standardize_delly(std_rec, raw_rec)
+
+
+def standardize_delly(std_rec, raw_rec):
     """
     Standardize Delly record.
 

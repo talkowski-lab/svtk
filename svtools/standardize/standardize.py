@@ -15,12 +15,10 @@ Copyright © 2017 Matthew Stone <mstone5@mgh.harvard.edu>
 Distributed under terms of the MIT license.
 """
 
-from .std_delly import standardize_delly
-from .std_manta import standardize_manta
-from .std_wham import standardize_wham
-
 
 class VCFStandardizer:
+    subclasses = {}
+
     def __init__(self, raw_vcf, std_vcf):
         """
         Standardize a VCF.
@@ -34,6 +32,20 @@ class VCFStandardizer:
         """
         self.raw_vcf = raw_vcf
         self.std_vcf = std_vcf
+
+    @classmethod
+    def register(cls, source):
+        def decorator(subclass):
+            cls.subclasses[source] = subclass
+            return subclass
+        return decorator
+
+    @classmethod
+    def create(cls, source, *args):
+        if source not in cls.subclasses:
+            msg = 'No standardizer defined for {0}'.format(source)
+            raise ValueError(msg)
+        return cls.subclasses[source](*args)
 
     def standardize(self):
         """
@@ -72,8 +84,8 @@ class VCFStandardizer:
             std_rec.alts = (alt, )
 
         # Add per-sample genotypes (ignoring other FORMAT fields)
-        for sample in raw_rec.samples:
-            std_rec.samples[sample]['GT'] = raw_rec.samples[sample]['GT']
+        for sample in record.samples:
+            std_rec.samples[sample]['GT'] = record.samples[sample]['GT']
 
         return std_rec
 
@@ -181,9 +193,9 @@ def standardize_record(raw_rec, std_rec, source='delly'):
     # Copy basic record data
 
     # Standardize INFO fields, and update basic data as necessary
-    if source == 'delly':
-        std_rec = standardize_wham(raw_rec, std_rec)
-        #  std_rec = standardize_delly(raw_rec, std_rec)
+    #  if source == 'delly':
+    #      std_rec = standardize_wham(raw_rec, std_rec)
+    #      std_rec = standardize_delly(raw_rec, std_rec)
 
     return std_rec
 
