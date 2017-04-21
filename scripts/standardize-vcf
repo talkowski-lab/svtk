@@ -47,8 +47,8 @@ def main():
     fout = VariantFile(args.fout, mode='w', header=header)
 
     #  standardizer = VCFStandardizer.create(args.source, vcf, fout)
-    standardizer = VCFStandardizer(vcf, fout)
-    for record in standardizer.standardize():
+    standardizer = VCFStandardizer.create(args.source, vcf, fout)
+    for record in standardizer.standardize_vcf():
         fout.write(record)
 
     #  for std_rec in standardize_vcf(vcf, fout):
