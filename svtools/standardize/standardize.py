@@ -47,17 +47,22 @@ class VCFStandardizer:
             raise ValueError(msg)
         return cls.subclasses[source](*args)
 
-    def standardize(self):
+    def standardize_vcf(self):
         """
+        Standardize every record in a VCF.
+
+        Any filtering of records should be implemented in this method.
+
         Yields
         ------
         std_rec : pysam.VariantRecord
             Standardized records
         """
-        for record in self.filter_vcf():
-            yield self.standardize_record(record)
+        for record in self.raw_vcf:
+            std_rec = self.std_vcf.new_record()
+            yield self.standardize_record(std_rec, record)
 
-    def standardize_record(self, record):
+    def standardize_record(self, std_rec, raw_rec):
         """
         Create a standardized copy of a VCF record.
 
@@ -72,17 +77,17 @@ class VCFStandardizer:
 
         # Construct a new record and copy basic VCF fields
         std_rec = self.std_vcf.new_record()
-        std_rec.chrom = record.chrom
-        std_rec.pos = record.pos
-        std_rec.id = record.id
-        std_rec.ref = record.ref
-        std_rec.alts = record.alts
+        std_rec.chrom = raw_rec.chrom
+        std_rec.pos = raw_rec.pos
+        std_rec.id = raw_rec.id
+        std_rec.ref = raw_rec.ref
+        std_rec.alts = raw_rec.alts
 
         # Strip filters
         std_rec.filter.add('PASS')
 
         # Standardize the required INFO fields
-        std_rec = self.standardize_info(std_rec, record)
+        std_rec = self.standardize_info(std_rec, raw_rec)
 
         # Standardize tloc ALT after SVTYPE and CHR2/END are standardized
         if std_rec.info['SVTYPE'] == 'BND':
@@ -90,19 +95,9 @@ class VCFStandardizer:
                                std_rec.info['STRANDS'])
             std_rec.alts = (alt, )
 
-        std_rec = self.standardize_format(std_rec, record)
+        std_rec = self.standardize_format(std_rec, raw_rec)
 
         return std_rec
-
-    def filter_vcf(self):
-        """
-        Filter records in raw VCF.
-
-        By default, no filtering is applied.
-        """
-
-        for record in self.raw_vcf:
-            yield record
 
     def standardize_info(self, std_rec, raw_rec):
         """
@@ -143,6 +138,52 @@ class VCFStandardizer:
             std_rec.samples[sample]['GT'] = raw_rec.samples[sample]['GT']
 
         return std_rec
+
+
+def parse_bnd_pos(alt):
+    """
+    Parses standard VCF BND ALT (e.g. N]1:1000]) into chrom, pos
+
+    Parameters
+    ----------
+    alt : str
+        VCF-formatted BND ALT
+
+    Returns
+    -------
+    chrom : str
+    pos : int
+    """
+    alt = alt.strip('ATCGN')
+    # Strip brackets separately, otherwise GL contigs will be altered
+    alt = alt.strip('[]')
+    chr2, end = alt.split(':')
+    end = int(end)
+    return chr2, end
+
+
+def parse_bnd_strands(alt):
+    """
+    Parses standard VCF BND ALT (e.g. N]1:1000]) for strandedness
+
+    Parameters
+    ----------
+    alt : str
+        VCF-formatted BND ALT
+
+    Returns
+    -------
+    strands : str
+        ++,+-,-+,--
+    """
+    if alt.endswith('['):
+        return '+-'
+    elif alt.endswith(']'):
+        return '++'
+    elif alt.startswith(']'):
+        return '-+'
+    elif alt.startswith('['):
+        return '--'
 
 
 def make_bnd_alt(chrom, pos, strands):
