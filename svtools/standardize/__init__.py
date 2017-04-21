@@ -1,1 +1,1 @@
-from .standardize import standardize_vcf, VCFStandardizer
+from .standardize import VCFStandardizer

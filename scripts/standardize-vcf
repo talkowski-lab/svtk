@@ -18,7 +18,7 @@ INFO fields, with specified constraints:
 
 import argparse
 import pkg_resources
-from svtools.standardize import standardize_vcf, VCFStandardizer
+from svtools.standardize import VCFStandardizer
 from pysam import VariantFile
 
 
@@ -46,7 +46,8 @@ def main():
 
     fout = VariantFile(args.fout, mode='w', header=header)
 
-    standardizer = VCFStandardizer.create(args.source, vcf, fout)
+    #  standardizer = VCFStandardizer.create(args.source, vcf, fout)
+    standardizer = VCFStandardizer(vcf, fout)
     for record in standardizer.standardize():
         fout.write(record)
 

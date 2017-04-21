@@ -72,7 +72,14 @@ class VCFStandardizer:
 
         # Construct a new record and copy basic VCF fields
         std_rec = self.std_vcf.new_record()
-        std_rec = self.copy_basics(std_rec, record)
+        std_rec.chrom = record.chrom
+        std_rec.pos = record.pos
+        std_rec.id = record.id
+        std_rec.ref = record.ref
+        std_rec.alts = record.alts
+
+        # Strip filters
+        std_rec.filter.add('PASS')
 
         # Standardize the required INFO fields
         std_rec = self.standardize_info(std_rec, record)
@@ -83,26 +90,9 @@ class VCFStandardizer:
                                std_rec.info['STRANDS'])
             std_rec.alts = (alt, )
 
-        # Add per-sample genotypes (ignoring other FORMAT fields)
-        for sample in record.samples:
-            std_rec.samples[sample]['GT'] = record.samples[sample]['GT']
+        std_rec = self.standardize_format(std_rec, record)
 
         return std_rec
-
-    def copy_basics(self, std_rec, raw_rec):
-        """
-        Copy basic record data (CHROM, POS, ID, REF, ALT).
-
-        Reset FILTER to PASS.
-        """
-        std_rec.chrom = raw_rec.chrom
-        std_rec.pos = raw_rec.pos
-        std_rec.id = raw_rec.id
-        std_rec.ref = raw_rec.ref
-        std_rec.alts = raw_rec.alts
-
-        # Strip filters
-        std_rec.filter.add('PASS')
 
     def filter_vcf(self):
         """
@@ -141,63 +131,18 @@ class VCFStandardizer:
 
         return std_rec
 
+    def standardize_format(self, std_rec, raw_rec):
+        """
+        Copy desired FORMAT fields to new record.
 
-def standardize_vcf(raw_vcf, std_vcf, std_fn=None, filter_fn=None):
-    """
-    Iterator over the construction of new standardized records.
+        By default, only GT is copied.
+        """
 
-    Parameters
-    ----------
-    raw_vcf : pysam.VariantFile
-        Input VCF.
-    std_vcf : pysam.VariantFile
-        Output VCF. Required to construct new VariantRecords.
-    std_fn : (pysam.VariantRecord, pysam.VariantRecord) -> pysam.VariantRecord
-        Standardization function for converting each record
-    filter_fn : (pysam.VariantFile -> iter of pysam.VariantRecord)
-        Optional filtering of raw VCF
+        # Add per-sample genotypes (ignoring other FORMAT fields)
+        for sample in raw_rec.samples:
+            std_rec.samples[sample]['GT'] = raw_rec.samples[sample]['GT']
 
-    Yields
-    ------
-    std_rec : pysam.VariantRecord
-        Standardized VCF record.
-    """
-    if filter_fn is not None:
-        raw_vcf = filter_fn(raw_vcf)
-
-    for raw_rec in raw_vcf:
-        std_rec = std_vcf.new_record()
-        std_rec = standardize_record(raw_rec, std_rec)
-        yield std_rec
-
-
-# TODO: pass standardization function instead of source name and allow
-# user specification of function with file at command line
-def standardize_record(raw_rec, std_rec, source='delly'):
-    """
-    Copies basic record data and standardizes INFO/FORMAT fields.
-
-    Parameters
-    ----------
-    raw_rec : pysam.VariantRecord
-        VCF record to standardize.
-    std_rec : pysam.VariantRecord
-        Empty VariantRecord constructed from new VariantFile.
-
-    Returns
-    -------
-    std_rec : pysam.VariantRecord
-        New VariantRecord with standardized data filled in.
-    """
-
-    # Copy basic record data
-
-    # Standardize INFO fields, and update basic data as necessary
-    #  if source == 'delly':
-    #      std_rec = standardize_wham(raw_rec, std_rec)
-    #      std_rec = standardize_delly(raw_rec, std_rec)
-
-    return std_rec
+        return std_rec
 
 
 def make_bnd_alt(chrom, pos, strands):
