@@ -166,6 +166,12 @@ def parse_bnd_strands(alt):
     """
     Parses standard VCF BND ALT (e.g. N]1:1000]) for strandedness
 
+    Note about parsing strands from BND ALT:
+    t[p[ piece extending to the right of p is joined after t (+-)
+    t]p] reverse comp piece extending left of p is joined after t (++)
+    ]p]t piece extending to the left of p is joined before t (-+)
+    [p[t reverse comp piece extending right of p is joined before t (--)
+
     Parameters
     ----------
     alt : str
