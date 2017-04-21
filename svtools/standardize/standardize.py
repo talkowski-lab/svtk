@@ -15,88 +15,181 @@ Copyright © 2017 Matthew Stone <mstone5@mgh.harvard.edu>
 Distributed under terms of the MIT license.
 """
 
-from .std_delly import standardize_delly
 
+class VCFStandardizer:
+    subclasses = {}
 
-def standardize_vcf(raw_vcf, std_vcf, std_fn=None, filter_fn=None):
-    """
-    Iterator over the construction of new standardized records.
+    def __init__(self, raw_vcf, std_vcf):
+        """
+        Standardize a VCF.
 
-    Arguments
-    ---------
-    raw_vcf : pysam.VariantFile
-        Input VCF.
-    std_vcf : pysam.VariantFile
-        Output VCF. Required to construct new VariantRecords.
-    std_fn : (pysam.VariantRecord, pysam.VariantRecord) -> pysam.VariantRecord
-        Standardization function for converting each record
-    filter_fn : (pysam.VariantFile -> iter of pysam.VariantRecord)
-        Optional filtering of raw VCF
+        Parameters
+        ----------
+        raw_vcf : pysam.VariantFile
+            Input VCF.
+        std_vcf : pysam.VariantFile
+            Standardized VCF.
+        """
+        self.raw_vcf = raw_vcf
+        self.std_vcf = std_vcf
 
-    Yields
-    ------
-    std_rec : pysam.VariantRecord
-        Standardized VCF record.
-    """
-    if filter_fn is not None:
-        raw_vcf = filter_fn(raw_vcf)
+    @classmethod
+    def register(cls, source):
+        def decorator(subclass):
+            cls.subclasses[source] = subclass
+            return subclass
+        return decorator
 
-    for raw_rec in raw_vcf:
-        std_rec = std_vcf.new_record()
-        std_rec = standardize_record(raw_rec, std_rec)
-        yield std_rec
+    @classmethod
+    def create(cls, source, *args):
+        if source not in cls.subclasses:
+            msg = 'No standardizer defined for {0}'.format(source)
+            raise ValueError(msg)
+        return cls.subclasses[source](*args)
 
+    def standardize_vcf(self):
+        """
+        Standardize every record in a VCF.
 
-# TODO: pass standardization function instead of source name and allow
-# user specification of function with file at command line
-def standardize_record(raw_rec, std_rec, source='delly'):
-    """
-    Copies basic record data and standardizes INFO/FORMAT fields.
+        Any filtering of records should be implemented in this method.
 
-    Arguments
-    ---------
-    raw_rec : pysam.VariantRecord
-        VCF record to standardize.
-    std_rec : pysam.VariantRecord
-        Empty VariantRecord constructed from new VariantFile.
+        Yields
+        ------
+        std_rec : pysam.VariantRecord
+            Standardized records
+        """
+        for record in self.raw_vcf:
+            std_rec = self.std_vcf.new_record()
+            yield self.standardize_record(std_rec, record)
 
-    Returns
-    -------
-    std_rec : pysam.VariantRecord
-        New VariantRecord with standardized data filled in.
-    """
+    def standardize_record(self, std_rec, raw_rec):
+        """
+        Create a standardized copy of a VCF record.
 
-    # Copy basic record data
-    std_rec.chrom = raw_rec.chrom
-    std_rec.pos = raw_rec.pos
-    std_rec.id = raw_rec.id
-    std_rec.ref = raw_rec.ref
-    std_rec.alts = raw_rec.alts
+        Parameters
+        ----------
+        record : pysam.VariantRecord
 
-    # Strip filters
-    std_rec.filter.add('PASS')
+        Returns
+        -------
+        std_rec : pysam.VariantRecord
+        """
 
-    # Standardize INFO fields, and update basic data as necessary
-    if source == 'delly':
-        std_rec = standardize_delly(raw_rec, std_rec)
-    else:
+        # Construct a new record and copy basic VCF fields
+        std_rec = self.std_vcf.new_record()
+        std_rec.chrom = raw_rec.chrom
+        std_rec.pos = raw_rec.pos
+        std_rec.id = raw_rec.id
+        std_rec.ref = raw_rec.ref
+        std_rec.alts = raw_rec.alts
+
+        # Strip filters
+        std_rec.filter.add('PASS')
+
+        # Standardize the required INFO fields
+        std_rec = self.standardize_info(std_rec, raw_rec)
+
+        # Standardize tloc ALT after SVTYPE and CHR2/END are standardized
+        if std_rec.info['SVTYPE'] == 'BND':
+            alt = make_bnd_alt(std_rec.info['CHR2'], std_rec.info['END'],
+                               std_rec.info['STRANDS'])
+            std_rec.alts = (alt, )
+
+        std_rec = self.standardize_format(std_rec, raw_rec)
+
+        return std_rec
+
+    def standardize_info(self, std_rec, raw_rec):
+        """
+        Standardize VCF record INFO.
+
+        When implementing this function, assume the basic data fields (CHROM,
+        POS, ID, REF, ALTS, and FILTER) have been copied directly from the
+        original record.
+
+        The default implementation is a placeholder for testing and should be
+        overridden with the logic for each algorithm's formatting.
+
+        Parameters
+        ----------
+        std_rec : pysam.VariantRecord
+            Standardized record with populated basic data.
+        raw_rec : pysam.VariantRecord
+            Raw record to be standardized.
+        """
+
         std_rec.info['SVTYPE'] = raw_rec.info['SVTYPE']
         std_rec.info['CHR2'] = raw_rec.chrom
         std_rec.info['END'] = raw_rec.pos + 1
         std_rec.info['SVLEN'] = 0
         std_rec.info['SOURCE'] = 'source'
 
-    # Standardize translocation ALT after svtype and chr2/end are standardized
-    if std_rec.info['SVTYPE'] == 'BND':
-        alt = make_bnd_alt(std_rec.info['CHR2'], std_rec.info['END'],
-                           std_rec.info['STRANDS'])
-        std_rec.alts = (alt, )
+        return std_rec
 
-    # Add per-sample genotypes
-    for sample in raw_rec.samples:
-        std_rec.samples[sample]['GT'] = raw_rec.samples[sample]['GT']
+    def standardize_format(self, std_rec, raw_rec):
+        """
+        Copy desired FORMAT fields to new record.
 
-    return std_rec
+        By default, only GT is copied.
+        """
+
+        # Add per-sample genotypes (ignoring other FORMAT fields)
+        for sample in raw_rec.samples:
+            std_rec.samples[sample]['GT'] = raw_rec.samples[sample]['GT']
+
+        return std_rec
+
+
+def parse_bnd_pos(alt):
+    """
+    Parses standard VCF BND ALT (e.g. N]1:1000]) into chrom, pos
+
+    Parameters
+    ----------
+    alt : str
+        VCF-formatted BND ALT
+
+    Returns
+    -------
+    chrom : str
+    pos : int
+    """
+    alt = alt.strip('ATCGN')
+    # Strip brackets separately, otherwise GL contigs will be altered
+    alt = alt.strip('[]')
+    chr2, end = alt.split(':')
+    end = int(end)
+    return chr2, end
+
+
+def parse_bnd_strands(alt):
+    """
+    Parses standard VCF BND ALT (e.g. N]1:1000]) for strandedness
+
+    Note about parsing strands from BND ALT:
+    t[p[ piece extending to the right of p is joined after t (+-)
+    t]p] reverse comp piece extending left of p is joined after t (++)
+    ]p]t piece extending to the left of p is joined before t (-+)
+    [p[t reverse comp piece extending right of p is joined before t (--)
+
+    Parameters
+    ----------
+    alt : str
+        VCF-formatted BND ALT
+
+    Returns
+    -------
+    strands : str
+        ++,+-,-+,--
+    """
+    if alt.endswith('['):
+        return '+-'
+    elif alt.endswith(']'):
+        return '++'
+    elif alt.startswith(']'):
+        return '-+'
+    elif alt.startswith('['):
+        return '--'
 
 
 def make_bnd_alt(chrom, pos, strands):
