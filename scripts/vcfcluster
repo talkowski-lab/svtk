@@ -1,0 +1,232 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+#
+# Copyright © 2015 Matthew Stone <mstone5@mgh.harvard.edu>
+# Distributed under terms of the MIT license.
+
+"""
+Intersect SV called by cluster-based algorithms.
+
+Paired-end and split-read callers provide a reasonably precise estimation of
+an SV breakpoint. This program identifies variant calls that fall within
+the expected margin of error made by these programs and clusters them together.
+The cluster distance defaults to 500 bp but it is recommended to use the
+maximum individual clustering distance across the libraries being analyzed.
+(Generally median + 7 * MAD)
+"""
+
+import argparse
+import heapq
+from collections import deque
+import numpy as np
+import pysam
+import vcf
+from svcf import SVFile, SVRecord, VCFTemplate, GenomeSLINK
+
+
+class FileFormatError(Exception):
+    """Improper file format"""
+
+
+class ClusterStats(object):
+    def __init__(self):
+        self.clusters = []
+
+
+def rmsstd(records):
+    starts = np.array([record.POS for record in records])
+    ends = np.array([record.INFO['END'] for record in records])
+
+    def _meanSS(X):
+        mu = np.mean(X)
+        return np.sum((X - mu) ** 2) / len(X)
+
+    SS = _meanSS(starts) + _meanSS(ends)
+    return np.sqrt(SS)
+
+
+def flatten_pos(records, name, fout):
+    for record in records:
+        chrom = record.CHROM
+        start = record.POS
+        end = record.INFO['END']
+        quad = record.samples[0].sample.split('.')[0]
+        source = record.source
+        ID = record.ID
+        svtype = record.INFO['SVTYPE']
+
+        entry = [str(x) for x in [chrom, start, end, quad, source, ID, name, svtype]]
+        entry = '\t'.join(entry) + '\n'
+        fout.write(entry)
+
+
+class VCFCluster(GenomeSLINK):
+    def __init__(self, svfiles, dist=500, excluded_regions=None, frac=0.0,
+                 match_strands=False, svtypes=None):
+        nodes = heapq.merge(*svfiles)
+
+        # Need list of samples and sources to produce merged records
+        samples = [s for svfile in svfiles for s in svfile.samples]
+        self.samples = sorted(set(samples))
+        self.sources = sorted(set([svfile.source for svfile in svfiles]))
+
+        # Remove SECONDARY records (duplicate calldata)
+        # Whitelist autosomes and X, Y
+        def _filter(nodes):
+            for node in nodes:
+                if svtypes is not None and node.svtype not in svtypes:
+                    continue
+                if ('SECONDARY' not in node.INFO) and node.is_allowed_chrom():
+                    yield node
+
+        self.frac = frac
+        self.match_strands = match_strands
+        super().__init__(_filter(nodes), dist, 1, excluded_regions)
+
+    def cluster(self):
+        """
+        Yields
+        ------
+        record : SVRecord
+        """
+        clusters = super().cluster(frac=self.frac,
+                                   match_strands=self.match_strands)
+        for cluster in clusters:
+            if len(cluster) > 0:
+                rec = SVRecord.merge(cluster, self.samples, self.sources)
+                if rec:
+                    yield rec, cluster
+
+
+def parse_filelist(filelist, chrom=None, start=None, end=None):
+    """
+    Parameters
+    ----------
+    filelist : File
+        Tab-delimited (filename, source)
+
+    Returns
+    -------
+    svfiles : list of SVFile
+    samples : list of str
+    sources : list of str
+        All sources present in list
+    """
+
+    svfiles = deque()
+    sources = set()
+    samples = set()
+
+    for line in filelist:
+        if len(line.split()) != 1:
+            raise FileFormatError('File list must be single column')
+
+        filename = line.strip()
+        svfile = SVFile(filename)
+        svfile.fetch(chrom, start, end)
+        svfiles.append(svfile)
+
+        source = svfile.source
+        sources.add(source)
+        samples = samples.union(svfile.samples)
+
+    return svfiles, sorted(samples), sorted(sources)
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+    #  parser.add_argument('-i', '--input-vcfs', nargs='+',
+    #                      help='Input VCFs. source must be in header.',
+    #                      required=True)
+    parser.add_argument('-f', '--filelist', type=argparse.FileType('r'),
+                        help='List of filename, source', required=True)
+    parser.add_argument('-o', '--output-vcf',
+                        type=argparse.FileType('w'), default=None,
+                        help='Output VCF.', required=True)
+    parser.add_argument('-c', '--chrom', default=None,
+                        help='Restrict clustering to single chromosome. '
+                        'Useful for parallelization.')
+    parser.add_argument('--start', default=None, type=int,
+                        help='Restrict clustering to single chromosome. '
+                        'Useful for parallelization.')
+    parser.add_argument('--end', default=None, type=int,
+                        help='Restrict clustering to single chromosome. '
+                        'Useful for parallelization.')
+    parser.add_argument('-d', '--dist',
+                        type=int, default=500,
+                        help='Maximum clustering distance. Suggested to use '
+                        'max of median + 7*MAD over samples. [500]')
+    parser.add_argument('-r', '--frac',
+                        type=float, default=0.0,
+                        help='Minimum reciprocal overlap between variants. '
+                        '[0.0]')
+    parser.add_argument('-m', '--match-strands', default=False,
+                        action='store_true')
+    parser.add_argument('-x', '--blacklist', metavar='BED.GZ',
+                        type=pysam.TabixFile, default=None,
+                        help='Tabix indexed bed of blacklisted regions. Any '
+                        'SV with a breakpoint falling inside one of these '
+                        'regions is filtered from output.')
+    parser.add_argument('-z', '--svsize', type=int, default=500,
+                        help='Minimum SV size to report for intrachromosomal '
+                        'events. [0]')
+    parser.add_argument('-p', '--prefix',
+                        default='MERGED',
+                        help='Prefix for merged variant IDs. [MERGED]')
+    parser.add_argument('-t', '--svtypes', default=None,
+                        help='Comma delimited list of svtypes to restrict '
+                        'clustering to (del,dup,inv,tloc)')
+    parser.add_argument('--cluster-bed', type=argparse.FileType('w'),
+                        help='Bed of constituent calls in each cluster')
+    #  parser.add_argument('--cnv-together',
+    #                      action='store_true', default=False,
+    #                      help='Cluster deletion and duplication calls '
+    #                      'together.')
+    args = parser.parse_args()
+
+    svfiles, samples, sources = parse_filelist(
+        args.filelist, chrom=args.chrom, start=args.start, end=args.end)
+
+    template = VCFTemplate(samples)
+    for source in sources:
+        template.add_standard_formats(source)
+    writer = vcf.Writer(args.output_vcf, template)
+
+    if args.svtypes is not None:
+        svtypes = args.svtypes.split(',')
+        permitted_types = 'del dup inv tloc'.split()
+        for svtype in svtypes:
+            if svtype not in permitted_types:
+                raise Exception('Unpermitted svtype: {0}'.format(svtype))
+    else:
+        svtypes = None
+
+    svc = VCFCluster(svfiles, dist=args.dist, excluded_regions=args.blacklist,
+                     frac=args.frac, match_strands=args.match_strands,
+                     svtypes=svtypes)
+
+    for i, (record, cluster) in enumerate(svc.cluster()):
+        # Name record
+        if args.prefix:
+            name = [args.prefix]
+        else:
+            name = ['SV']
+        if args.chrom:
+            name.append(args.chrom)
+        name.append(str(i + 1))
+        record.ID = '_'.join(name)
+
+        # Size filter (CTX have size -1)
+        if -1 < record.INFO['SVLEN'] < args.svsize:
+            continue
+
+        writer.write_record(record)
+
+        if args.cluster_bed is not None:
+            flatten_pos(cluster, record.ID, args.cluster_bed)
+
+
+if __name__ == '__main__':
+    main()
