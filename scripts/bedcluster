@@ -15,7 +15,7 @@ linked calls.
 
 import argparse
 import sys
-from collections import namedtuple
+from collections import namedtuple, deque
 import numpy as np
 from scipy import sparse
 from scipy.sparse import csgraph
@@ -142,6 +142,49 @@ def bedcluster(bed, variant_list, preserve_links=False):
     return clusters, samples
 
 
+def collapse_sample_calls(cluster):
+    """
+    Merges multiple variants in same sample
+
+    Parameters
+    ----------
+    cluster : list of BedCall
+
+    Returns
+    -------
+    cluster : list of BedCall
+    """
+
+    calldict = defaultdict(list)
+    variants = deque()
+
+    # Get all calls in each sample
+    for call in cluster:
+        calldict[call.sample].append(call)
+
+    # If a sample has only one call, keep it, otherwise merge
+    for sample, calls in calldict.items():
+        if len(calls) == 1:
+            variants.append(calls[0])
+            continue
+
+        # Track IDs of merged variants
+        ID = ','.join([call.ID for call in calls])
+
+        # To merge variants in a sample, take broadest range
+        start = np.min([call.start for call in calls])
+        end = np.max([call.end for call in calls])
+
+        chrom = calls[0].chrom
+        sample = calls[0].sample
+        svtype = calls[0].svtype
+
+        merged = BedCall(chrom, start, end, ID, sample, svtype)
+        variants.append(merged)
+
+    return list(variants)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description=__doc__,
@@ -172,17 +215,37 @@ def main():
                         'each cluster as final coordinates of cluster. '
                         'Recommended to turn off with preserve-links.')
     parser.add_argument('fout', type=argparse.FileType('w'),
-                        nargs='?', default=sys.stdout)
+                        nargs='?', default=sys.stdout,
+                        help='Clustered SVOF.')
     args = parser.parse_args()
 
-    header = '\t'.join('#chr start end name sample svtype'.split())
-    args.fout.write(header + '\tcname\tvaf\tvac\trmsstd\n')
+    header = ('#chrA start end chrB name svtype sample call_name vaf vac '
+              'pre_rmsstd post_rmsstd')
+    header = '\t'.join(header.split()) + '\n'
+    args.fout.write(header)
 
     clusters, samples = bedcluster(args.bed, args.variant_list,
                                    args.preserve_links)
     num_samples = float(len(samples))
 
     for i, cluster in enumerate(clusters):
+        # Calculate RMSSTD before merging per-sample variants
+        pre_RMSSTD = rmsstd(cluster)
+
+        # Make a single variant for each sample
+        cluster = collapse_sample_calls(cluster)
+
+        # Re-calculate RMSSTD after merging per-sample variants
+        post_RMSSTD = rmsstd(cluster)
+
+        # Merge coordinates AFTER getting min/max per sample
+        if args.merge_coordinates:
+            # Report median region of overlap
+            start = str(int(np.median([int(call.start) for call in cluster])))
+            end = str(int(np.median([int(call.end) for call in cluster])))
+            cluster = [BedCall(c.chrom, start, end, *c[3:]) for c in cluster]
+
+        # Get variant frequency info
         vac = len(set([call.sample for call in cluster]))
         vaf = vac / num_samples
 
@@ -190,19 +253,15 @@ def main():
         if vaf > args.max_freq:
             continue
 
-        RMSSTD = rmsstd(cluster)
-
-        if args.merge_coordinates:
-            # Report median region of overlap
-            start = str(int(np.median([int(call.start) for call in cluster])))
-            end = str(int(np.median([int(call.end) for call in cluster])))
-
-            cluster = [BedCall(c.chrom, start, end, *c[3:]) for c in cluster]
-
+        # Assign cluster ID
         cid = args.prefix + ('_%d' % i)
+
         for call in cluster:
-            entry = '{0}\t{1}\t{2:.3f}\t{3}\t{4:.3f}\n'
-            entry = entry.format('\t'.join(call), cid, vaf, vac, RMSSTD)
+            entry = ('{chrom}\t{start}\t{end}\t{chrom}\t{{cid}}\t{svtype}\t'
+                     '{sample}\t{ID}').format(**call._asdict())
+            entry = (entry + '\t{vaf:.3f}\t{vac}\t{pre_RMSSTD:.3f}\t'
+                     '{post_RMSSTD:.3f}\n').format(**locals())
+
             args.fout.write(entry)
 
 
