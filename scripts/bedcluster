@@ -22,13 +22,11 @@ from scipy.sparse import csgraph
 from collections import defaultdict
 
 
-# TODO: convert add'l columns to FORMAT/GT format
-class TooFewColumnsError(Exception):
-    """Not enough columns to uniquely cluster regions"""
-
-
 class FieldNumberError(Exception):
     """Number of fields detected don't match number specified"""
+
+
+BedCall = namedtuple('BedCall', 'chrom start end ID sample svtype'.split())
 
 
 def rmsstd(calls):
@@ -43,18 +41,18 @@ def rmsstd(calls):
     return np.sqrt(SS)
 
 
-def bedcluster(bed, variant_list, n=6, preserve_links=False):
+def bedcluster(bed, variant_list, preserve_links=False):
     """
     Cluster a self-intersected bed.
 
     Parameters
     ----------
     bed : file
+        Product of a bedtools intersect.
+        Columns: chrA, startA, endA, nameA, sampleA, svtypeA, chrB, startB,
+        endB, nameB, sampleB, svtypeB
     variant_list : file
         Unique variant IDs in bed. Necessary for sparse graph
-    n : int
-        Number of columns in original bed. (self-intersected has double)
-        Corresponds to fields: chrom start end ID sample svtype
 
     Returns
     -------
@@ -63,9 +61,6 @@ def bedcluster(bed, variant_list, n=6, preserve_links=False):
     samples : list of str
         List of unique samples found (used in population frequency check)
     """
-
-    bed_fields = 'chrom start end ID sample svtype'.split()
-    BedCall = namedtuple('BedCall', bed_fields[:n])
 
     def _is_null(bedcall):
         return bedcall.chrom == '.'
@@ -92,8 +87,8 @@ def bedcluster(bed, variant_list, n=6, preserve_links=False):
         data = line.strip().split()
 
         try:
-            c1 = data[:n]
-            c2 = data[n:]
+            c1 = data[:6]
+            c2 = data[6:]
 
             # Cast start/end to ints
             c1[1], c1[2] = int(c1[1]), int(c1[2])
@@ -112,27 +107,23 @@ def bedcluster(bed, variant_list, n=6, preserve_links=False):
         except:
             c = len(data) / 2
             b = '%s: ' % bed.name
-            msg = b + '%d fields per region specified, %d found' % (n, c)
+            msg = b + '%d fields per region specified, %d found' % (6, c)
             raise FieldNumberError(msg)
 
-        if hasattr(c1, 'sample'):
-            samples.add(c1.sample)
+        samples.add(c1.sample)
 
         # Link the two calls from the current line
-        # G.add_node(c1)
         if not _is_null(c2) and c1.svtype == c2.svtype:
             idx1 = variant_indexes[c1.ID]
             idx2 = variant_indexes[c2.ID]
             G[idx1, idx2] = 1
-            #  G.add_edge(c1, c2)
-            if hasattr(c2, 'sample'):
-                samples.add(c2.sample)
+            samples.add(c2.sample)
 
         if preserve_links and prev_c1 is not None and c1.ID == prev_c1.ID:
             idx1 = variant_indexes[c1.ID]
             idx2 = variant_indexes[prev_c1.ID]
             G[idx1, idx2] = 1
-            #  G.add_edge(c1, prev_c1)
+
         prev_c1 = c1
 
     #  clusters = list(nx.connected_components(G))
@@ -161,15 +152,9 @@ def main():
     parser.add_argument('bed',
                         type=argparse.FileType('r'),
                         nargs='?', default=sys.stdin,
-                        help='Product of a bedtools intersect. Each original '
-                        'file must have had the same columns. Allowed columns '
-                        'described below.')
-    parser.add_argument('-n', '--num-col',
-                        type=int, default=6,
-                        help='Number of columns in the original bed files. '
-                        'In order, they must be chrom, start, end, ID, '
-                        'sample, svtype. Fewer than 6 columns are '
-                        'allowed but must be a truncation of this list. [6]')
+                        help='Product of a bedtools intersect. Columns: chrA, '
+                        'startA, endA, nameA, sampleA, svtypeA, chrB, startB, '
+                        'endB, nameB, sampleB, svtypeB')
     parser.add_argument('-p', '--prefix', default='prefix',
                         help='Cluster ID prefix')
     parser.add_argument('-f', '--max-freq',
@@ -190,25 +175,16 @@ def main():
                         nargs='?', default=sys.stdout)
     args = parser.parse_args()
 
-    if args.num_col < 4:
-        msg = 'Clustering requires at least chrom, start, end, ID.'
-        raise TooFewColumnsError(msg)
-
-    header = '#chr start end name sample svtype'.split()
-    header = '\t'.join(header[:args.num_col])
+    header = '\t'.join('#chr start end name sample svtype'.split())
     args.fout.write(header + '\tcname\tvaf\tvac\trmsstd\n')
 
     clusters, samples = bedcluster(args.bed, args.variant_list,
-                                   args.num_col, args.preserve_links)
+                                   args.preserve_links)
     num_samples = float(len(samples))
 
     for i, cluster in enumerate(clusters):
-        if hasattr(cluster[0], 'sample'):
-            vac = len(set([call.sample for call in cluster]))
-            vaf = vac / num_samples
-        else:
-            vac = 0
-            vaf = 0.0
+        vac = len(set([call.sample for call in cluster]))
+        vaf = vac / num_samples
 
         # Filter clusters exceeding max population freq
         if vaf > args.max_freq:
@@ -217,10 +193,6 @@ def main():
         RMSSTD = rmsstd(cluster)
 
         if args.merge_coordinates:
-            bed_fields = 'chrom start end ID sample svtype'.split()
-            bed_fields = bed_fields[:args.num_col]
-            BedCall = namedtuple('BedCall', bed_fields)
-
             # Report median region of overlap
             start = str(int(np.median([int(call.start) for call in cluster])))
             end = str(int(np.median([int(call.end) for call in cluster])))
