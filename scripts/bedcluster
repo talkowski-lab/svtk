@@ -1,0 +1,239 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Copyright © 2016 Matthew Stone <mstone5@mgh.harvard.edu>
+# Distributed under terms of the MIT license.
+
+"""
+Cluster a bed produced by a bedtools intersection of a bed with itself.
+
+A self-intersected bed has two sets of columns in each row, corresponding to
+two entries in the original bed that shared sufficient overlap. The clustering
+is performed by linking each such pair and then returning all clusters of
+linked calls.
+"""
+
+import argparse
+import sys
+from collections import namedtuple
+import numpy as np
+#  import networkx as nx
+from scipy import sparse
+from scipy.sparse import csgraph
+from collections import defaultdict
+
+
+# TODO: convert add'l columns to FORMAT/GT format
+class TooFewColumnsError(Exception):
+    """Not enough columns to uniquely cluster regions"""
+
+
+class FieldNumberError(Exception):
+    """Number of fields detected don't match number specified"""
+
+
+def rmsstd(calls):
+    starts = np.array([call.start for call in calls])
+    ends = np.array([call.end for call in calls])
+
+    def _meanSS(X):
+        mu = np.mean(X)
+        return np.sum((X - mu) ** 2) / len(X)
+
+    SS = _meanSS(starts) + _meanSS(ends)
+    return np.sqrt(SS)
+
+
+def bedcluster(bed, variant_list, n=6, preserve_links=False):
+    """
+    Cluster a self-intersected bed.
+
+    Parameters
+    ----------
+    bed : file
+    variant_list : file
+        Unique variant IDs in bed. Necessary for sparse graph
+    n : int
+        Number of columns in original bed. (self-intersected has double)
+        Corresponds to fields: chrom start end ID sample svtype
+
+    Returns
+    -------
+    clusters : list of BedCall
+        (chrom, start, end, ID, sample, svtype)
+    samples : list of str
+        List of unique samples found (used in population frequency check)
+    """
+
+    bed_fields = 'chrom start end ID sample svtype'.split()
+    BedCall = namedtuple('BedCall', bed_fields[:n])
+
+    def _is_null(bedcall):
+        return bedcall.chrom == '.'
+
+    variant_indexes = {}
+    variant_IDs = [l.strip() for l in variant_list.readlines()]
+    for i, variant in enumerate(variant_IDs):
+        variant_indexes[variant.strip()] = i
+    num_variants = len(variant_indexes)
+
+    #  G = nx.Graph()
+    G = sparse.eye(num_variants, dtype=np.uint16, format='lil')
+
+    samples = set()
+    prev_c1 = None
+
+    variants = {}
+
+    for line in bed:
+        # Skip header
+        if line.startswith('#'):
+            continue
+
+        data = line.strip().split()
+
+        try:
+            c1 = data[:n]
+            c2 = data[n:]
+
+            # Cast start/end to ints
+            c1[1], c1[2] = int(c1[1]), int(c1[2])
+            c2[1], c2[2] = int(c2[1]), int(c2[2])
+
+            c1 = BedCall(*c1)
+            c2 = BedCall(*c2)
+
+            if c1.ID not in variants:
+                idx = variant_indexes[c1.ID]
+                variants[idx] = c1
+            if c2.ID not in variants:
+                idx = variant_indexes[c2.ID]
+                variants[idx] = c2
+
+        except:
+            c = len(data) / 2
+            b = '%s: ' % bed.name
+            msg = b + '%d fields per region specified, %d found' % (n, c)
+            raise FieldNumberError(msg)
+
+        if hasattr(c1, 'sample'):
+            samples.add(c1.sample)
+
+        # Link the two calls from the current line
+        # G.add_node(c1)
+        if not _is_null(c2) and c1.svtype == c2.svtype:
+            idx1 = variant_indexes[c1.ID]
+            idx2 = variant_indexes[c2.ID]
+            G[idx1, idx2] = 1
+            #  G.add_edge(c1, c2)
+            if hasattr(c2, 'sample'):
+                samples.add(c2.sample)
+
+        if preserve_links and prev_c1 is not None and c1.ID == prev_c1.ID:
+            idx1 = variant_indexes[c1.ID]
+            idx2 = variant_indexes[prev_c1.ID]
+            G[idx1, idx2] = 1
+            #  G.add_edge(c1, prev_c1)
+        prev_c1 = c1
+
+    #  clusters = list(nx.connected_components(G))
+    n_comp, labels = csgraph.connected_components(G, connection='weak')
+
+    clusters = defaultdict(list)
+    for idx, label in enumerate(labels):
+        clusters[label].append(variants[idx])
+
+    clusters = list(clusters.values())
+
+    clusters = [sorted(cluster, key=lambda c: (c.chrom, int(c.start)))
+                for cluster in clusters]
+    clusters = sorted(clusters, key=lambda c: (c[0].chrom, int(c[0].start)))
+
+    return clusters, samples
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument('variant_list',
+                        type=argparse.FileType('r'),
+                        help='List of unique variant IDs in intersected bed')
+    parser.add_argument('bed',
+                        type=argparse.FileType('r'),
+                        nargs='?', default=sys.stdin,
+                        help='Product of a bedtools intersect. Each original '
+                        'file must have had the same columns. Allowed columns '
+                        'described below.')
+    parser.add_argument('-n', '--num-col',
+                        type=int, default=6,
+                        help='Number of columns in the original bed files. '
+                        'In order, they must be chrom, start, end, ID, '
+                        'sample, svtype. Fewer than 6 columns are '
+                        'allowed but must be a truncation of this list. [6]')
+    parser.add_argument('-p', '--prefix', default='prefix',
+                        help='Cluster ID prefix')
+    parser.add_argument('-f', '--max-freq',
+                        type=float, default=1.0,
+                        help='Max population frequency to allow [1.0]')
+    parser.add_argument('-l', '--preserve-links',
+                        action='store_true', default=False,
+                        help='Link two consecutive bed entries that share ID. '
+                        'Used if clustering the intersection of two clustered '
+                        'beds. Requires all entries from same cluster be '
+                        'adjacent.')
+    parser.add_argument('-m', '--merge-coordinates',
+                        action='store_true', default=False,
+                        help='Report median of start and end positions in '
+                        'each cluster as final coordinates of cluster. '
+                        'Recommended to turn off with preserve-links.')
+    parser.add_argument('fout', type=argparse.FileType('w'),
+                        nargs='?', default=sys.stdout)
+    args = parser.parse_args()
+
+    if args.num_col < 4:
+        msg = 'Clustering requires at least chrom, start, end, ID.'
+        raise TooFewColumnsError(msg)
+
+    header = '#chr start end name sample svtype'.split()
+    header = '\t'.join(header[:args.num_col])
+    args.fout.write(header + '\tcname\tvaf\tvac\trmsstd\n')
+
+    clusters, samples = bedcluster(args.bed, args.variant_list,
+                                   args.num_col, args.preserve_links)
+    num_samples = float(len(samples))
+
+    for i, cluster in enumerate(clusters):
+        if hasattr(cluster[0], 'sample'):
+            vac = len(set([call.sample for call in cluster]))
+            vaf = vac / num_samples
+        else:
+            vac = 0
+            vaf = 0.0
+
+        # Filter clusters exceeding max population freq
+        if vaf > args.max_freq:
+            continue
+
+        RMSSTD = rmsstd(cluster)
+
+        if args.merge_coordinates:
+            bed_fields = 'chrom start end ID sample svtype'.split()
+            bed_fields = bed_fields[:args.num_col]
+            BedCall = namedtuple('BedCall', bed_fields)
+
+            # Report median region of overlap
+            start = str(int(np.median([int(call.start) for call in cluster])))
+            end = str(int(np.median([int(call.end) for call in cluster])))
+
+            cluster = [BedCall(c.chrom, start, end, *c[3:]) for c in cluster]
+
+        cid = args.prefix + ('_%d' % i)
+        for call in cluster:
+            entry = '{0}\t{1}\t{2:.3f}\t{3}\t{4:.3f}\n'
+            entry = entry.format('\t'.join(call), cid, vaf, vac, RMSSTD)
+            args.fout.write(entry)
+
+
+if __name__ == '__main__':
+    main()
