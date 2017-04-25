@@ -18,7 +18,9 @@ setup(
     author_email='mstone5@mgh.harvard.edu',
     packages=['svtools'],
     package_data={'svtools': ['data/standard_template.vcf']},
-    scripts=['scripts/standardize-vcf'],
+    scripts=[
+        'scripts/standardize-vcf',
+        'scripts/bedcluster'],
     install_requires=[
         'numpy',
         'pysam',
