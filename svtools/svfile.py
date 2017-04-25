@@ -14,6 +14,9 @@ from functools import partial
 import numpy as np
 import vcf
 from vcf.model import _Record, _Call, _Breakend, _SV, make_calldata_tuple
+
+from pysam import VariantFile
+
 from .genomeslink import GSNode
 from .constants import NULL_GT, STD_FORMATS, MEDIANS
 
@@ -41,33 +44,19 @@ class MissingInfoError(Exception):
 class SVFile(object):
     def __init__(self, filename):
         """
-        Wrapper for standardized VCF files
+        Wrapper for standardized VCF files.
         """
         self.filename = filename
 
-        def _get_suffix(fname):
-            return os.path.splitext(fname)[-1].strip('.')
+        self.reader = VariantFile(filename)
 
-        if filename.endswith('.gz'):
-            self.filetype = _get_suffix(filename[:-3])
-        else:
-            self.filetype = _get_suffix(filename)
-
-        if self.filetype == 'vcf':
-            self.reader = vcf.Reader(filename=filename)
-            required_info = 'SVTYPE CHR2 END SOURCES STRANDS'.split()
-
-            for info in required_info:
-                if info not in self.reader.infos:
-                    msg = "Required INFO field {0} not found".format(info)
-                    raise MissingInfoError(msg)
-
-            if 'source' not in self.reader.metadata:
-                raise Exception('Must specify source in VCF header')
-            self.source = self.reader.metadata['source'][0]
-
-        else:
-            raise UnsupportedFiletypeError(self.filetype)
+        # Confirm all standard INFO fields are present
+        required_info = 'SVTYPE CHR2 END STRANDS SVLEN SOURCE'.split()
+        for info in required_info:
+            if info not in self.reader.header.info.keys():
+                msg = "Required INFO field {0} not found in file {1}"
+                msg = msg.format(info, filename)
+                raise MissingInfoError(msg)
 
     def fetch(self, chrom, start=None, end=None):
         """
@@ -94,12 +83,7 @@ class SVFile(object):
 
         try:
             self.reader = self.reader.fetch(chrom, start, end)
-        # No calls on chromosome, empty reader
         except ValueError:
-            self.reader = iter(())
-        except AttributeError:
-            self.reader = iter(())
-        except OSError:
             raise TabixNotFoundError(self.filename)
 
     @property
@@ -107,10 +91,10 @@ class SVFile(object):
         """
         Returns
         ------
-        samples : list of vcf._Call
+        samples : list of str
         """
-        if hasattr(self.reader, 'samples'):
-            return self.reader.samples
+        if hasattr(self.reader.header, 'samples'):
+            return list(self.reader.header.samples)
         else:
             return []
 
