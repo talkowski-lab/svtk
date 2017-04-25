@@ -19,8 +19,9 @@ setup(
     packages=['svtools'],
     package_data={'svtools': ['data/standard_template.vcf']},
     scripts=[
-        'scripts/standardize-vcf',
-        'scripts/bedcluster'],
+        'scripts/standardize_vcf',
+        'scripts/bedcluster',
+        'scripts/make_svof'],
     install_requires=[
         'numpy',
         'pysam',
