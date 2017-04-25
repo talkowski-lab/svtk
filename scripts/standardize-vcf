@@ -14,6 +14,7 @@ INFO fields, with specified constraints:
   END:     SV end position (or position on CHR2 in translocations)
   STRANDS: Breakpoint strandedness [++,+-,-+,--]
   SVLEN:   SV length (-1 if translocation)
+  SOURCE:  Source algorithm
 """
 
 import argparse
@@ -26,11 +27,12 @@ def main():
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('vcf', help='Raw VCF')
-    parser.add_argument('fout', help='Standardized VCF')
-    parser.add_argument('source', help='Source algorithm')
+    parser.add_argument('vcf', help='Raw VCF.')
+    parser.add_argument('fout', help='Standardized VCF.')
+    parser.add_argument('source', help='Source algorithm. '
+                        '[delly,lumpy,manta,wham]')
     parser.add_argument('--standardizer', help='Path to python file with '
-                        'custom standardizer definition.')
+                        'custom standardizer definition. (Not yet supported.)')
     args = parser.parse_args()
 
     template = pkg_resources.resource_filename('svtools',
