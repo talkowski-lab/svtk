@@ -31,3 +31,26 @@ def is_smaller_chrom(chrA, chrB):
     # Numeric is always less than X/Y
     else:
         return chrA.isdigit()
+
+
+def recip(startA, endA, startB, endB, frac):
+    """
+    Test if two intervals share a specified reciprocal overlap.
+    """
+
+    if frac == 0:
+        return True
+
+    start = max(startA, startB)
+    end = min(endA, endB)
+    olen = end - start
+    lenA = endA - startA
+    lenB = endB - startB
+
+    try:
+        lapA = olen / float(lenA)
+        lapB = olen / float(lenB)
+    except ZeroDivisionError:
+        return False
+
+    return (olen > 0) and (lapA >= frac) and (lapB >= frac)

@@ -7,14 +7,13 @@ Copyright © 2016 Matthew Stone <mstone5@mgh.harvard.edu>
 Distributed under terms of the MIT license.
 """
 
-import os
 from collections import OrderedDict, defaultdict, deque
 from functools import partial
 import numpy as np
-import vcf
 from vcf.model import _Record, _Call, _Breakend, _SV, make_calldata_tuple
 
 from pysam import VariantFile
+from .utils import recip
 
 from .genomeslink import GSNode
 from .constants import NULL_GT, STD_FORMATS, MEDIANS
@@ -108,28 +107,9 @@ class SVFile(object):
         return SVRecord(record)
 
 
-def recip(startA, endA, startB, endB, frac):
-    if frac == 0:
-        return True
-
-    start = max(startA, startB)
-    end = min(endA, endB)
-    olen = end - start
-    lenA = endA - startA
-    lenB = endB - startB
-
-    try:
-        lapA = olen / float(lenA)
-        lapB = olen / float(lenB)
-    except ZeroDivisionError:
-        return False
-
-    return (olen > 0) and (lapA >= frac) and (lapB >= frac)
-
-
-class SVRecord(_Record, GSNode):
+class SVRecord(GSNode):
     """
-    Extend VCF record to add clusterability
+    Clusterable VCF record.
     """
 
     def __init__(self, record):
@@ -138,18 +118,20 @@ class SVRecord(_Record, GSNode):
             Must specify 'CHR2' and 'END' in INFO
         """
 
-        _Record.__init__(self, record.CHROM, record.POS, record.ID, record.REF,
-                         record.ALT, record.QUAL, record.FILTER, record.INFO,
-                         record.FORMAT, record._sample_indexes, record.samples)
+        self.record = record
+        self.source = record.info['SOURCE']
 
-        GSNode.__init__(self, self.CHROM, self.POS, self.INFO['CHR2'],
-                        self.INFO['END'], self.ID)
+        chrA = record.chrom
+        posA = record.pos
+        chrB = record.info['CHR2']
+        posB = record.info['END']
+        name = record.id
 
-        self.source = self.INFO['SOURCES'][0]
+        super().__init__(self, chrA, posA, chrB, posB, name)
 
     def clusters_with(self, other, dist, frac=0.0, match_strands=False):
         if match_strands:
-            strand = self.INFO['STRANDS'] == other.INFO['STRANDS']
+            strand = self.info['STRANDS'] == other.info['STRANDS']
         else:
             strand = True
 
@@ -206,13 +188,13 @@ class SVRecord(_Record, GSNode):
         """
 
         # Position bounds
-        MIN_POS = min(rec.POS for rec in records)
-        MAX_POS = max(rec.POS for rec in records)
-        MIN_END = min(rec.INFO['END'] for rec in records)
-        MAX_END = max(rec.INFO['END'] for rec in records)
+        MIN_POS = min(rec.posA for rec in records)
+        MAX_POS = max(rec.posA for rec in records)
+        MIN_END = min(rec.posB for rec in records)
+        MAX_END = max(rec.posB for rec in records)
 
-        POS = int(np.median([rec.POS for rec in records]))
-        END = int(np.median([rec.INFO['END'] for rec in records]))
+        POS = int(np.median([rec.posA for rec in records]))
+        END = int(np.median([rec.posB for rec in records]))
         CIPOS = [MIN_POS - POS, MAX_POS - POS]
         CIEND = [MIN_END - END, MAX_END - END]
 
