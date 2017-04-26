@@ -21,12 +21,9 @@ import os
 import pkg_resources
 from collections import deque
 import numpy as np
-import pysam
-from pysam import VariantFile
-import vcf
-from svcf import SVRecord, VCFTemplate, GenomeSLINK
-from svtools.svfile import SVFile
-
+from pysam import VariantFile, TabixFile
+from svtools.svfile import SVFile, SVRecord
+from svtools.genomeslink import GenomeSLINK
 
 
 class FileFormatError(Exception):
@@ -35,11 +32,6 @@ class FileFormatError(Exception):
 
 class MissingFileError(Exception):
     """VCF not found"""
-
-
-class ClusterStats(object):
-    def __init__(self):
-        self.clusters = []
 
 
 def rmsstd(records):
@@ -73,6 +65,7 @@ def flatten_pos(records, name, fout):
 class VCFCluster(GenomeSLINK):
     def __init__(self, svfiles, dist=500, excluded_regions=None, frac=0.0,
                  match_strands=False, svtypes=None):
+
         nodes = heapq.merge(*svfiles)
 
         # Need list of samples and sources to produce merged records
@@ -86,7 +79,7 @@ class VCFCluster(GenomeSLINK):
             for node in nodes:
                 if svtypes is not None and node.svtype not in svtypes:
                     continue
-                if ('SECONDARY' not in node.INFO) and node.is_allowed_chrom():
+                if ('SECONDARY' not in node.record.info) and node.is_allowed_chrom():
                     yield node
 
         self.frac = frac
@@ -181,9 +174,6 @@ def main():
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
-    #  parser.add_argument('-i', '--input-vcfs', nargs='+',
-    #                      help='Input VCFs. source must be in header.',
-    #                      required=True)
     parser.add_argument('filelist', type=argparse.FileType('r'),
                         help='List of paths to standardized VCFS')
     parser.add_argument('fout', help='Clustered VCF.')
@@ -207,7 +197,7 @@ def main():
     parser.add_argument('-m', '--match-strands', default=False,
                         action='store_true')
     parser.add_argument('-x', '--blacklist', metavar='BED.GZ',
-                        type=pysam.TabixFile, default=None,
+                        type=TabixFile, default=None,
                         help='Tabix indexed bed of blacklisted regions. Any '
                         'SV with a breakpoint falling inside one of these '
                         'regions is filtered from output.')
@@ -222,10 +212,6 @@ def main():
                         'clustering to (del,dup,inv,tloc)')
     parser.add_argument('--cluster-bed', type=argparse.FileType('w'),
                         help='Bed of constituent calls in each cluster')
-    #  parser.add_argument('--cnv-together',
-    #                      action='store_true', default=False,
-    #                      help='Cluster deletion and duplication calls '
-    #                      'together.')
     args = parser.parse_args()
 
     # Parse SV files and lists of samples and sources
@@ -236,37 +222,34 @@ def main():
     header = make_vcf_header(samples, sources)
     fout = VariantFile(args.fout, mode='w', header=header)
 
+    # Fetch region of interest
+    if args.chrom is not None:
+        for svfile in svfiles:
+            svfile.fetch(args.chrom, args.start, args.end)
+
     fout.close()
 
-    #  svfiles, samples, sources = parse_filelist(
-        #  args.filelist, chrom=args.chrom, start=args.start, end=args.end)
+    if args.svtypes is not None:
+        svtypes = args.svtypes.split(',')
+        permitted_types = 'del dup inv tloc'.split()
+        for svtype in svtypes:
+            if svtype not in permitted_types:
+                raise Exception('Unpermitted svtype: {0}'.format(svtype))
+    else:
+        svtypes = None
 
-    #  template = VCFTemplate(samples)
-    #  for source in sources:
-        #  template.add_standard_formats(source)
-    #  writer = vcf.Writer(args.output_vcf, template)
+    svc = VCFCluster(svfiles, dist=args.dist, excluded_regions=args.blacklist,
+                     frac=args.frac, match_strands=args.match_strands,
+                     svtypes=svtypes)
 
-    #  if args.svtypes is not None:
-        #  svtypes = args.svtypes.split(',')
-        #  permitted_types = 'del dup inv tloc'.split()
-        #  for svtype in svtypes:
-            #  if svtype not in permitted_types:
-                #  raise Exception('Unpermitted svtype: {0}'.format(svtype))
-    #  else:
-        #  svtypes = None
-
-    #  svc = VCFCluster(svfiles, dist=args.dist, excluded_regions=args.blacklist,
-                     #  frac=args.frac, match_strands=args.match_strands,
-                     #  svtypes=svtypes)
-
-    #  for i, (record, cluster) in enumerate(svc.cluster()):
-        #  # Name record
-        #  if args.prefix:
-            #  name = [args.prefix]
-        #  else:
-            #  name = ['SV']
-        #  if args.chrom:
-            #  name.append(args.chrom)
+    for i, (record, cluster) in enumerate(svc.cluster()):
+        # Name record
+        if args.prefix:
+            name = [args.prefix]
+        else:
+            name = ['SV']
+        if args.chrom:
+            name.append(args.chrom)
         #  name.append(str(i + 1))
         #  record.ID = '_'.join(name)
 

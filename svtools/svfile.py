@@ -7,16 +7,10 @@ Copyright © 2016 Matthew Stone <mstone5@mgh.harvard.edu>
 Distributed under terms of the MIT license.
 """
 
-from collections import OrderedDict, defaultdict, deque
-from functools import partial
 import numpy as np
-from vcf.model import _Record, _Call, _Breakend, _SV, make_calldata_tuple
-
 from pysam import VariantFile
-from .utils import recip
-
+from .utils import recip, make_bnd_alt
 from .genomeslink import GSNode
-from .constants import NULL_GT, STD_FORMATS, MEDIANS
 
 
 class UnsupportedFiletypeError(Exception):
@@ -141,21 +135,23 @@ class SVRecord(GSNode):
         posB = record.info['END']
         name = record.id
 
-        super().__init__(self, chrA, posA, chrB, posB, name)
+        super().__init__(chrA, posA, chrB, posB, name)
 
     def clusters_with(self, other, dist, frac=0.0, match_strands=False):
-        if match_strands:
-            strand = self.info['STRANDS'] == other.info['STRANDS']
-        else:
-            strand = True
+        svtype_match = self.svtype == other.svtype
 
-        if self.svtype == 'tloc' and other.svtype == 'tloc':
+        if match_strands:
+            strand_match = self.info['STRANDS'] == other.info['STRANDS']
+        else:
+            strand_match = True
+
+        if self.is_tloc or other.is_tloc:
             overlap = True
         else:
             overlap = recip(self.posA, self.posB, other.posA, other.posB, frac)
 
         return(super().clusters_with(other, dist) and
-               self.svtype == other.svtype and overlap and strand)
+               svtype_match and overlap and strand_match)
 
     @property
     def svtype(self):
@@ -163,22 +159,13 @@ class SVRecord(GSNode):
         Returns
         -------
         svtype : str
-            One of {del, dup, inv tloc}
+            One of {DEL, DUP, INV, BND}
         """
-        SIMPLE_SVTYPES = {
-            'DEL': 'del',
-            'DUP': 'dup',
-            'DUP:TANDEM': 'dup',
-            'INV': 'inv',
-            'TRA': 'tloc',
-            'INS': 'ins',
-            'RPL': 'del',
-            'BND': 'inv'}
+        return self.record.info['SVTYPE']
 
-        if self.CHROM != self.INFO['CHR2']:
-            return 'tloc'
-        else:
-            return SIMPLE_SVTYPES[self.INFO['SVTYPE']]
+    @property
+    def is_tloc(self):
+        return self.chrA != self.chrB
 
     @staticmethod
     def merge_pos(records):
@@ -215,296 +202,85 @@ class SVRecord(GSNode):
         return POS, END, CIPOS, CIEND
 
     @classmethod
-    def merge(cls, records, samples, sources, ID='.',
-              MEDIANS=MEDIANS, summary_fn=np.median):
+    def merge(cls, new_record, records, sources):
         """
-        Aggregates VCF INFO fields across clustered records.
+        Aggregate clustered records.
 
         * Original record IDs are preserved in a new INFO field
-        * Fields common to multiple sources are renamed to
-        ${FIELDNAME}_${SOURCENAME}, and master field is assigned to median/sum
 
         Parameters
         ----------
-        others : list of SVRecord
-        ID : str
-            ID for merged record
-        samples : list of str
-            List of sample IDs to include in list of calls
+        new_record : pysam.VariantRecord
+            Blank record to fill with aggregated data
+        records : list of SVRecord
+            Clustered records
         sources : list of str
-            List of source algorithms to parse INFO/FORMAT from
-        MEDIANS : dict, {str : (list of str)}
-            Numeric fields are summed by default. Fields listed here will be
-            combined using an alternative summary function. Keys are source
-            program names, values are lists of field names
-        summary_fn : function
-            of summing (defaults to np.median)
-            Only merge positions and IDs, not metrics
+            List of all sources
         """
 
         # Secondary records have duplicate POS/END/INFO
-        records = [rec for rec in records if not ('SECONDARY' in rec.INFO)]
+        # TODO: move secondary filtering elsewhere
 
         if len(records) == 0:
             return None
 
-        record = records[0]
+        base_record = records[0]
 
-        # Constant INFO fields
-        CHROM = record.CHROM
-        REF = 'N'
-        CHR2 = record.INFO['CHR2']
-        SVTYPE = record.INFO['SVTYPE']
+        new_record.chrom = base_record.chrA
+        new_record.ref = base_record.record.ref
+        new_record.info['SVTYPE'] = base_record.svtype
+        new_record.info['CHR2'] = base_record.chrB
 
+        # TODO: Check if strands should be merged
+        new_record.info['STRANDS'] = base_record.record.info['STRANDS']
+
+        # Merge coordinates
         POS, END, CIPOS, CIEND = cls.merge_pos(records)
+        new_record.pos = POS
+        new_record.info['END'] = END
+        new_record.info['CIPOS'] = CIPOS
+        new_record.info['CIEND'] = CIEND
 
-        # ALT
-        if SVTYPE == 'BND':
-            # Worry about strands later
-            orient = remote = True
-            ALT = [_Breakend(CHR2, END, orient, remote, 'N', True)]
+        call_sources = sorted(set([r.record.info['SOURCE'] for r in records]))
+        new_record.info['SOURCES'] = call_sources
+
+        # Assign alts, updating translocation alt based on merged coordinates
+        if new_record.info['SVTYPE'] == 'BND':
+            strands = new_record.info['STRANDS']
+            alt = make_bnd_alt(base_record.chrB, END, strands)
+            new_record.alts = (alt, )
         else:
-            ALT = [_SV(SVTYPE)]
+            new_record.alts = base_record.alts
 
         # SVLEN for intra-chromosomal is -1
-        if CHROM == CHR2:
-            SVLEN = END - POS
+        if base_record.is_tloc:
+            new_record.info['SVLEN'] = -1
         else:
-            SVLEN = -1
+            new_record.info['SVLEN'] = END - POS
 
         # QUAL, FILTER currently unused
-        QUAL = None
-        FILTER = None
+        new_record.filter.add('PASS')
 
-        # INFO
-        INFO = OrderedDict([
-            ('SVTYPE', SVTYPE),
-            ('CHR2', CHR2),
-            ('END', END),
-            ('SVLEN', SVLEN),
-            ('CIPOS', CIPOS),
-            ('CIEND', CIEND)])
-
-        if 'STRANDS' in record.INFO:
-            INFO['STRANDS'] = record.INFO['STRANDS']
-
-        # Count number of samples with support from each caller
-        sources = sorted(sources)
-        source_support = defaultdict(set)
-        for record in records:
-            # Check genotype, allow './.' calls
-            for call in record.samples:
-                if call.data.GT not in NULL_GT[record.source]:
-                    source_support[record.source].add(call.sample)
-        for source in sources:
-            INFO[source] = len(source_support[source])
-
-        # Make FORMAT field from FORMAT fields of sources
-        # Tag with source
-        ORIG_IDS = [source + '_IDs' for source in sources]
-        FORMAT = [(fmt, src) for src in sources for fmt in STD_FORMATS[src]]
-        FORMAT = ['_'.join(fmt_src) for fmt_src in FORMAT]
-        FORMAT = ':'.join(sources + ORIG_IDS + FORMAT)
-        # PyVCF forces a 'GT' field as first in FORMAT, but we
-        # don't call a merged genotype yet
-        FORMAT = 'GT:' + FORMAT
-
-        MergedCall = make_calldata_tuple(FORMAT.split(':'))
-
-        # Aggregate any call information for each sample/source pairing
-        source_calldata = defaultdict(list)
-        original_IDs = defaultdict(list)
-        for record in records:
-            for call in record.samples:
-                key = (call.sample, record.source)
-                source_calldata[key].append(call.data)
-                # Track IDs of variants with 0/0 call for evidence lookup
-                original_IDs[key].append(record.ID)
-
-        # Collapse multiple calls from same source
-        sample_calldata = deque()
-        for sample in samples:
-            calldata = {}
+        # Seed with null values
+        for sample in new_record.samples:
+            new_record.samples[sample]['GT'] = (0, 0)
             for source in sources:
-                # List of original call IDs
-                calldata[source + '_IDs'] = original_IDs[(sample, source)]
+                new_record.samples[sample][source] = 0
 
-                # Merge data across multiple calls by same program
-                data = source_calldata[sample, source]
+        # Update with called samples
+        # TODO: optionally permit ./. instead of rejecting
+        # I think that was an issue with one caller, maybe handle in preproc
+        null_GTs = [(0, 0), (None, None), (0, ), (None, )]
+        for record in records:
+            for sample in record.samples:
+                gt = record.samples[sample]['GT']
+                if gt not in null_GTs:
+                    new_record.samples[sample]['GT'] = (0, 1)
 
-                try:
-                    data = cls.merge_calldata(data, source, MEDIANS[source])
-                except:
-                    import pdb
-                    pdb.set_trace()
-                calldata.update(data)
-
-            # Call het if called by any source
-            if any(calldata[source] for source in sources):
-                calldata['GT'] = '0/1'
-            else:
-                calldata['GT'] = '0/0'
-
-            FIELD = [calldata[field] for field in FORMAT.split(':')]
-            sample_calldata.append(MergedCall(*FIELD))
-
-        # sample_indexes
-        sample_indexes = {sample: i for i, sample in enumerate(samples)}
-
-        record = _Record(CHROM, POS, ID, REF, ALT, QUAL, FILTER, INFO, FORMAT,
-                         sample_indexes, [])
-
-        # Convert CallData tuples back to PyVCF _Call format
-        sc = zip(samples, sample_calldata)
-        calls = [_Call(record, sample, calldata) for sample, calldata in sc]
-        record.samples = calls
-
-        source_support = sorted(set([record.source for record in records]))
-        record.INFO['SOURCES'] = source_support
-        #  source_support = ','.join(source_support)
+                    source = record.info['SOURCE']
+                    new_record.samples[sample][source] = 1
 
         return SVRecord(record)
-
-    @staticmethod
-    def merge_field_vals(vals, dtype, summary_fn):
-        """
-        Merge list of genotype field values
-
-        Parameters
-        ----------
-        vals : list
-        dtype : type
-            type of value (or type of subvalue if values are lists/tuples)
-        summary_fn : function
-            Function to apply to numeric fields
-
-        Returns
-        -------
-        val : type of input values
-        """
-
-        # Eliminate None values. If all None, return default null value
-        vals = [val for val in vals if val is not None]
-        if len(vals) == 0:
-            if dtype == str:
-                return ''
-            else:
-                return dtype(0)
-
-        # Map merge_fields to each sub-item in tuple or list field
-        if isinstance(vals[0], list) or isinstance(vals[0], tuple):
-            ltype = type(vals[0])
-            map_merge = partial(SVRecord.merge_field_vals, dtype=dtype,
-                                summary_fn=summary_fn)
-            val = [map_merge(sub_vals) for sub_vals in zip(*vals)]
-            return ltype(val)
-
-        # Join string fields together for now
-        elif isinstance(vals[0], str):
-            return ','.join(vals)
-
-        # Take median or sum numerics
-        elif isinstance(vals[0], float) or isinstance(vals[0], int):
-            # check this
-            vals = [v for v in vals if v is not None]
-            if len(vals) == 0:
-                return dtype(0)
-            else:
-                return dtype(summary_fn(vals))
-
-        else:
-            msg = 'Fields must be list, tuple, str, int, or float'
-            raise PyVCFParsingError(msg)
-
-    @staticmethod
-    def null_genotypes(source):
-        """
-        Generate null genotype field values
-        str = '', float = 0.0, int = 0
-
-        Returns
-        -------
-        genotypes : dict
-            Null values
-        """
-        genotypes = {}
-        for fmt in STD_FORMATS[source].values():
-            if fmt.type == 'String':
-                genotypes[fmt.id] = ''
-            elif fmt.type == 'Integer':
-                if fmt.num > 1:
-                    genotypes[fmt.id] = [0] * fmt.num
-                else:
-                    genotypes[fmt.id] = 0
-            elif fmt.type == 'Float':
-                if fmt.num > 1:
-                    genotypes[fmt.id] = [0.0] * fmt.num
-                else:
-                    genotypes[fmt.id] = 0.0
-
-        return genotypes
-
-    @classmethod
-    def merge_calldata(cls, calldata, source, MEDIANS):
-        """
-        Merge a list of CallData from vcf Records into consensus field values
-
-        Strings are joined by a comma, numerics are summed or medianed
-
-        Parameters
-        ----------
-        calldata : list of vcf.CallData
-
-        Returns
-        -------
-        merged_data : dict
-            {field: merged_value} for field in calldata attributes
-        """
-
-        # Make null call
-        merged_data = {}
-        called = [c for c in calldata if c.GT not in NULL_GT[source]]
-        merged_data[source] = len(called)
-
-        # Zero out genotype fields
-        genotypes = cls.null_genotypes(source)
-
-        # Return null call if no calls made in this
-        if len(calldata) == 0:
-            pass
-
-        # If only one call, no need to merge
-        elif len(calldata) == 1:
-            call = calldata[0]
-            for field in genotypes:
-                genotypes[field] = getattr(call, field)
-
-        # Merge data from overlapping calls
-        else:
-            for field in genotypes:
-                if field in MEDIANS:
-                    summary_fn = np.median
-                else:
-                    summary_fn = np.sum
-                vals = [getattr(call, field) for call in calldata]
-
-                dtype = STD_FORMATS[source][field].type
-                if dtype == 'Float':
-                    dtype = float
-                elif dtype == 'Integer':
-                    dtype = int
-                elif dtype == 'String':
-                    dtype = str
-
-                val = cls.merge_field_vals(vals, dtype, summary_fn)
-                genotypes[field] = val
-
-        # Rename fields with a suffix indicating source caller
-        for field in [k for k in genotypes.keys()]:
-            genotypes[field + '_' + source] = genotypes.pop(field)
-
-        merged_data.update(genotypes)
-        return merged_data
 
     def __hash__(self):
         return id(self)
