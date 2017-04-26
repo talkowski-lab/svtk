@@ -46,6 +46,9 @@ def main():
     for sample in vcf.header.samples:
         header.add_sample(sample)
 
+    # Tag source in header
+    header.add_line('##source={0}'.format(args.source))
+
     fout = VariantFile(args.fout, mode='w', header=header)
 
     #  standardizer = VCFStandardizer.create(args.source, vcf, fout)
