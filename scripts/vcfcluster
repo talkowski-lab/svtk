@@ -17,15 +17,21 @@ maximum individual clustering distance across the libraries being analyzed.
 
 import argparse
 import heapq
+import os
 from collections import deque
 import numpy as np
 import pysam
 import vcf
-from svcf import SVFile, SVRecord, VCFTemplate, GenomeSLINK
+from svcf import SVRecord, VCFTemplate, GenomeSLINK
+from svtools.svfile import SVFile
 
 
 class FileFormatError(Exception):
     """Improper file format"""
+
+
+class MissingFileError(Exception):
+    """VCF not found"""
 
 
 class ClusterStats(object):
@@ -55,7 +61,8 @@ def flatten_pos(records, name, fout):
         ID = record.ID
         svtype = record.INFO['SVTYPE']
 
-        entry = [str(x) for x in [chrom, start, end, quad, source, ID, name, svtype]]
+        entry = [str(x) for x in [chrom, start, end, quad, source, ID, name,
+                                  svtype]]
         entry = '\t'.join(entry) + '\n'
         fout.write(entry)
 
@@ -98,37 +105,39 @@ class VCFCluster(GenomeSLINK):
                     yield rec, cluster
 
 
-def parse_filelist(filelist, chrom=None, start=None, end=None):
+def parse_filepaths(filepaths):
     """
     Parameters
     ----------
-    filelist : File
-        Tab-delimited (filename, source)
+    filepaths : list of str
+        List of paths to standardized VCFs
 
     Returns
     -------
     svfiles : list of SVFile
     samples : list of str
+        List of unique samples across all VCFs
     sources : list of str
-        All sources present in list
+        List of unique sources across all VCFs
     """
 
     svfiles = deque()
     sources = set()
     samples = set()
 
-    for line in filelist:
-        if len(line.split()) != 1:
+    for path in filepaths:
+        if len(path.split()) != 1:
             raise FileFormatError('File list must be single column')
+        if not os.path.isfile(path):
+            raise MissingFileError('VCF {0} not found'.format(path))
 
-        filename = line.strip()
-        svfile = SVFile(filename)
-        svfile.fetch(chrom, start, end)
+        svfile = SVFile(path)
         svfiles.append(svfile)
 
         source = svfile.source
         sources.add(source)
-        samples = samples.union(svfile.samples)
+
+        samples = samples.union(svfile.reader.header.samples)
 
     return svfiles, sorted(samples), sorted(sources)
 
@@ -140,8 +149,8 @@ def main():
     #  parser.add_argument('-i', '--input-vcfs', nargs='+',
     #                      help='Input VCFs. source must be in header.',
     #                      required=True)
-    parser.add_argument('-f', '--filelist', type=argparse.FileType('r'),
-                        help='List of filename, source', required=True)
+    parser.add_argument('filelist', type=argparse.FileType('r'),
+                        help='List of paths to standardized VCFS')
     parser.add_argument('-o', '--output-vcf',
                         type=argparse.FileType('w'), default=None,
                         help='Output VCF.', required=True)
@@ -186,46 +195,51 @@ def main():
     #                      'together.')
     args = parser.parse_args()
 
-    svfiles, samples, sources = parse_filelist(
-        args.filelist, chrom=args.chrom, start=args.start, end=args.end)
+    filepaths = [line.strip() for line in args.filelist.readlines()]
+    svfiles, samples, sources = parse_filepaths(filepaths)
 
-    template = VCFTemplate(samples)
-    for source in sources:
-        template.add_standard_formats(source)
-    writer = vcf.Writer(args.output_vcf, template)
+    print(sources)
 
-    if args.svtypes is not None:
-        svtypes = args.svtypes.split(',')
-        permitted_types = 'del dup inv tloc'.split()
-        for svtype in svtypes:
-            if svtype not in permitted_types:
-                raise Exception('Unpermitted svtype: {0}'.format(svtype))
-    else:
-        svtypes = None
+    #  svfiles, samples, sources = parse_filelist(
+        #  args.filelist, chrom=args.chrom, start=args.start, end=args.end)
 
-    svc = VCFCluster(svfiles, dist=args.dist, excluded_regions=args.blacklist,
-                     frac=args.frac, match_strands=args.match_strands,
-                     svtypes=svtypes)
+    #  template = VCFTemplate(samples)
+    #  for source in sources:
+        #  template.add_standard_formats(source)
+    #  writer = vcf.Writer(args.output_vcf, template)
 
-    for i, (record, cluster) in enumerate(svc.cluster()):
-        # Name record
-        if args.prefix:
-            name = [args.prefix]
-        else:
-            name = ['SV']
-        if args.chrom:
-            name.append(args.chrom)
-        name.append(str(i + 1))
-        record.ID = '_'.join(name)
+    #  if args.svtypes is not None:
+        #  svtypes = args.svtypes.split(',')
+        #  permitted_types = 'del dup inv tloc'.split()
+        #  for svtype in svtypes:
+            #  if svtype not in permitted_types:
+                #  raise Exception('Unpermitted svtype: {0}'.format(svtype))
+    #  else:
+        #  svtypes = None
 
-        # Size filter (CTX have size -1)
-        if -1 < record.INFO['SVLEN'] < args.svsize:
-            continue
+    #  svc = VCFCluster(svfiles, dist=args.dist, excluded_regions=args.blacklist,
+                     #  frac=args.frac, match_strands=args.match_strands,
+                     #  svtypes=svtypes)
 
-        writer.write_record(record)
+    #  for i, (record, cluster) in enumerate(svc.cluster()):
+        #  # Name record
+        #  if args.prefix:
+            #  name = [args.prefix]
+        #  else:
+            #  name = ['SV']
+        #  if args.chrom:
+            #  name.append(args.chrom)
+        #  name.append(str(i + 1))
+        #  record.ID = '_'.join(name)
 
-        if args.cluster_bed is not None:
-            flatten_pos(cluster, record.ID, args.cluster_bed)
+        #  # Size filter (CTX have size -1)
+        #  if -1 < record.INFO['SVLEN'] < args.svsize:
+            #  continue
+
+        #  writer.write_record(record)
+
+        #  if args.cluster_bed is not None:
+            #  flatten_pos(cluster, record.ID, args.cluster_bed)
 
 
 if __name__ == '__main__':
