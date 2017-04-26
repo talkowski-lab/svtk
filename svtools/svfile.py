@@ -39,6 +39,10 @@ class MissingInfoError(Exception):
     """Missing required INFO field"""
 
 
+class MissingSourceError(Exception):
+    """Source not specified in VCF header"""
+
+
 class SVFile(object):
     def __init__(self, filename):
         """
@@ -55,6 +59,16 @@ class SVFile(object):
                 msg = "Required INFO field {0} not found in file {1}"
                 msg = msg.format(info, filename)
                 raise MissingInfoError(msg)
+
+        # Unfortunately no way to index into "source" metadata record
+        # via pysam API, must manually check all header records
+        self.source = None
+        for hrec in self.reader.header.records:
+            if hrec.key == 'source':
+                self.source = hrec.value
+        if self.source is None:
+            msg = "Source not specified in header of {0}".format(filename)
+            raise MissingSourceError(msg)
 
     def fetch(self, chrom, start=None, end=None):
         """
