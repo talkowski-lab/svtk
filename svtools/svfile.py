@@ -114,7 +114,7 @@ class SVRecord(GSNode):
 
     def __init__(self, record):
         """
-        record : vcf._Record
+        record : pysam.VariantRecord
             Must specify 'CHR2' and 'END' in INFO
         """
 
