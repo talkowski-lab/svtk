@@ -18,12 +18,15 @@ maximum individual clustering distance across the libraries being analyzed.
 import argparse
 import heapq
 import os
+import pkg_resources
 from collections import deque
 import numpy as np
 import pysam
+from pysam import VariantFile
 import vcf
 from svcf import SVRecord, VCFTemplate, GenomeSLINK
 from svtools.svfile import SVFile
+
 
 
 class FileFormatError(Exception):
@@ -142,6 +145,38 @@ def parse_filepaths(filepaths):
     return svfiles, sorted(samples), sorted(sources)
 
 
+def make_vcf_header(samples, sources):
+    """
+    Add samples and sources to VCF template header.
+
+    Parameters
+    ----------
+    samples : list of str
+    sources : list of str
+
+    Returns
+    -------
+    pysam.VariantHeader
+    """
+
+    # Read stock template
+    template = pkg_resources.resource_filename('svtools',
+                                               'data/vcfcluster_template.vcf')
+    template = VariantFile(template)
+    header = template.header
+
+    # Add samples
+    for sample in samples:
+        header.add_sample(sample)
+
+    # Add source FORMAT fields
+    meta = '##FORMAT=<ID={0},Number=1,Type=Integer,Description="Called by {1}"'
+    for source in sources:
+        header.add_line(meta.format(source, source.capitalize()))
+
+    return header
+
+
 def main():
     parser = argparse.ArgumentParser(
         description=__doc__,
@@ -151,9 +186,7 @@ def main():
     #                      required=True)
     parser.add_argument('filelist', type=argparse.FileType('r'),
                         help='List of paths to standardized VCFS')
-    parser.add_argument('-o', '--output-vcf',
-                        type=argparse.FileType('w'), default=None,
-                        help='Output VCF.', required=True)
+    parser.add_argument('fout', help='Clustered VCF.')
     parser.add_argument('-c', '--chrom', default=None,
                         help='Restrict clustering to single chromosome. '
                         'Useful for parallelization.')
@@ -195,10 +228,15 @@ def main():
     #                      'together.')
     args = parser.parse_args()
 
+    # Parse SV files and lists of samples and sources
     filepaths = [line.strip() for line in args.filelist.readlines()]
     svfiles, samples, sources = parse_filepaths(filepaths)
 
-    print(sources)
+    # Open new file
+    header = make_vcf_header(samples, sources)
+    fout = VariantFile(args.fout, mode='w', header=header)
+
+    fout.close()
 
     #  svfiles, samples, sources = parse_filelist(
         #  args.filelist, chrom=args.chrom, start=args.start, end=args.end)
