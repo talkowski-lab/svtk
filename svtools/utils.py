@@ -54,3 +54,22 @@ def recip(startA, endA, startB, endB, frac):
         return False
 
     return (olen > 0) and (lapA >= frac) and (lapB >= frac)
+
+
+def make_bnd_alt(chrom, pos, strands):
+    """
+    Make ALT for BND record in accordance with VCF specification.
+    """
+
+    p = '{0}:{1}'.format(chrom, pos)
+
+    if strands == '++':
+        fmt = 'N]{0}]'
+    elif strands == '+-':
+        fmt = 'N[{0}['
+    elif strands == '-+':
+        fmt = ']{0}]N'
+    elif strands == '--':
+        fmt = '[{0}[N'
+
+    return fmt.format(p)

@@ -16,6 +16,9 @@ Distributed under terms of the MIT license.
 """
 
 
+from svtools.utils import make_bnd_alt
+
+
 class VCFStandardizer:
     subclasses = {}
 
@@ -190,22 +193,3 @@ def parse_bnd_strands(alt):
         return '-+'
     elif alt.startswith('['):
         return '--'
-
-
-def make_bnd_alt(chrom, pos, strands):
-    """
-    Make ALT for BND record in accordance with VCF specification.
-    """
-
-    p = '{0}:{1}'.format(chrom, pos)
-
-    if strands == '++':
-        fmt = 'N]{0}]'
-    elif strands == '+-':
-        fmt = 'N[{0}['
-    elif strands == '-+':
-        fmt = ']{0}]N'
-    elif strands == '--':
-        fmt = '[{0}[N'
-
-    return fmt.format(p)
