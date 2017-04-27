@@ -51,7 +51,7 @@ def flatten_pos(records, name, fout):
 
 
 class VCFCluster(GenomeSLINK):
-    def __init__(self, svfiles, samples, sources, header,
+    def __init__(self, svfiles,
                  dist=500, frac=0.0, match_strands=True,
                  blacklist=None, svtypes=None):
         """
@@ -66,8 +66,7 @@ class VCFCluster(GenomeSLINK):
         Parameters
         ----------
         svfiles : list of SVFile
-        samples : list of str
-        sources : list of str
+            Standardized VCFs to cluster
         header : pysam.VariantHeader
             VCF header to use when creating new records
         dist : int, optional
@@ -86,13 +85,23 @@ class VCFCluster(GenomeSLINK):
             specified, all svtypes will be clustered.
         """
 
+        # Merge sorted SV files
         nodes = heapq.merge(*svfiles)
 
-        # Need list of samples and sources to produce merged records
-        samples = [s for svfile in svfiles for s in svfile.samples]
-        self.samples = sorted(set(samples))
-        self.sources = sorted(set([svfile.source for svfile in svfiles]))
+        # Make lists of unique sources and samples to construct VCF header
+        sources = set()
+        samples = set()
 
+        for svfile in svfiles:
+            sources.add(svfile.source)
+            samples = samples.union(svfile.reader.header.samples)
+
+        # Build VCF header for new record construction
+        self.samples = sorted(samples)
+        self.sources = sorted(sources)
+        self.header = self.make_vcf_header()
+
+        # Parameterize clustering
         self.frac = frac
         self.match_strands = match_strands
 
@@ -136,6 +145,33 @@ class VCFCluster(GenomeSLINK):
                 if rec:
                     yield rec, cluster
 
+    def make_vcf_header(self):
+        """
+        Add samples and sources to VCF template header.
+
+        Returns
+        -------
+        pysam.VariantHeader
+        """
+
+        # Read stock template
+        template = pkg_resources.resource_filename(
+                        'svtools', 'data/vcfcluster_template.vcf')
+        template = VariantFile(template)
+        header = template.header
+
+        # Add samples
+        for sample in self.samples:
+            header.add_sample(sample)
+
+        # Add source FORMAT fields
+        meta = ('##FORMAT=<ID={0},Number=1,Type=Integer,'
+                'Description="Called by {1}"')
+        for source in self.sources:
+            header.add_line(meta.format(source, source.capitalize()))
+
+        return header
+
 
 def parse_filepaths(filepaths):
     """
@@ -147,16 +183,9 @@ def parse_filepaths(filepaths):
     Returns
     -------
     svfiles : list of SVFile
-    samples : list of str
-        List of unique samples across all VCFs
-    sources : list of str
-        List of unique sources across all VCFs
     """
 
     svfiles = deque()
-    sources = set()
-    samples = set()
-
     for path in filepaths:
         if len(path.split()) != 1:
             raise FileFormatError('File list must be single column')
@@ -166,44 +195,7 @@ def parse_filepaths(filepaths):
         svfile = SVFile(path)
         svfiles.append(svfile)
 
-        source = svfile.source
-        sources.add(source)
-
-        samples = samples.union(svfile.reader.header.samples)
-
-    return svfiles, sorted(samples), sorted(sources)
-
-
-def make_vcf_header(samples, sources):
-    """
-    Add samples and sources to VCF template header.
-
-    Parameters
-    ----------
-    samples : list of str
-    sources : list of str
-
-    Returns
-    -------
-    pysam.VariantHeader
-    """
-
-    # Read stock template
-    template = pkg_resources.resource_filename('svtools',
-                                               'data/vcfcluster_template.vcf')
-    template = VariantFile(template)
-    header = template.header
-
-    # Add samples
-    for sample in samples:
-        header.add_sample(sample)
-
-    # Add source FORMAT fields
-    meta = '##FORMAT=<ID={0},Number=1,Type=Integer,Description="Called by {1}"'
-    for source in sources:
-        header.add_line(meta.format(source, source.capitalize()))
-
-    return header
+    return svfiles
 
 
 def main():
@@ -252,7 +244,7 @@ def main():
 
     # Parse SV files and lists of samples and sources
     filepaths = [line.strip() for line in args.filelist.readlines()]
-    svfiles, samples, sources = parse_filepaths(filepaths)
+    svfiles = parse_filepaths(filepaths)
 
     # Open new file
     header = make_vcf_header(samples, sources)
