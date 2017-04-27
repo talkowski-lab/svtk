@@ -228,6 +228,9 @@ class SVRecordCluster:
                     source = record.record.info['SOURCE']
                     new_record.samples[sample][source] = 1
 
+        # Report cluster RMSSTD
+        new_record.info['RMSSTD'] = self.rmsstd
+
         return new_record
 
     def merge_pos(self):
