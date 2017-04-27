@@ -34,18 +34,6 @@ class MissingFileError(Exception):
     """VCF not found"""
 
 
-def rmsstd(records):
-    starts = np.array([record.POS for record in records])
-    ends = np.array([record.INFO['END'] for record in records])
-
-    def _meanSS(X):
-        mu = np.mean(X)
-        return np.sum((X - mu) ** 2) / len(X)
-
-    SS = _meanSS(starts) + _meanSS(ends)
-    return np.sqrt(SS)
-
-
 def flatten_pos(records, name, fout):
     for record in records:
         chrom = record.CHROM
