@@ -167,42 +167,15 @@ class SVRecord(GSNode):
     def is_tloc(self):
         return self.chrA != self.chrB
 
-    @staticmethod
-    def merge_pos(records):
-        """
-        Compute aggregate POS/END of clustered SVRecords.
+    def __hash__(self):
+        return id(self)
 
-        Defaults to computing median of POS and END over constituent
-        records. CIPOS/CIEND are calculated as (MIN - MEDIAN, MAX - MEDIAN)
-        over POS and END.
 
-        Parameters
-        ----------
-        records : list of SVRecord
+class SVRecordCluster:
+    def __init__(self, records):
+        self.records = records
 
-        Returns
-        -------
-        POS : int
-        END : int
-        CIPOS : list of int
-        CIEND : list of int
-        """
-
-        # Position bounds
-        MIN_POS = min(rec.posA for rec in records)
-        MAX_POS = max(rec.posA for rec in records)
-        MIN_END = min(rec.posB for rec in records)
-        MAX_END = max(rec.posB for rec in records)
-
-        POS = int(np.median([rec.posA for rec in records]))
-        END = int(np.median([rec.posB for rec in records]))
-        CIPOS = [MIN_POS - POS, MAX_POS - POS]
-        CIEND = [MIN_END - END, MAX_END - END]
-
-        return POS, END, CIPOS, CIEND
-
-    @classmethod
-    def merge(cls, new_record, records, sources):
+    def merge(self, new_record, sources):
         """
         Aggregate clustered records.
 
@@ -212,19 +185,22 @@ class SVRecord(GSNode):
         ----------
         new_record : pysam.VariantRecord
             Blank record to fill with aggregated data
-        records : list of SVRecord
-            Clustered records
         sources : list of str
             List of all sources
+
+        Returns
+        -------
+        new_record : pysam.VariantRecord
+            VCF record populated with aggregate cluster data
         """
 
         # Secondary records have duplicate POS/END/INFO
         # TODO: move secondary filtering elsewhere
 
-        if len(records) == 0:
+        if len(self.records) == 0:
             return None
 
-        base_record = records[0]
+        base_record = self.records[0]
 
         new_record.chrom = base_record.chrA
         new_record.ref = base_record.record.ref
@@ -235,14 +211,14 @@ class SVRecord(GSNode):
         new_record.info['STRANDS'] = base_record.record.info['STRANDS']
 
         # Merge coordinates
-        POS, END, CIPOS, CIEND = cls.merge_pos(records)
+        POS, END, CIPOS, CIEND = self.merge_pos()
         new_record.pos = POS
         new_record.info['END'] = END
         new_record.info['CIPOS'] = CIPOS
         new_record.info['CIEND'] = CIEND
 
-        call_sources = sorted(set([r.record.info['SOURCE'] for r in records]))
-        new_record.info['SOURCES'] = call_sources
+        call_sources = [r.record.info['SOURCE'] for r in self.records]
+        new_record.info['SOURCES'] = sorted(set(call_sources))
 
         # Assign alts, updating translocation alt based on merged coordinates
         if new_record.info['SVTYPE'] == 'BND':
@@ -271,7 +247,7 @@ class SVRecord(GSNode):
         # TODO: optionally permit ./. instead of rejecting
         # I think that was an issue with one caller, maybe handle in preproc
         null_GTs = [(0, 0), (None, None), (0, ), (None, )]
-        for record in records:
+        for record in self.records:
             for sample in record.samples:
                 gt = record.samples[sample]['GT']
                 if gt not in null_GTs:
@@ -280,7 +256,33 @@ class SVRecord(GSNode):
                     source = record.info['SOURCE']
                     new_record.samples[sample][source] = 1
 
-        return SVRecord(record)
+        return new_record
 
-    def __hash__(self):
-        return id(self)
+    def merge_pos(self):
+        """
+        Compute aggregate POS/END of clustered SVRecords.
+
+        Defaults to computing median of POS and END over constituent
+        records. CIPOS/CIEND are calculated as (MIN - MEDIAN, MAX - MEDIAN)
+        over POS and END.
+
+        Returns
+        -------
+        POS : int
+        END : int
+        CIPOS : list of int
+        CIEND : list of int
+        """
+
+        # Position bounds
+        MIN_POS = min(rec.posA for rec in self.records)
+        MAX_POS = max(rec.posA for rec in self.records)
+        MIN_END = min(rec.posB for rec in self.records)
+        MAX_END = max(rec.posB for rec in self.records)
+
+        POS = int(np.median([rec.posA for rec in self.records]))
+        END = int(np.median([rec.posB for rec in self.records]))
+        CIPOS = [MIN_POS - POS, MAX_POS - POS]
+        CIEND = [MIN_END - END, MAX_END - END]
+
+        return POS, END, CIPOS, CIEND
