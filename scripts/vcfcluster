@@ -20,9 +20,8 @@ import heapq
 import os
 import pkg_resources
 from collections import deque
-import numpy as np
 from pysam import VariantFile, TabixFile
-from svtools.svfile import SVFile, SVRecord
+from svtools.svfile import SVFile, SVRecordCluster
 from svtools.genomeslink import GenomeSLINK
 
 
@@ -104,6 +103,7 @@ class VCFCluster(GenomeSLINK):
         # Parameterize clustering
         self.frac = frac
         self.match_strands = match_strands
+        self.svtypes = svtypes
 
         super().__init__(nodes, dist, 1, blacklist)
 
@@ -139,11 +139,12 @@ class VCFCluster(GenomeSLINK):
         """
         clusters = super().cluster(frac=self.frac,
                                    match_strands=self.match_strands)
-        for cluster in clusters:
-            if len(cluster) > 0:
-                rec = SVRecord.merge(cluster, self.samples, self.sources)
-                if rec:
-                    yield rec, cluster
+        for records in clusters:
+            if len(records) > 0:
+                cluster = SVRecordCluster(records)
+                record = self.header.new_record()
+                record = cluster.merge(record, self.sources)
+                yield record, cluster
 
     def make_vcf_header(self):
         """
@@ -246,16 +247,10 @@ def main():
     filepaths = [line.strip() for line in args.filelist.readlines()]
     svfiles = parse_filepaths(filepaths)
 
-    # Open new file
-    header = make_vcf_header(samples, sources)
-    fout = VariantFile(args.fout, mode='w', header=header)
-
     # Fetch region of interest
     if args.chrom is not None:
         for svfile in svfiles:
             svfile.fetch(args.chrom, args.start, args.end)
-
-    fout.close()
 
     #  if args.svtypes is not None:
     #      svtypes = args.svtypes.split(',')
@@ -269,6 +264,8 @@ def main():
     svc = VCFCluster(svfiles, dist=args.dist, blacklist=args.blacklist,
                      frac=args.frac, match_strands=args.match_strands,
                      svtypes=svtypes)
+    # Open new file
+    fout = VariantFile(args.fout, mode='w', header=svc.header)
 
     for i, (record, cluster) in enumerate(svc.cluster()):
         # Name record
@@ -278,8 +275,10 @@ def main():
             name = ['SV']
         if args.chrom:
             name.append(args.chrom)
-        #  name.append(str(i + 1))
-        #  record.ID = '_'.join(name)
+        name.append(str(i + 1))
+        record.id = '_'.join(name)
+
+        fout.write(record)
 
         #  # Size filter (CTX have size -1)
         #  if -1 < record.INFO['SVLEN'] < args.svsize:
@@ -290,6 +289,7 @@ def main():
         #  if args.cluster_bed is not None:
             #  flatten_pos(cluster, record.ID, args.cluster_bed)
 
+    fout.close()
 
 if __name__ == '__main__':
     main()
