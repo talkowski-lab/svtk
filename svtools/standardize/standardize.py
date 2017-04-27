@@ -91,13 +91,7 @@ class VCFStandardizer:
 
         # Standardize the required INFO fields
         std_rec = self.standardize_info(std_rec, raw_rec)
-
-        # Standardize tloc ALT after SVTYPE and CHR2/END are standardized
-        if std_rec.info['SVTYPE'] == 'BND':
-            alt = make_bnd_alt(std_rec.info['CHR2'], std_rec.info['END'],
-                               std_rec.info['STRANDS'])
-            std_rec.alts = (alt, )
-
+        std_rec = self.standardize_alts(std_rec, raw_rec)
         std_rec = self.standardize_format(std_rec, raw_rec)
 
         return std_rec
@@ -139,6 +133,22 @@ class VCFStandardizer:
         # Add per-sample genotypes (ignoring other FORMAT fields)
         for sample in raw_rec.samples:
             std_rec.samples[sample]['GT'] = raw_rec.samples[sample]['GT']
+
+        return std_rec
+
+    def standardize_alts(self, std_rec, raw_rec):
+        """
+        Standardize ALT field.
+
+        Default behavior is to standardize BND alt to VCF spec and leave
+        other SVTYPE alts untouched.
+        """
+
+        # Standardize tloc ALT after SVTYPE and CHR2/END are standardized
+        if std_rec.info['SVTYPE'] == 'BND':
+            alt = make_bnd_alt(std_rec.info['CHR2'], std_rec.info['END'],
+                               std_rec.info['STRANDS'])
+            std_rec.alts = (alt, )
 
         return std_rec
 

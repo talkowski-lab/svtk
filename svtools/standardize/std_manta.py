@@ -54,18 +54,9 @@ class MantaStandardizer(VCFStandardizer):
         svtype = raw_rec.info['SVTYPE']
         std_rec.info['SVTYPE'] = svtype
 
-        if svtype == 'DEL':
-            import ipdb
-            ipdb.set_trace()
-
         # Define CHR2 and END
         if svtype == 'BND':
             chr2, end = parse_bnd_pos(raw_rec.alts[0])
-            alt = raw_rec.alts[0].strip('ATCGN')
-            # Strip brackets separately, otherwise GL contigs will be altered
-            alt = alt.strip('[]')
-            chr2, end = alt.split(':')
-            end = int(end)
         else:
             chr2 = raw_rec.chrom
             end = raw_rec.info['END']
@@ -79,7 +70,6 @@ class MantaStandardizer(VCFStandardizer):
             else:
                 strands = '--'
         elif svtype == 'BND':
-            alt = raw_rec.alts[0]
             strands = parse_bnd_strands(raw_rec.alts[0])
         elif svtype == 'DEL':
             strands = '+-'
@@ -95,5 +85,27 @@ class MantaStandardizer(VCFStandardizer):
             std_rec.info['SVLEN'] = std_rec.info['END'] - std_rec.pos
 
         std_rec.info['SOURCE'] = 'manta'
+
+        return std_rec
+
+    def standardize_alts(self, std_rec, raw_rec):
+        """
+        Standardize ALT.
+
+        When the full ref/alt sequence is specified for deletions or
+        insertions, replace with N and <SVTYPE>
+        """
+
+        # Format BND ALT
+        std_rec = super().standardize_alts(std_rec, raw_rec)
+
+        # Set reference to null
+        std_rec.ref = 'N'
+
+        # Replace ALT sequence with svtype tag
+        svtype = std_rec.info['SVTYPE']
+        simple_alt = '<{0}>'.format(svtype)
+        if svtype != 'BND':
+            std_rec.alts = (simple_alt, )
 
         return std_rec
