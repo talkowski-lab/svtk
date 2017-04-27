@@ -286,3 +286,24 @@ class SVRecordCluster:
         CIEND = [MIN_END - END, MAX_END - END]
 
         return POS, END, CIPOS, CIEND
+
+    @property
+    def rmsstd(self):
+        """
+        Root-mean-square standard deviation of cluster coordinates
+        """
+
+        if hasattr(self, '_rmsstd'):
+            return self._rmmstd
+
+        starts = np.array([record.posA for record in self.records])
+        ends = np.array([record.posB for record in self.records])
+
+        def _meanSS(X):
+            mu = np.mean(X)
+            return np.sum((X - mu) ** 2) / len(X)
+
+        SS = _meanSS(starts) + _meanSS(ends)
+        self._rmmstd = np.sqrt(SS)
+
+        return self._rmmstd
