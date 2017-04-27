@@ -51,8 +51,40 @@ def flatten_pos(records, name, fout):
 
 
 class VCFCluster(GenomeSLINK):
-    def __init__(self, svfiles, dist=500, blacklist=None, frac=0.0,
-                 match_strands=False, svtypes=None):
+    def __init__(self, svfiles, samples, sources, header,
+                 dist=500, frac=0.0, match_strands=True,
+                 blacklist=None, svtypes=None):
+        """
+        Clustering of VCF records.
+
+        Records are clustered with a graph-based single linkage algorithm.
+        Records are linked in the graph if their breakpoints are within a
+        specified distance (default 500 bp) and if they share a minimum
+        reciprocal overlap (default 0.1; records of type BND are not subjected
+        to the reciprocal overlap requirement).
+
+        Parameters
+        ----------
+        svfiles : list of SVFile
+        samples : list of str
+        sources : list of str
+        header : pysam.VariantHeader
+            VCF header to use when creating new records
+        dist : int, optional
+            Clustering distance. The starts and ends of two records must both
+            be within this distance in order for the records to be linked.
+        frac : float, optional
+            Minimum reciprocal overlap for two records to be linked.
+        match_strands : bool, optional
+            If true, two records must share strandedness in order to be linked.
+        blacklist : pysam.TabixFile, optional
+            Blacklisted genomic regions. Records in these regions will be
+            removed prior to clustering.
+        svtypes : list of str, optional
+            SV classes to be clustered. Records with an svtype not present in
+            this list will be removed prior to clustering. If no list is
+            specified, all svtypes will be clustered.
+        """
 
         nodes = heapq.merge(*svfiles)
 
