@@ -19,8 +19,8 @@ class SVFile(object):
         Wrapper for standardized VCF files.
         """
         self.filename = filename
-
         self.reader = VariantFile(filename)
+        self.samples = list(self.reader.header.samples)
 
         # Confirm all standard INFO fields are present
         required_info = 'SVTYPE CHR2 END STRANDS SVLEN SOURCE'.split()
@@ -63,18 +63,6 @@ class SVFile(object):
         except ValueError:
             msg = 'No index found for {0}'.format(self.filename)
             raise FileNotFoundError(msg)
-
-    @property
-    def samples(self):
-        """
-        Returns
-        ------
-        samples : list of str
-        """
-        if hasattr(self.reader.header, 'samples'):
-            return list(self.reader.header.samples)
-        else:
-            return []
 
     def __iter__(self):
         return self

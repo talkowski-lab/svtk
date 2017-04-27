@@ -65,7 +65,7 @@ class VCFCluster(GenomeSLINK):
 
         for svfile in svfiles:
             sources.add(svfile.source)
-            samples = samples.union(svfile.reader.header.samples)
+            samples = samples.union(svfile.samples)
 
         # Build VCF header for new record construction
         self.samples = sorted(samples)
