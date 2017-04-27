@@ -26,14 +26,14 @@ class MantaStandardizer(VCFStandardizer):
             # Filter unmarked SECONDARY on same chromosome
             # TODO: Check if necessary to filter diff chromosomes
             if 'MATEID' in record.info:
-                mate_ID = record.info['MATEID']
+                mate_ID = record.info['MATEID'][0]
 
                 # Skip records with an observed mate
                 if mate_ID in mate_IDs:
                     continue
 
-                # Track mates of observed records
-                mate_IDs.append(mate_ID)
+                # Track IDs of observed records
+                mate_IDs.append(record.id)
 
             std_rec = self.std_vcf.new_record()
             yield self.standardize_record(std_rec, record)
