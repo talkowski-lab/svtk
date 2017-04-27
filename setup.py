@@ -17,7 +17,8 @@ setup(
     author='Matthew Stone',
     author_email='mstone5@mgh.harvard.edu',
     packages=['svtools'],
-    package_data={'svtools': ['data/standard_template.vcf']},
+    package_data={'svtools': ['data/standard_template.vcf',
+                              'data/vcfcluster_template.vcf']},
     scripts=[
         'scripts/standardize_vcf',
         'scripts/bedcluster',
