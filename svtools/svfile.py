@@ -226,7 +226,7 @@ class SVRecordCluster:
             alt = make_bnd_alt(base_record.chrB, END, strands)
             new_record.alts = (alt, )
         else:
-            new_record.alts = base_record.alts
+            new_record.alts = base_record.record.alts
 
         # SVLEN for intra-chromosomal is -1
         if base_record.is_tloc:
@@ -248,12 +248,12 @@ class SVRecordCluster:
         # I think that was an issue with one caller, maybe handle in preproc
         null_GTs = [(0, 0), (None, None), (0, ), (None, )]
         for record in self.records:
-            for sample in record.samples:
-                gt = record.samples[sample]['GT']
+            for sample in record.record.samples:
+                gt = record.record.samples[sample]['GT']
                 if gt not in null_GTs:
                     new_record.samples[sample]['GT'] = (0, 1)
 
-                    source = record.info['SOURCE']
+                    source = record.record.info['SOURCE']
                     new_record.samples[sample][source] = 1
 
         return new_record
