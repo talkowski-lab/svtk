@@ -213,8 +213,8 @@ class GenomeSLINK(object):
                 n, p = node, prev
                 if n.chrA != p.chrA and is_smaller_chrom(n.chrA, p.chrA):
                     msg = 'Breakend with reverse CTX ordering found'
-                    print(prev, prev.source, prev.ID)
-                    print(node, node.source, node.ID)
+                    print(prev, prev.source, prev.record.id)
+                    print(node, node.source, node.record.id)
                     raise Exception(msg)
 
                 yield candidates
