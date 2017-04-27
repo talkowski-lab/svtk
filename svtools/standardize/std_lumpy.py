@@ -18,10 +18,27 @@ class LumpyStandardizer(VCFStandardizer):
             # Split inversion events into their constituent breakpoints
             # For each strandedness in record, make a corresponding std record
             strands = record.info['STRANDS']
-            for strand in strands:
+            for i, strand in enumerate(strands):
                 record.info['STRANDS'] = (strand, )
                 std_rec = self.std_vcf.new_record()
-                yield self.standardize_record(std_rec, record)
+                std_rec = self.standardize_record(std_rec, record)
+
+                # Some variants have stranded pairs that don't match their
+                # SV type
+                if std_rec.info['SVTYPE'] == 'DEL':
+                    if std_rec.info['STRANDS'] != '+-':
+                        continue
+                if std_rec.info['SVTYPE'] == 'DUP':
+                    if std_rec.info['STRANDS'] != '-+':
+                        continue
+                if std_rec.info['SVTYPE'] == 'INV':
+                    if std_rec.info['STRANDS'] not in '++ --'.split():
+                        continue
+
+                # Tag split record
+                std_rec.id += 'abcd'[i]
+
+                yield std_rec
 
     def standardize_info(self, std_rec, raw_rec):
         """
