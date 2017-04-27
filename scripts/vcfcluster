@@ -25,14 +25,6 @@ from svtools.svfile import SVFile, SVRecordCluster
 from svtools.genomeslink import GenomeSLINK
 
 
-class FileFormatError(Exception):
-    """Improper file format"""
-
-
-class MissingFileError(Exception):
-    """VCF not found"""
-
-
 def flatten_pos(records, name, fout):
     for record in records:
         chrom = record.CHROM
@@ -189,9 +181,9 @@ def parse_filepaths(filepaths):
     svfiles = deque()
     for path in filepaths:
         if len(path.split()) != 1:
-            raise FileFormatError('File list must be single column')
+            raise ValueError('File list must be single column')
         if not os.path.isfile(path):
-            raise MissingFileError('VCF {0} not found'.format(path))
+            raise FileNotFoundError('VCF {0} not found'.format(path))
 
         svfile = SVFile(path)
         svfiles.append(svfile)

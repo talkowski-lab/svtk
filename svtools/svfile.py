@@ -13,30 +13,6 @@ from .utils import recip, make_bnd_alt
 from .genomeslink import GSNode
 
 
-class UnsupportedFiletypeError(Exception):
-    """Unsupported or unexpected filetype"""
-
-
-class UnboundedFetchError(Exception):
-    """Only start position of tabix fetch region specified, no end"""
-
-
-class TabixNotFoundError(Exception):
-    """No Tabix index found"""
-
-
-class PyVCFParsingError(Exception):
-    """Unexpected datatype from PyVCF"""
-
-
-class MissingInfoError(Exception):
-    """Missing required INFO field"""
-
-
-class MissingSourceError(Exception):
-    """Source not specified in VCF header"""
-
-
 class SVFile(object):
     def __init__(self, filename):
         """
@@ -52,7 +28,7 @@ class SVFile(object):
             if info not in self.reader.header.info.keys():
                 msg = "Required INFO field {0} not found in file {1}"
                 msg = msg.format(info, filename)
-                raise MissingInfoError(msg)
+                raise KeyError(msg)
 
         # Unfortunately no way to index into "source" metadata record
         # via pysam API, must manually check all header records
@@ -62,7 +38,7 @@ class SVFile(object):
                 self.source = hrec.value
         if self.source is None:
             msg = "Source not specified in header of {0}".format(filename)
-            raise MissingSourceError(msg)
+            raise KeyError(msg)
 
     def fetch(self, chrom, start=None, end=None):
         """
@@ -76,21 +52,17 @@ class SVFile(object):
         start : int, optional
         end : int, optional
             Required if start specified
-
-        Raises
-        ------
-        UnboundedFetchError
-        TabixNotFoundError
         """
         if start is not None and end is None:
             msg = 'Start {}:{} specified but no end coordinate provided'
             msg = msg.format(chrom, start)
-            raise UnboundedFetchError(msg)
+            raise ValueError(msg)
 
         try:
             self.reader = self.reader.fetch(chrom, start, end)
         except ValueError:
-            raise TabixNotFoundError(self.filename)
+            msg = 'No index found for {0}'.format(self.filename)
+            raise FileNotFoundError(msg)
 
     @property
     def samples(self):
