@@ -144,7 +144,7 @@ class GSNode(object):
 
 
 class GenomeSLINK(object):
-    def __init__(self, nodes, dist, size=1, excluded_regions=None):
+    def __init__(self, nodes, dist, size=1, blacklist=None):
         """
         Graph-based single-linkage clustering of genomic coordinates.
 
@@ -157,7 +157,7 @@ class GenomeSLINK(object):
         size : int
             Minimum cluster size. Recommended to use 1 for call/variant
             clustering, scale up for read pair clustering.
-        excluded_regions : pysam.TabixFile, optional
+        blacklist : pysam.TabixFile, optional
             Regions to exclude from clustering. Any node with a coordinate
             inside an excluding region is omitted. (NOTE: not overlap-based.)
         """
@@ -165,7 +165,7 @@ class GenomeSLINK(object):
         self.nodes = nodes
         self.dist = dist
         self.size = size
-        self.excluded_regions = excluded_regions
+        self.blacklist = blacklist
 
     # TODO: add parameter for filter fn to apply to each node
     # Add `filter` method to nodes for subclassing?
@@ -190,7 +190,7 @@ class GenomeSLINK(object):
         for node in self.nodes:
             node_count += 1
             # Skip blacklisted nodes
-            if (self.excluded_regions and node.is_in(self.excluded_regions)):
+            if (self.blacklist and node.is_in(self.blacklist)):
                 continue
 
             if prev is None or prev.is_clusterable_with(node, self.dist):

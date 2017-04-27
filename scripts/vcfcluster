@@ -51,7 +51,7 @@ def flatten_pos(records, name, fout):
 
 
 class VCFCluster(GenomeSLINK):
-    def __init__(self, svfiles, dist=500, excluded_regions=None, frac=0.0,
+    def __init__(self, svfiles, dist=500, blacklist=None, frac=0.0,
                  match_strands=False, svtypes=None):
 
         nodes = heapq.merge(*svfiles)
@@ -72,7 +72,7 @@ class VCFCluster(GenomeSLINK):
 
         self.frac = frac
         self.match_strands = match_strands
-        super().__init__(_filter(nodes), dist, 1, excluded_regions)
+        super().__init__(_filter(nodes), dist, 1, blacklist)
 
     def cluster(self):
         """
@@ -217,16 +217,16 @@ def main():
 
     fout.close()
 
-    if args.svtypes is not None:
-        svtypes = args.svtypes.split(',')
-        permitted_types = 'del dup inv tloc'.split()
-        for svtype in svtypes:
-            if svtype not in permitted_types:
-                raise Exception('Unpermitted svtype: {0}'.format(svtype))
-    else:
-        svtypes = None
+    #  if args.svtypes is not None:
+    #      svtypes = args.svtypes.split(',')
+    #      permitted_types = 'del dup inv tloc'.split()
+    #      for svtype in svtypes:
+    #          if svtype not in permitted_types:
+    #              raise Exception('Unpermitted svtype: {0}'.format(svtype))
+    #  else:
+    svtypes = None
 
-    svc = VCFCluster(svfiles, dist=args.dist, excluded_regions=args.blacklist,
+    svc = VCFCluster(svfiles, dist=args.dist, blacklist=args.blacklist,
                      frac=args.frac, match_strands=args.match_strands,
                      svtypes=svtypes)
 
