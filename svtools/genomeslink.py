@@ -167,6 +167,20 @@ class GenomeSLINK(object):
         self.size = size
         self.blacklist = blacklist
 
+    def filter_nodes(self):
+        """
+        Filter provided nodes. By default, remove nodes in blacklisted regions.
+
+        Yields
+        ------
+        node : GSNode
+        """
+        for node in self.nodes:
+            # Skip nodes in blacklisted regions
+            if (self.blacklist and node.is_in(self.blacklist)):
+                continue
+            yield node
+
     # TODO: add parameter for filter fn to apply to each node
     # Add `filter` method to nodes for subclassing?
     def get_candidates(self):
@@ -187,11 +201,8 @@ class GenomeSLINK(object):
         prev = None
 
         node_count = 0
-        for node in self.nodes:
+        for node in self.filter_nodes():
             node_count += 1
-            # Skip blacklisted nodes
-            if (self.blacklist and node.is_in(self.blacklist)):
-                continue
 
             if prev is None or prev.is_clusterable_with(node, self.dist):
                 candidates.append(node)

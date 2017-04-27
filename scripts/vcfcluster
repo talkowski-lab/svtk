@@ -61,18 +61,34 @@ class VCFCluster(GenomeSLINK):
         self.samples = sorted(set(samples))
         self.sources = sorted(set([svfile.source for svfile in svfiles]))
 
-        # Remove SECONDARY records (duplicate calldata)
-        # Whitelist autosomes and X, Y
-        def _filter(nodes):
-            for node in nodes:
-                if svtypes is not None and node.svtype not in svtypes:
-                    continue
-                if ('SECONDARY' not in node.record.info) and node.is_allowed_chrom():
-                    yield node
-
         self.frac = frac
         self.match_strands = match_strands
-        super().__init__(_filter(nodes), dist, 1, blacklist)
+
+        super().__init__(nodes, dist, 1, blacklist)
+
+    def filter_nodes(self):
+        """
+        Filter records before clustering.
+
+        In addition to default removal of records in blacklisted regions,
+        filter records if:
+        1) Record does not belong to one of the specified SV classes.
+        2) Record is marked as SECONDARY
+        3) Record is not on a whitelisted chromosome (default: 1-22,X,Y)
+
+        Yields
+        ------
+        node : svfile.SVRecord
+        """
+
+        for node in super().filter_nodes():
+            if self.svtypes is not None and node.svtype not in self.svtypes:
+                continue
+            if 'SECONDARY' in node.record.info:
+                continue
+            if not node.is_allowed_chrom():
+                continue
+            yield node
 
     def cluster(self):
         """
