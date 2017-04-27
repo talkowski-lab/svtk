@@ -24,8 +24,7 @@ setup(
         'scripts/vcfcluster'],
     install_requires=[
         'numpy',
-        'pysam',
         'scipy',
-        'pyyaml'
+        'pysam',
     ]
 )
