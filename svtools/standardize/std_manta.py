@@ -51,12 +51,12 @@ class MantaStandardizer(VCFStandardizer):
         # Colons in the ID can break parsing
         std_rec.id = '_'.join(std_rec.id.split(':'))
 
-        try:
-            svtype = raw_rec.info['SVTYPE']
-        except:
+        svtype = raw_rec.info['SVTYPE']
+        std_rec.info['SVTYPE'] = svtype
+
+        if svtype == 'DEL':
             import ipdb
             ipdb.set_trace()
-        std_rec.info['SVTYPE'] = svtype
 
         # Define CHR2 and END
         if svtype == 'BND':
@@ -92,7 +92,7 @@ class MantaStandardizer(VCFStandardizer):
         if svtype == 'BND' and std_rec.chrom != std_rec.info['CHR2']:
             std_rec.info['SVLEN'] = -1
         else:
-            std_rec.info['SVLEN'] = std_rec.info['END'] = std_rec.pos
+            std_rec.info['SVLEN'] = std_rec.info['END'] - std_rec.pos
 
         std_rec.info['SOURCE'] = 'manta'
 
