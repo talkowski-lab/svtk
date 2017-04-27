@@ -23,6 +23,15 @@ from svtools.standardize import VCFStandardizer
 from pysam import VariantFile
 
 
+def any_called(record):
+    null_GTs = [(0, 0), (None, None), (0, ), (None, )]
+
+    def _is_called(sample):
+        return record.samples[sample]['GT'] not in null_GTs
+
+    return any([_is_called(sample) for sample in record.samples])
+
+
 def main():
     parser = argparse.ArgumentParser(
         description=__doc__,
@@ -31,6 +40,9 @@ def main():
     parser.add_argument('fout', help='Standardized VCF.')
     parser.add_argument('source', help='Source algorithm. '
                         '[delly,lumpy,manta,wham]')
+    parser.add_argument('--include-reference-sites', action='store_true',
+                        default=False, help='Include records where all '
+                        'samples are called 0/0 or ./.')
     parser.add_argument('--standardizer', help='Path to python file with '
                         'custom standardizer definition. (Not yet supported.)')
     args = parser.parse_args()
@@ -51,10 +63,10 @@ def main():
 
     fout = VariantFile(args.fout, mode='w', header=header)
 
-    #  standardizer = VCFStandardizer.create(args.source, vcf, fout)
     standardizer = VCFStandardizer.create(args.source, vcf, fout)
     for record in standardizer.standardize_vcf():
-        fout.write(record)
+        if any_called(record) or args.include_reference_sites:
+            fout.write(record)
 
     #  for std_rec in standardize_vcf(vcf, fout):
         #  fout.write(std_rec)
