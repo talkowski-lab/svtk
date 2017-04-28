@@ -135,9 +135,30 @@ class SVRecordCluster:
     def __init__(self, records):
         self.records = records
 
-    def merge(self, new_record, sources):
+    def sources(self):
         """
-        Aggregate clustered records.
+        Return list of source algorithms in clustered records.
+
+        By default, searches for both a SOURCE and a SOURCES INFO field
+
+        Returns
+        -------
+        sources : list of str
+        """
+        call_sources = set()
+        for record in self.records:
+            source = record.record.info.get('SOURCE')
+            sources = record.record.info.get('SOURCES')
+            if source:
+                call_sources.add(source)
+            if sources:
+                call_sources = call_sources.union(sources)
+
+        return sorted(call_sources)
+
+    def merge_record_data(self, new_record):
+        """
+        Aggregate metadata (coordinates, alts, and INFO) of clustered records.
 
         * Original record IDs are preserved in a new INFO field
 
@@ -145,8 +166,6 @@ class SVRecordCluster:
         ----------
         new_record : pysam.VariantRecord
             Blank record to fill with aggregated data
-        sources : list of str
-            List of all sources
 
         Returns
         -------
@@ -177,8 +196,7 @@ class SVRecordCluster:
         new_record.info['CIPOS'] = CIPOS
         new_record.info['CIEND'] = CIEND
 
-        call_sources = [r.record.info['SOURCE'] for r in self.records]
-        new_record.info['SOURCES'] = sorted(set(call_sources))
+        new_record.info['SOURCES'] = self.sources()
 
         # Assign alts, updating translocation alt based on merged coordinates
         if new_record.info['SVTYPE'] == 'BND':
@@ -197,10 +215,44 @@ class SVRecordCluster:
         # QUAL, FILTER currently unused
         new_record.filter.add('PASS')
 
+        # Report cluster RMSSTD
+        new_record.info['RMSSTD'] = self.rmsstd
+
+        return new_record
+
+    def merge_record_formats(self, new_record, sourcelist, call_sources=False):
+        """
+        Aggregate sample genotype data across records.
+
+        1) Set GT to 0/1 for samples called in any record, 0/0 otherwise.
+        2) For each provided source, set a corresponding FORMAT field to 1
+           for samples called by the source. If the FORMAT field is available
+           in the record being merged, use per-sample data. If the FORMAT field
+           is not available, use the record's SOURCE or SOURCES to determine
+           support for all samples called in that record.
+
+        Parameters
+        ----------
+        new_record : pysam.VariantRecord
+            Record to populate with FORMAT data
+        sourcelist : list of str
+            List of all sources to add a FORMAT field for
+        call_sources : bool, optional
+            If True, each record is already annotated with FORMAT data
+            indicating the supporting source algorithms for each sample.
+            If False, use each record's SOURCE key to derive a supporting
+            algorithm for all samples called in the record.
+
+        Returns
+        -------
+        new_record : pysam.VariantRecord
+            Populated record
+        """
+
         # Seed with null values
         for sample in new_record.samples:
             new_record.samples[sample]['GT'] = (0, 0)
-            for source in sources:
+            for source in sourcelist:
                 new_record.samples[sample][source] = 0
 
         # Update with called samples
@@ -210,14 +262,32 @@ class SVRecordCluster:
         for record in self.records:
             for sample in record.record.samples:
                 gt = record.record.samples[sample]['GT']
-                if gt not in null_GTs:
-                    new_record.samples[sample]['GT'] = (0, 1)
 
+                # Skip samples without a call
+                if gt in null_GTs:
+                    continue
+
+                # Otherwise call the sample in the new record
+                new_record.samples[sample]['GT'] = (0, 1)
+
+                # If call sources are already provided, add them
+                if call_sources:
+                    for source in sourcelist:
+                        # Get the sample's current source call and the
+                        # record's source call for that sample
+                        call = new_record.samples[sample].get(source)
+                        src_call = record.record.samples[sample].get(source)
+
+                        # If sample was already called by the source, or if
+                        # it was called by the source in the current record,
+                        # call it in the new record
+                        call = call or src_call
+                        new_record.samples[sample][source] = call
+                # Otherwise add the record's SOURCE
+                else:
+                    # TODO: think about checking SOURCES as well?
                     source = record.record.info['SOURCE']
                     new_record.samples[sample][source] = 1
-
-        # Report cluster RMSSTD
-        new_record.info['RMSSTD'] = self.rmsstd
 
         return new_record
 
