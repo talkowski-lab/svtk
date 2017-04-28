@@ -8,18 +8,21 @@ Distributed under terms of the MIT license.
 """
 
 import numpy as np
-from pysam import VariantFile
 from .utils import recip, make_bnd_alt
 from .genomeslink import GSNode
 
 
 class SVFile(object):
-    def __init__(self, filename):
+    def __init__(self, vcf):
         """
         Wrapper for standardized VCF files.
+
+        Parameters
+        ----------
+        vcf : pysam.VariantFile
         """
-        self.filename = filename
-        self.reader = VariantFile(filename)
+        self.reader = vcf
+        self.filename = vcf.filename.decode('utf-8')
         self.samples = list(self.reader.header.samples)
 
         # Confirm all standard INFO fields are present
@@ -27,7 +30,7 @@ class SVFile(object):
         for info in required_info:
             if info not in self.reader.header.info.keys():
                 msg = "Required INFO field {0} not found in file {1}"
-                msg = msg.format(info, filename)
+                msg = msg.format(info, self.filename)
                 raise KeyError(msg)
 
         # Unfortunately no way to index into "source" metadata record
@@ -37,7 +40,8 @@ class SVFile(object):
             if hrec.key == 'source':
                 self.source = hrec.value
         if self.source is None:
-            msg = "Source not specified in header of {0}".format(filename)
+            msg = "Source not specified in header of {0}"
+            msg = msg.format(self.filename)
             raise KeyError(msg)
 
     def fetch(self, chrom, start=None, end=None):

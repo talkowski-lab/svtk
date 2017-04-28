@@ -15,16 +15,17 @@ maximum individual clustering distance across the libraries being analyzed.
 """
 
 import heapq
+import re
 import pkg_resources
 from pysam import VariantFile
-from svtools.svfile import SVRecordCluster
+from svtools.svfile import SVFile, SVRecordCluster
 from svtools.genomeslink import GenomeSLINK
 
 
 class VCFCluster(GenomeSLINK):
-    def __init__(self, svfiles,
+    def __init__(self, vcfs,
                  dist=500, frac=0.0, match_strands=True,
-                 blacklist=None, svtypes=None):
+                 region=None, blacklist=None, svtypes=None):
         """
         Clustering of VCF records.
 
@@ -36,7 +37,7 @@ class VCFCluster(GenomeSLINK):
 
         Parameters
         ----------
-        svfiles : list of SVFile
+        vcfs : list of pysam.VariantFile
             Standardized VCFs to cluster
         header : pysam.VariantHeader
             VCF header to use when creating new records
@@ -55,6 +56,15 @@ class VCFCluster(GenomeSLINK):
             this list will be removed prior to clustering. If no list is
             specified, all svtypes will be clustered.
         """
+
+        # Wrap VCFs as SVFiles
+        svfiles = [SVFile(vcf) for vcf in vcfs]
+
+        # Fetch region of interest
+        if region is not None:
+            chrom, start, end = parse_region(region)
+            for svfile in svfiles:
+                svfile.fetch(chrom, start, end)
 
         # Merge sorted SV files
         nodes = heapq.merge(*svfiles)
@@ -115,7 +125,8 @@ class VCFCluster(GenomeSLINK):
             if len(records) > 0:
                 cluster = SVRecordCluster(records)
                 record = self.header.new_record()
-                record = cluster.merge(record, self.sources)
+                record = cluster.merge_record_data(record)
+                record = cluster.merge_record_formats(record, self.sources)
                 yield record, cluster
 
     def make_vcf_header(self):
@@ -144,3 +155,28 @@ class VCFCluster(GenomeSLINK):
             header.add_line(meta.format(source, source.capitalize()))
 
         return header
+
+
+def parse_region(region):
+    """
+    Parameters
+    ----------
+    region : str
+        (chrom) or (chrom:start-end)
+
+    Returns
+    -------
+    chrom : str
+    start : int or None
+    end : int or None
+    """
+
+    # Assume only contig specified
+    if ':' not in region:
+        return region, None, None
+
+    exp = re.compile(r'(.*):(\d+)-(\d+)')
+    match = exp.match(region)
+    chrom, start, end = match.group(1, 2, 3)
+
+    return chrom, int(start), int(end)
