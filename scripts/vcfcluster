@@ -17,6 +17,7 @@ maximum individual clustering distance across the libraries being analyzed.
 
 import argparse
 import os
+import re
 from collections import deque
 from pysam import VariantFile, TabixFile
 
@@ -38,6 +39,29 @@ def flatten_pos(records, name, fout):
                                   svtype]]
         entry = '\t'.join(entry) + '\n'
         fout.write(entry)
+
+
+def parse_region(region):
+    """
+    Parameters
+    ----------
+    region : str
+        (chrom) or (chrom:start-end)
+
+    Returns
+    -------
+    chrom : str
+    start : int or None
+    end : int or None
+    """
+
+    # Assume only contig specified
+    if ':' not in region:
+        return region, None, None
+
+    exp = re.compile(r'(.*):(\d+)-(\d+)')
+    match = exp.match(region)
+    return match.group(1, 2, 3)
 
 
 def parse_filepaths(filepaths):
@@ -72,23 +96,16 @@ def main():
     parser.add_argument('filelist', type=argparse.FileType('r'),
                         help='List of paths to standardized VCFS')
     parser.add_argument('fout', help='Clustered VCF.')
-    parser.add_argument('-c', '--chrom', default=None,
-                        help='Restrict clustering to single chromosome. '
-                        'Useful for parallelization.')
-    parser.add_argument('--start', default=None, type=int,
-                        help='Restrict clustering to single chromosome. '
-                        'Useful for parallelization.')
-    parser.add_argument('--end', default=None, type=int,
-                        help='Restrict clustering to single chromosome. '
-                        'Useful for parallelization.')
+    parser.add_argument('-r', '--region', default=None,
+                        help='Restrict clustering to genomic region.')
     parser.add_argument('-d', '--dist',
                         type=int, default=500,
                         help='Maximum clustering distance. Suggested to use '
                         'max of median + 7*MAD over samples. [500]')
-    parser.add_argument('-r', '--frac',
-                        type=float, default=0.0,
+    parser.add_argument('-f', '--frac',
+                        type=float, default=0.1,
                         help='Minimum reciprocal overlap between variants. '
-                        '[0.0]')
+                        '[0.1]')
     parser.add_argument('-m', '--match-strands', default=False,
                         action='store_true')
     parser.add_argument('-x', '--blacklist', metavar='BED.GZ',
@@ -102,11 +119,11 @@ def main():
     parser.add_argument('-p', '--prefix',
                         default='MERGED',
                         help='Prefix for merged variant IDs. [MERGED]')
-    parser.add_argument('-t', '--svtypes', default=None,
-                        help='Comma delimited list of svtypes to restrict '
-                        'clustering to (del,dup,inv,tloc)')
-    parser.add_argument('--cluster-bed', type=argparse.FileType('w'),
-                        help='Bed of constituent calls in each cluster')
+    # parser.add_argument('-t', '--svtypes', default=None,
+    #                     help='Comma delimited list of svtypes to restrict '
+    #                     'clustering to (del,dup,inv,tloc)')
+    #  parser.add_argument('--cluster-bed', type=argparse.FileType('w'),
+    #                      help='Bed of constituent calls in each cluster')
     args = parser.parse_args()
 
     # Parse SV files and lists of samples and sources
@@ -114,9 +131,10 @@ def main():
     svfiles = parse_filepaths(filepaths)
 
     # Fetch region of interest
-    if args.chrom is not None:
+    if args.region is not None:
+        chrom, start, end = parse_region(args.region)
         for svfile in svfiles:
-            svfile.fetch(args.chrom, args.start, args.end)
+            svfile.fetch(chrom, start, end)
 
     #  if args.svtypes is not None:
     #      svtypes = args.svtypes.split(',')
