@@ -200,8 +200,6 @@ class SVRecordCluster:
         new_record.info['CIPOS'] = CIPOS
         new_record.info['CIEND'] = CIEND
 
-        new_record.info['SOURCES'] = self.sources()
-
         # Assign alts, updating translocation alt based on merged coordinates
         if new_record.info['SVTYPE'] == 'BND':
             strands = new_record.info['STRANDS']
@@ -224,7 +222,16 @@ class SVRecordCluster:
 
         return new_record
 
-    def merge_record_formats(self, new_record, sourcelist, call_sources=False):
+    def merge_record_sources(self, new_record, single_source=False):
+        if single_source:
+            new_record.info['SOURCE'] = self.records[0].record.info['SOURCE']
+        else:
+            new_record.info['SOURCES'] = self.sources()
+
+        return new_record
+
+    def merge_record_formats(self, new_record, sourcelist, single_source=False,
+                             call_sources=False):
         """
         Aggregate sample genotype data across records.
 
@@ -256,6 +263,11 @@ class SVRecordCluster:
         # Seed with null values
         for sample in new_record.samples:
             new_record.samples[sample]['GT'] = (0, 0)
+
+            # Don't add source FORMATs
+            if single_source:
+                continue
+
             for source in sourcelist:
                 new_record.samples[sample][source] = 0
 
@@ -273,6 +285,10 @@ class SVRecordCluster:
 
                 # Otherwise call the sample in the new record
                 new_record.samples[sample]['GT'] = (0, 1)
+
+                # Don't add source FORMATs
+                if single_source:
+                    continue
 
                 # If call sources are already provided, add them
                 if call_sources:
