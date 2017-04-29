@@ -26,7 +26,7 @@ class SVFile(object):
         self.samples = list(self.reader.header.samples)
 
         # Confirm all standard INFO fields are present
-        required_info = 'SVTYPE CHR2 END STRANDS SVLEN SOURCE'.split()
+        required_info = 'SVTYPE CHR2 END STRANDS SVLEN SOURCES'.split()
         for info in required_info:
             if info not in self.reader.header.info.keys():
                 msg = "Required INFO field {0} not found in file {1}"
@@ -35,11 +35,12 @@ class SVFile(object):
 
         # Unfortunately no way to index into "source" metadata record
         # via pysam API, must manually check all header records
-        self.source = None
+        self.sources = None
         for hrec in self.reader.header.records:
             if hrec.key == 'source':
-                self.source = hrec.value
-        if self.source is None:
+                self.sources = hrec.value.split(',')
+
+        if self.sources is None:
             msg = "Source not specified in header of {0}"
             msg = msg.format(self.filename)
             raise KeyError(msg)
@@ -91,7 +92,7 @@ class SVRecord(GSNode):
         """
 
         self.record = record
-        self.source = record.info['SOURCE']
+        self.sources = record.info['SOURCES']
 
         chrA = record.chrom
         posA = record.pos
@@ -151,10 +152,7 @@ class SVRecordCluster:
         """
         call_sources = set()
         for record in self.records:
-            source = record.record.info.get('SOURCE')
             sources = record.record.info.get('SOURCES')
-            if source:
-                call_sources.add(source)
             if sources:
                 call_sources = call_sources.union(sources)
 
@@ -220,13 +218,8 @@ class SVRecordCluster:
         # Report cluster RMSSTD
         new_record.info['RMSSTD'] = self.rmsstd
 
-        return new_record
-
-    def merge_record_sources(self, new_record, single_source=False):
-        if single_source:
-            new_record.info['SOURCE'] = self.records[0].record.info['SOURCE']
-        else:
-            new_record.info['SOURCES'] = self.sources()
+        # List of aggregate sources
+        new_record.info['SOURCES'] = self.sources()
 
         return new_record
 
@@ -264,10 +257,6 @@ class SVRecordCluster:
         for sample in new_record.samples:
             new_record.samples[sample]['GT'] = (0, 0)
 
-            # Don't add source FORMATs
-            if single_source:
-                continue
-
             for source in sourcelist:
                 new_record.samples[sample][source] = 0
 
@@ -286,10 +275,6 @@ class SVRecordCluster:
                 # Otherwise call the sample in the new record
                 new_record.samples[sample]['GT'] = (0, 1)
 
-                # Don't add source FORMATs
-                if single_source:
-                    continue
-
                 # If call sources are already provided, add them
                 if call_sources:
                     for source in sourcelist:
@@ -305,9 +290,8 @@ class SVRecordCluster:
                         new_record.samples[sample][source] = call
                 # Otherwise add the record's SOURCE
                 else:
-                    # TODO: think about checking SOURCES as well?
-                    source = record.record.info['SOURCE']
-                    new_record.samples[sample][source] = 1
+                    for source in record.record.info['SOURCES']:
+                        new_record.samples[sample][source] = 1
 
         return new_record
 
