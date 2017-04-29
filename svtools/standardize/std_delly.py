@@ -69,6 +69,6 @@ class DellyStandardizer(VCFStandardizer):
         else:
             std_rec.info['SVLEN'] = -1
 
-        std_rec.info['SOURCE'] = 'delly'
+        std_rec.info['SOURCES'] = ['delly']
 
         return std_rec

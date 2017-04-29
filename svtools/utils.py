@@ -8,6 +8,9 @@ Distributed under terms of the MIT license.
 """
 
 
+NULL_GT = [(0, 0), (None, None), (0, ), (None, )]
+
+
 def is_smaller_chrom(chrA, chrB):
     """
     Test if chrA is naturally less than chrB

@@ -84,7 +84,7 @@ class MantaStandardizer(VCFStandardizer):
         else:
             std_rec.info['SVLEN'] = std_rec.info['END'] - std_rec.pos
 
-        std_rec.info['SOURCE'] = 'manta'
+        std_rec.info['SOURCES'] = ['manta']
 
         return std_rec
 

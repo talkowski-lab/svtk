@@ -16,7 +16,7 @@ Distributed under terms of the MIT license.
 """
 
 
-from svtools.utils import make_bnd_alt
+from svtools.utils import make_bnd_alt, NULL_GT
 
 
 class VCFStandardizer:
@@ -119,7 +119,7 @@ class VCFStandardizer:
         std_rec.info['CHR2'] = raw_rec.chrom
         std_rec.info['END'] = raw_rec.pos + 1
         std_rec.info['SVLEN'] = 0
-        std_rec.info['SOURCE'] = 'source'
+        std_rec.info['SOURCES'] = ['source']
 
         return std_rec
 
@@ -127,12 +127,20 @@ class VCFStandardizer:
         """
         Copy desired FORMAT fields to new record.
 
-        By default, only GT is copied.
+        By default, copy GT and tag source FORMAT appropriately.
         """
+
+        source = std_rec.info['SOURCES'][0]
 
         # Add per-sample genotypes (ignoring other FORMAT fields)
         for sample in raw_rec.samples:
-            std_rec.samples[sample]['GT'] = raw_rec.samples[sample]['GT']
+            gt = raw_rec.samples[sample]['GT']
+            std_rec.samples[sample]['GT'] = gt
+
+            if gt not in NULL_GT:
+                std_rec.samples[sample][source] = 1
+            else:
+                std_rec.samples[sample][source] = 0
 
         return std_rec
 

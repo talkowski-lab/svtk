@@ -67,6 +67,6 @@ class LumpyStandardizer(VCFStandardizer):
         # Strip per-strand counts
         std_rec.info['STRANDS'] = raw_rec.info['STRANDS'][0].split(':')[0]
 
-        std_rec.info['SOURCE'] = 'lumpy'
+        std_rec.info['SOURCES'] = ['lumpy']
 
         return std_rec

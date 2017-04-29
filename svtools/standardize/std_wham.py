@@ -43,6 +43,6 @@ class WhamStandardizer(VCFStandardizer):
         # SVLEN is a list and can be negative
         std_rec.info['SVLEN'] = abs(raw_rec.info['SVLEN'][0])
 
-        std_rec.info['SOURCE'] = 'wham'
+        std_rec.info['SOURCES'] = ['wham']
 
         return std_rec

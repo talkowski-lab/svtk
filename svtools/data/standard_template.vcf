@@ -9,7 +9,7 @@
 ##INFO=<ID=END,Number=1,Type=Integer,Description="End position of the structural variant">
 ##INFO=<ID=STRANDS,Number=1,Type=String,Description="Breakpoint strandedness [++,+-,-+,--]">
 ##INFO=<ID=SVLEN,Number=1,Type=Integer,Description="SV length">
-##INFO=<ID=SOURCE,Number=1,Type=String,Description="Source algorithm">
+##INFO=<ID=SOURCES,Number=.,Type=String,Description="Source algorithms">
 ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
 ##FORMAT=<ID=GL,Number=G,Type=Float,Description="Log10-scaled genotype likelihoods for RR,RA,AA genotypes">
 ##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype Quality">
