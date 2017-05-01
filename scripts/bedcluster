@@ -216,10 +216,10 @@ def main():
                         'Recommended to turn off with preserve-links.')
     parser.add_argument('fout', type=argparse.FileType('w'),
                         nargs='?', default=sys.stdout,
-                        help='Clustered SVOF.')
+                        help='Clustered bed.')
     args = parser.parse_args()
 
-    header = ('#chrA start end chrB name svtype sample call_name vaf vac '
+    header = ('#chrom start end name svtype sample call_name vaf vac '
               'pre_rmsstd post_rmsstd')
     header = '\t'.join(header.split()) + '\n'
     args.fout.write(header)
