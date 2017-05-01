@@ -257,7 +257,7 @@ def main():
         cid = args.prefix + ('_%d' % i)
 
         for call in cluster:
-            entry = ('{chrom}\t{start}\t{end}\t{chrom}\t{{cid}}\t{svtype}\t'
+            entry = ('{chrom}\t{start}\t{end}\t{{cid}}\t{svtype}\t'
                      '{sample}\t{ID}').format(**call._asdict())
             entry = (entry + '\t{vaf:.3f}\t{vac}\t{pre_RMSSTD:.3f}\t'
                      '{post_RMSSTD:.3f}\n').format(**locals())
