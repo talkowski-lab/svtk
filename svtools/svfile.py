@@ -63,6 +63,16 @@ class SVFile(object):
             msg = msg.format(chrom, start)
             raise ValueError(msg)
 
+        # First check if VCF is empty
+        try:
+            pos = self.reader.tell()
+            next(self.reader)
+            self.reader.seek(pos)
+        except StopIteration:
+            self.reader = iter(())
+            return
+
+        # Then check if index is present
         try:
             self.reader = self.reader.fetch(chrom, start, end)
         except ValueError:
