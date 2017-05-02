@@ -116,7 +116,7 @@ def main():
 
     svc = VCFCluster(vcfs, dist=args.dist, blacklist=args.blacklist,
                      frac=args.frac, match_strands=args.match_strands,
-                     svtypes=svtypes)
+                     svtypes=svtypes, region=args.region)
 
     # Open new file
     fout = VariantFile(args.fout, mode='w', header=svc.header)
