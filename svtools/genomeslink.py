@@ -1,12 +1,13 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright © 2015 Matthew Stone <mstone5@mgh.harvard.edu>
+# Distributed under terms of the MIT license.
 """
 genomeslink.py
 
 Implementation of single-linkage clustering for genomic coordinates.
 
 Not actually an implementation of the SLINK algorithm.
-
-Copyright © 2015 Matthew Stone <mstone5@mgh.harvard.edu>
-Distributed under terms of the MIT license.
 """
 
 from collections import deque

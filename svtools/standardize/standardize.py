@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright © 2017 Matthew Stone <mstone5@mgh.harvard.edu>
+# Distributed under terms of the MIT license.
 """
 standardize.py
 
@@ -10,9 +14,6 @@ INFO fields, with specified constraints:
   END:     SV end position (or position on CHR2 in translocations)
   STRANDS: Breakpoint strandedness [++,+-,-+,--]
   SVLEN:   SV length (-1 if translocation)
-
-Copyright © 2017 Matthew Stone <mstone5@mgh.harvard.edu>
-Distributed under terms of the MIT license.
 """
 
 

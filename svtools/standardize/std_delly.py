@@ -1,10 +1,11 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright © 2017 Matthew Stone <mstone5@mgh.harvard.edu>
+# Distributed under terms of the MIT license.
 """
 std_delly.py
 
 Standardize a Delly record.
-
-Copyright © 2017 Matthew Stone <mstone5@mgh.harvard.edu>
-Distributed under terms of the MIT license.
 """
 
 from .standardize import VCFStandardizer

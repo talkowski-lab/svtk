@@ -94,9 +94,9 @@ def main():
     parser.add_argument('-p', '--prefix',
                         default='MERGED',
                         help='Prefix for merged variant IDs. [MERGED]')
-    # parser.add_argument('-t', '--svtypes', default=None,
-    #                     help='Comma delimited list of svtypes to restrict '
-    #                     'clustering to (del,dup,inv,tloc)')
+    parser.add_argument('-t', '--svtypes', default='DEL,DUP,INV,BND',
+                        help='Comma delimited list of svtypes to cluster '
+                        '[DEL,DUP,INV,BND]')
     #  parser.add_argument('--cluster-bed', type=argparse.FileType('w'),
     #                      help='Bed of constituent calls in each cluster')
     args = parser.parse_args()
@@ -112,7 +112,7 @@ def main():
     #          if svtype not in permitted_types:
     #              raise Exception('Unpermitted svtype: {0}'.format(svtype))
     #  else:
-    svtypes = None
+    svtypes = args.svtypes.split(',')
 
     svc = VCFCluster(vcfs, dist=args.dist, blacklist=args.blacklist,
                      frac=args.frac, match_strands=args.match_strands,
