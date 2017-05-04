@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright (c) 2016 Ryan Collins <rcollins@chgr.mgh.harvard.edu>
 # Distributed under terms of the MIT license.
@@ -141,7 +141,7 @@ def binCov(bam, chr, binsize, mode='nucleotide', overlap=0.05,
 
 
 # Main function
-def main():
+def main(argv):
     # Add arguments
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('bam', type=str,
@@ -172,7 +172,7 @@ def main():
                         action='store_true', help='Boolean flag to indicate'
                         ' if you are using a bedtools version pre-2.24.0')
     parser.set_defaults(presubbed=False)
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     # Correct filename for py3/py2 string inconsistency
     if args.bam.endswith("'") and args.bam.startswith("b'"):
@@ -216,4 +216,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1:])
