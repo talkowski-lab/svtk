@@ -185,9 +185,10 @@ def collapse_sample_calls(cluster):
     return list(variants)
 
 
-def main():
+def main(argv):
     parser = argparse.ArgumentParser(
         description=__doc__,
+        prog='svtools bedcluster',
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('variant_list',
                         type=argparse.FileType('r'),
@@ -217,7 +218,7 @@ def main():
     parser.add_argument('fout', type=argparse.FileType('w'),
                         nargs='?', default=sys.stdout,
                         help='Clustered bed.')
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     header = ('#chrom start end name svtype sample call_name vaf vac '
               'pre_rmsstd post_rmsstd')
@@ -266,4 +267,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1:])

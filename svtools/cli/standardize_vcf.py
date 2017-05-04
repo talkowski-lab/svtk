@@ -18,6 +18,7 @@ INFO fields, with specified constraints:
 """
 
 import argparse
+import sys
 import pkg_resources
 from svtools.standardize import VCFStandardizer
 from pysam import VariantFile
@@ -32,9 +33,10 @@ def any_called(record):
     return any([_is_called(sample) for sample in record.samples])
 
 
-def main():
+def main(argv):
     parser = argparse.ArgumentParser(
         description=__doc__,
+        prog='svtools standardize',
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('vcf', help='Raw VCF.')
     parser.add_argument('fout', help='Standardized VCF.')
@@ -45,7 +47,7 @@ def main():
                         'samples are called 0/0 or ./.')
     parser.add_argument('--standardizer', help='Path to python file with '
                         'custom standardizer definition. (Not yet supported.)')
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     template = pkg_resources.resource_filename('svtools',
                                                'data/standard_template.vcf')
@@ -79,4 +81,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1:])

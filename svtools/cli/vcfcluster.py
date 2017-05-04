@@ -17,6 +17,7 @@ maximum individual clustering distance across the libraries being analyzed.
 
 import argparse
 import os
+import sys
 from collections import deque
 from pysam import VariantFile, TabixFile
 
@@ -64,9 +65,10 @@ def parse_filepaths(filepaths):
     return vcfs
 
 
-def main():
+def main(argv):
     parser = argparse.ArgumentParser(
         description=__doc__,
+        prog='svtools vcfcluster',
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('filelist', type=argparse.FileType('r'),
                         help='List of paths to standardized VCFS')
@@ -99,7 +101,7 @@ def main():
                         '[DEL,DUP,INV,BND]')
     #  parser.add_argument('--cluster-bed', type=argparse.FileType('w'),
     #                      help='Bed of constituent calls in each cluster')
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     # Parse SV files and lists of samples and sources
     filepaths = [line.strip() for line in args.filelist.readlines()]
@@ -145,4 +147,4 @@ def main():
     fout.close()
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1:])

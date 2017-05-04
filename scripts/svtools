@@ -38,21 +38,12 @@ class SVTools:
         parser.add_argument('subcommand', help=argparse.SUPPRESS)
         args = parser.parse_args(sys.argv[1:2])
 
-        if not hasattr(self, args.subcommand):
+        if not hasattr(cli, args.subcommand):
             print('Unrecognized command: {0}'.format(args.subcommand))
             parser.print_help()
             sys.exit(1)
 
-        getattr(self, args.subcommand)()
-
-    def vcfcluster(self):
-        print('vcfcluster placeholder')
-
-    def bedcluster(self):
-        print('bedcluster placeholder')
-
-    def standardize(self):
-        print('standardize placeholder')
+        getattr(cli, args.subcommand)(sys.argv[2:])
 
 if __name__ == '__main__':
     SVTools()
