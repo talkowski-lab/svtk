@@ -190,15 +190,10 @@ def main(argv):
         description=__doc__,
         prog='svtools bedcluster',
         formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('variant_list',
-                        type=argparse.FileType('r'),
-                        help='List of unique variant IDs in intersected bed')
-    parser.add_argument('bed',
-                        type=argparse.FileType('r'),
-                        nargs='?', default=sys.stdin,
-                        help='Product of a bedtools intersect. Columns: chrA, '
-                        'startA, endA, nameA, sampleA, svtypeA, chrB, startB, '
-                        'endB, nameB, sampleB, svtypeB')
+    parser.add_argument('bed', help='SV calls to cluster. Columns: #chr, '
+                        'start, end, name, sample, svtype')
+    parser.add_argument('-r', '--region', help='Region to cluster '
+                        '(chrom:start-end). Requires tabixed bed.')
     parser.add_argument('-p', '--prefix', default='prefix',
                         help='Cluster ID prefix')
     parser.add_argument('-f', '--max-freq',
@@ -219,6 +214,16 @@ def main(argv):
                         nargs='?', default=sys.stdout,
                         help='Clustered bed.')
     args = parser.parse_args(argv)
+
+    bed = pbt.BedTool(args.bed)
+    if args.region:
+        bed = bed.tabix_intervals(args.region)
+
+    # Drop any columns beyond those required
+    bed = bed.cut(range(6))
+
+    
+
 
     header = ('#chrom start end name svtype sample call_name vaf vac '
               'pre_rmsstd post_rmsstd')
