@@ -234,7 +234,7 @@ class SVRecordCluster:
 
         return new_record
 
-    def merge_record_formats(self, new_record, sourcelist, single_source=False,
+    def merge_record_formats(self, new_record, sourcelist,
                              call_sources=False):
         """
         Aggregate sample genotype data across records.
