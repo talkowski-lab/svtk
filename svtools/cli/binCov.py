@@ -19,6 +19,21 @@ import shutil
 import os
 
 
+def countable_read(read):
+    """
+    Requirements to include a read when computing coverage.
+
+    Require non-duplicate primary read alignments.
+    """
+    ok = (not read.is_duplicate and
+          not read.is_unmapped and
+          not read.is_secondary and
+          not read.is_supplementary and
+          read.reference_start > 0 and
+          read.next_reference_start)  # TODO: check if this should be >0
+    return ok
+
+
 # Function to return read or fragment intervals from pysam.AlignmentFile
 def filter_mappings(bam, mode='nucleotide'):
     """
@@ -45,20 +60,20 @@ def filter_mappings(bam, mode='nucleotide'):
 
     # For nucleotide mode, return non-duplicate primary read mappings
     for read in bam:
-        if (not any([read.is_duplicate, read.is_unmapped,
-                   read.is_secondary, read.is_supplementary])
-            and all([read.reference_start>0, read.next_reference_start])):
-            if mode == 'nucleotide':
-                yield '\t'.join([read.reference_name,
-                                 str(read.reference_start),
-                                 str(read.reference_end)]) + '\n'
-            else:
-                if read.is_read1 and read.is_proper_pair:
-                    fstart, fend = sorted([int(read.reference_start),
-                                           int(read.next_reference_start)])
-                    if fstart < fend:
-                        yield '\t'.join([read.reference_name,
-                                         str(fstart), str(fend)]) + '\n'
+        if not countable_read(read):
+            continue
+
+        if mode == 'nucleotide':
+            yield '\t'.join([read.reference_name,
+                             str(read.reference_start),
+                             str(read.reference_end)]) + '\n'
+        else:
+            if read.is_read1 and read.is_proper_pair:
+                fstart, fend = sorted([int(read.reference_start),
+                                       int(read.next_reference_start)])
+                if fstart < fend:
+                    yield '\t'.join([read.reference_name,
+                                     str(fstart), str(fend)]) + '\n'
 
 
 # Function to evaluate nucleotide or physical coverage
