@@ -196,7 +196,7 @@ def main():
         f_in = open(args.cov_out, 'rb')
         f_out = gzip.open(args.cov_out + '.gz', 'wb')
         shutil.copyfileobj(f_in, f_out)
-    os.remove(args.cov_out)
+        os.remove(args.cov_out)
 
     # Normalize coverage (if optioned) & write out
     if args.norm_out is not None:
@@ -212,7 +212,7 @@ def main():
         f_in = open(args.norm_out, 'rb')
         f_out = gzip.open(args.norm_out + '.gz', 'wb')
         shutil.copyfileobj(f_in, f_out)
-    os.remove(args.norm_out)
+        os.remove(args.norm_out)
 
 
 if __name__ == '__main__':
