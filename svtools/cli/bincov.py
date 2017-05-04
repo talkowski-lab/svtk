@@ -143,7 +143,9 @@ def binCov(bam, chr, binsize, mode='nucleotide', overlap=0.05,
 # Main function
 def main(argv):
     # Add arguments
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        prog='svtools bincov')
     parser.add_argument('bam', type=str,
                         help='Input bam')
     parser.add_argument('chr', help='Contig to evaluate')
