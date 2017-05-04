@@ -8,22 +8,18 @@ Calculates non-duplicate primary-aligned binned coverage
 of a chromosome from an input BAM file
 """
 
-#Import libraries
+# Import libraries
 import argparse
 import sys
 from subprocess import call
 import pysam
 import pybedtools
-import pandas as pd
 import gzip
 import shutil
 import os
 
-#Define exception class for invalid coverage modes
-class InvalidModeError(Exception):
-    """Invalid coverage mode"""
 
-#Function to return read or fragment intervals from pysam.AlignmentFile
+# Function to return read or fragment intervals from pysam.AlignmentFile
 def filter_mappings(bam, mode='nucleotide'):
     """
     Generates bed intervals from a bam for a specific chromosome corresponding
@@ -42,12 +38,12 @@ def filter_mappings(bam, mode='nucleotide'):
         Read or fragment intervals (depending on mode)
     """
 
-    #Sanity check mode
+    # Sanity check mode
     if mode not in 'nucleotide physical'.split():
-        raise InvalidModeError('Invalid mode: ' + mode + 
-                               ' (options: nucleotide, physical)')
+        msg = 'Invalid mode: {0} (options: nucleotide, physical)'
+        raise ValueError(msg.format(mode))
 
-    #For nucleotide mode, return non-duplicate primary read mappings
+    # For nucleotide mode, return non-duplicate primary read mappings
     for read in bam:
         if (not any([read.is_duplicate, read.is_unmapped,
                    read.is_secondary, read.is_supplementary])
@@ -65,11 +61,11 @@ def filter_mappings(bam, mode='nucleotide'):
                                          str(fstart), str(fend)]) + '\n'
 
 
-#Function to evaluate nucleotide or physical coverage
+# Function to evaluate nucleotide or physical coverage
 def binCov(bam, chr, binsize, mode='nucleotide', overlap=0.05,
            blacklist=None, presubbed=False, oldBT=False):
     """
-    Generates non-duplicate, primary-aligned nucleotide or physical coverage 
+    Generates non-duplicate, primary-aligned nucleotide or physical coverage
     in regular bin sizes on a specified chromosome from a coordinate-sorted
     bamfile
 
@@ -97,8 +93,8 @@ def binCov(bam, chr, binsize, mode='nucleotide', overlap=0.05,
     coverage : pybedtools.BedTool
         chr, start, end, coverage
     """
-    
-    #Create coverage bins and convert to BedTool
+
+    # Create coverage bins and convert to BedTool
     maxchrpos = {d['SN']: d['LN'] for d in bam.header['SQ']}[chr]
     bin_starts = range(0, maxchrpos - binsize, binsize)
     bin_stops = range(binsize, maxchrpos, binsize)
@@ -107,31 +103,31 @@ def binCov(bam, chr, binsize, mode='nucleotide', overlap=0.05,
         bins.append([chr, bin_starts[i], bin_stops[i]])
     bins = pybedtools.BedTool(bins)
 
-    #Remove bins that have at least 5% overlap with blacklist by size
+    # Remove bins that have at least 5% overlap with blacklist by size
     if blacklist is not None:
         blist = pybedtools.BedTool(blacklist)
         bins_filtered = bins.intersect(blist, v=True, f=overlap)
     else:
         bins_filtered = bins
 
-    #Filter bam
-    if presubbed == True:
+    # Filter bam
+    if presubbed:
         mappings = filter_mappings(bam, mode)
     else:
         mappings = filter_mappings(bam.fetch(chr), mode)
     bambed = pybedtools.BedTool(mappings)
 
-    #Generate & return coverage
-    if oldBT == True:
+    # Generate & return coverage
+    if oldBT:
         coverage = bambed.coverage(bins_filtered, counts=True)
     else:
         coverage = bins_filtered.coverage(bambed, counts=True, sorted=True)
     return coverage
 
 
-#Main function
+# Main function
 def main():
-    #Add arguments
+    # Add arguments
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('bam', type=str,
                         help='Input bam')
@@ -142,7 +138,7 @@ def main():
     parser.add_argument('-b', '--binsize', type=int, default=1000,
                         help='Bin size in bp (default: 1000)')
     parser.add_argument('-m', '--mode', default='nucleotide',
-                        choices = ['nucleotide', 'physical'],
+                        choices=['nucleotide', 'physical'],
                         help='Evaluate nucleotide or physical coverage '
                              '(default: nucleotide)')
     parser.add_argument('-x', '--blacklist', type=str, default=None,
@@ -155,53 +151,54 @@ def main():
                         ' if input bam is already subsetted to desired chr',
                         default=False)
     parser.add_argument('-v', '--overlap', nargs=1, type=float, default=0.05,
-                           help='Maximum tolerated blacklist overlap before '
-                                 'excluding bin')
+                        help='Maximum tolerated blacklist overlap before '
+                        'excluding bin')
     parser.add_argument('--oldBT', dest='oldBT', default=False,
                         action='store_true', help='Boolean flag to indicate'
                         ' if you are using a bedtools version pre-2.24.0')
     parser.set_defaults(presubbed=False)
     args = parser.parse_args()
 
-    #Correct filename for py3/py2 string inconsistency
+    # Correct filename for py3/py2 string inconsistency
     if args.bam.endswith("'") and args.bam.startswith("b'"):
         filename = args.bam[2:-1]
     else:
         filename = args.bam
 
-    #Stores bam input as pysam.AlignmentFile
+    # Stores bam input as pysam.AlignmentFile
     bamfile = pysam.AlignmentFile(filename, 'rb')
 
-    #Get coverage & write out
+    # Get coverage & write out
     coverage = binCov(bamfile, args.chr, args.binsize,
-                      args.mode, args.overlap, args.blacklist, 
+                      args.mode, args.overlap, args.blacklist,
                       args.presubbed, args.oldBT)
     coverage.saveas(args.cov_out)
     call('sort -Vk1,1 -k2,2n -o ' + args.cov_out + ' ' + args.cov_out,
          shell=True)
-    #Gzip if optioned
-    if args.gzip is True:
-        with open(args.cov_out, 'rb') as f_in, gzip.open(args.cov_out + '.gz', 
-            'wb') as f_out:
-            shutil.copyfileobj(f_in, f_out)
+
+    # Gzip if optioned
+    if args.gzip:
+        f_in = open(args.cov_out, 'rb')
+        f_out = gzip.open(args.cov_out + '.gz', 'wb')
+        shutil.copyfileobj(f_in, f_out)
     os.remove(args.cov_out)
 
-    #Normalize coverage (if optioned) & write out
+    # Normalize coverage (if optioned) & write out
     if args.norm_out is not None:
-        ncoverage = coverage.to_dataframe(names = 'chr start end cov'.split())
+        ncoverage = coverage.to_dataframe(names='chr start end cov'.split())
         medcov = ncoverage.loc[ncoverage['cov'] > 0, 'cov'].median()
         ncoverage['cov'] = ncoverage['cov'] / medcov
         ncoverage.to_csv(args.norm_out, sep='\t', index=False, header=False)
-        call(' '.join(['sort -Vk1,1 -k2,2n -o', args.norm_out, 
-                        args.norm_out]), shell=True)
-    #Gzip if optioned
+        call(' '.join(['sort -Vk1,1 -k2,2n -o', args.norm_out,
+                       args.norm_out]), shell=True)
+
+    # Gzip if optioned
     if args.gzip is True:
-        with open(args.norm_out, 'rb') as f_in, gzip.open(args.norm_out 
-            + '.gz', 'wb') as f_out:
-            shutil.copyfileobj(f_in, f_out)
+        f_in = open(args.norm_out, 'rb')
+        f_out = gzip.open(args.norm_out + '.gz', 'wb')
+        shutil.copyfileobj(f_in, f_out)
     os.remove(args.norm_out)
 
 
-#Main block
 if __name__ == '__main__':
     main()
