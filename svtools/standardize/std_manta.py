@@ -10,6 +10,7 @@ Standardize a Manta record.
 
 
 from collections import deque
+from svtools.utils import is_smaller_chrom
 from .standardize import VCFStandardizer, parse_bnd_pos, parse_bnd_strands
 
 
@@ -58,9 +59,16 @@ class MantaStandardizer(VCFStandardizer):
         # Define CHR2 and END
         if svtype == 'BND':
             chr2, end = parse_bnd_pos(raw_rec.alts[0])
+            chrom, pos = raw_rec.chrom, raw_rec.pos
+            if not is_smaller_chrom(chrom, chr2):
+                pos, end = end, pos
+                chrom, chr2 = chr2, chrom
+                std_rec.pos = pos
+                std_rec.chrom = chrom
         else:
             chr2 = raw_rec.chrom
             end = raw_rec.info['END']
+
         std_rec.info['CHR2'] = chr2
         std_rec.info['END'] = end
 
@@ -78,6 +86,9 @@ class MantaStandardizer(VCFStandardizer):
             strands = '-+'
         elif svtype == 'INS':
             strands = '.'
+
+        if not is_smaller_chrom(std_rec.chrom, std_rec.info['CHR2']):
+            strands = strands[::-1]
         std_rec.info['STRANDS'] = strands
 
         if svtype == 'BND' and std_rec.chrom != std_rec.info['CHR2']:
