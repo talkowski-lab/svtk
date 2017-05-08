@@ -5,12 +5,15 @@
 # Distributed under terms of the MIT license.
 
 """
-Cluster a bed produced by a bedtools intersection of a bed with itself.
+Cluster a bed of structural variants based on reciprocal overlap.
 
-A self-intersected bed has two sets of columns in each row, corresponding to
-two entries in the original bed that shared sufficient overlap. The clustering
-is performed by linking each such pair and then returning all clusters of
-linked calls.
+Variants are clustered with the single-linkage algorithm, using a minimum
+reciprocal overlap to determine whether two variants are linked. If multiple
+variants from the same sample are clustered together, they are merged into a
+single spanning variant. Cluster compactness, calculated as the
+root-mean-square standard deviation, is reported for each cluster. Optionally,
+the median coordinates for each cluster are reported rather than the original
+individual coordinates.
 """
 
 import argparse
