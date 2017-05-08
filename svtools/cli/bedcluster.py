@@ -148,20 +148,10 @@ def main(argv):
                         '(chrom:start-end). Requires tabixed bed.')
     parser.add_argument('-p', '--prefix', default='prefix',
                         help='Cluster ID prefix')
-    parser.add_argument('--max-freq',
-                        type=float, default=1.0,
-                        help='Max population frequency to allow [1.0]')
-    parser.add_argument('-l', '--preserve-links',
-                        action='store_true', default=False,
-                        help='Link two consecutive bed entries that share ID. '
-                        'Used if clustering the intersection of two clustered '
-                        'beds. Requires all entries from same cluster be '
-                        'adjacent.')
     parser.add_argument('-m', '--merge-coordinates',
                         action='store_true', default=False,
                         help='Report median of start and end positions in '
-                        'each cluster as final coordinates of cluster. '
-                        'Recommended to turn off with preserve-links.')
+                        'each cluster as final coordinates of cluster.')
     parser.add_argument('fout', type=argparse.FileType('w'),
                         nargs='?', default=sys.stdout,
                         help='Clustered bed.')
@@ -208,10 +198,6 @@ def main(argv):
         # Get variant frequency info
         vac = len(set([call.fields[4] for call in cluster]))
         vaf = vac / num_samples
-
-        # Filter clusters exceeding max population freq
-        if vaf > args.max_freq:
-            continue
 
         # Assign cluster ID
         cid = args.prefix + ('_%d' % i)
