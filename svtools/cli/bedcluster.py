@@ -15,23 +15,19 @@ linked calls.
 
 import argparse
 import sys
-from collections import namedtuple, deque
+from collections import namedtuple, deque, defaultdict
 import numpy as np
 from scipy import sparse
 from scipy.sparse import csgraph
-from collections import defaultdict
+import pybedtools as pbt
 
 
-class FieldNumberError(Exception):
-    """Number of fields detected don't match number specified"""
+BedCall = namedtuple('BedCall', 'chrom start end name sample svtype'.split())
 
 
-BedCall = namedtuple('BedCall', 'chrom start end ID sample svtype'.split())
-
-
-def rmsstd(calls):
-    starts = np.array([call.start for call in calls])
-    ends = np.array([call.end for call in calls])
+def rmsstd(intervals):
+    starts = np.array([interval.start for interval in intervals])
+    ends = np.array([interval.end for interval in intervals])
 
     def _meanSS(X):
         mu = np.mean(X)
@@ -41,105 +37,57 @@ def rmsstd(calls):
     return np.sqrt(SS)
 
 
-def bedcluster(bed, variant_list, preserve_links=False):
+def bedcluster(bed, frac=0.8):
     """
-    Cluster a self-intersected bed.
+    Single linkage clustering of a bed file based on reciprocal overlap.
 
     Parameters
     ----------
-    bed : file
-        Product of a bedtools intersect.
-        Columns: chrA, startA, endA, nameA, sampleA, svtypeA, chrB, startB,
-        endB, nameB, sampleB, svtypeB
-    variant_list : file
-        Unique variant IDs in bed. Necessary for sparse graph
+    bed : pybedtools.BedTool
+        Columns: chr, start, end, name, sample, svtype.
+    frac : float
+        Minimum reciprocal overlap for two variants to be linked together.
 
     Returns
     -------
-    clusters : list of BedCall
-        (chrom, start, end, ID, sample, svtype)
-    samples : list of str
-        List of unique samples found (used in population frequency check)
+    clusters : list of deque of pybedtools.Interval
     """
 
-    def _is_null(bedcall):
-        return bedcall.chrom == '.'
+    # Get list of unique variant IDs and initialize sparse graph
+    variant_IDs = [interval.fields[3] for interval in bed.intervals]
+    G = sparse.eye(len(variant_IDs), dtype=np.uint16, format='lil')
 
+    # Map variant IDs to graph indices
     variant_indexes = {}
-    variant_IDs = [l.strip() for l in variant_list.readlines()]
     for i, variant in enumerate(variant_IDs):
         variant_indexes[variant.strip()] = i
-    num_variants = len(variant_indexes)
 
-    #  G = nx.Graph()
-    G = sparse.eye(num_variants, dtype=np.uint16, format='lil')
+    # Self-intersect the bed
+    intersection = bed.intersect(bed, wa=True, wb=True, loj=True,
+                                 r=True, f=frac)
 
-    samples = set()
-    prev_c1 = None
-
-    variants = {}
-
-    for line in bed:
-        # Skip header
-        if line.startswith('#'):
-            continue
-
-        data = line.strip().split()
-
-        try:
-            c1 = data[:6]
-            c2 = data[6:]
-
-            # Cast start/end to ints
-            c1[1], c1[2] = int(c1[1]), int(c1[2])
-            c2[1], c2[2] = int(c2[1]), int(c2[2])
-
-            c1 = BedCall(*c1)
-            c2 = BedCall(*c2)
-
-            if c1.ID not in variants:
-                idx = variant_indexes[c1.ID]
-                variants[idx] = c1
-            if c2.ID not in variants:
-                idx = variant_indexes[c2.ID]
-                variants[idx] = c2
-
-        except:
-            c = len(data) / 2
-            b = '%s: ' % bed.name
-            msg = b + '%d fields per region specified, %d found' % (6, c)
-            raise FieldNumberError(msg)
-
-        samples.add(c1.sample)
+    # Cluster intervals based on reciprocal overlap
+    for interval in intersection.intervals:
+        # Make fields accessible by name
+        c1 = BedCall(*interval.fields[:6])
+        c2 = BedCall(*interval.fields[6:])
 
         # Link the two calls from the current line
-        if not _is_null(c2) and c1.svtype == c2.svtype:
-            idx1 = variant_indexes[c1.ID]
-            idx2 = variant_indexes[c2.ID]
-            G[idx1, idx2] = 1
-            samples.add(c2.sample)
-
-        if preserve_links and prev_c1 is not None and c1.ID == prev_c1.ID:
-            idx1 = variant_indexes[c1.ID]
-            idx2 = variant_indexes[prev_c1.ID]
+        if c2.chrom != '.' and c1.svtype == c2.svtype:
+            idx1 = variant_indexes[c1.name]
+            idx2 = variant_indexes[c2.name]
             G[idx1, idx2] = 1
 
-        prev_c1 = c1
+    # Cluster graph
+    n_comp, cluster_labels = csgraph.connected_components(G, connection='weak')
 
-    #  clusters = list(nx.connected_components(G))
-    n_comp, labels = csgraph.connected_components(G, connection='weak')
+    # Build deques of clustered Intervals
+    clusters = [deque() for i in range(n_comp)]
+    for idx, interval in enumerate(bed.intervals):
+        label = cluster_labels[idx]
+        clusters[label].append(interval)
 
-    clusters = defaultdict(list)
-    for idx, label in enumerate(labels):
-        clusters[label].append(variants[idx])
-
-    clusters = list(clusters.values())
-
-    clusters = [sorted(cluster, key=lambda c: (c.chrom, int(c.start)))
-                for cluster in clusters]
-    clusters = sorted(clusters, key=lambda c: (c[0].chrom, int(c[0].start)))
-
-    return clusters, samples
+    return clusters
 
 
 def collapse_sample_calls(cluster):
@@ -148,39 +96,40 @@ def collapse_sample_calls(cluster):
 
     Parameters
     ----------
-    cluster : list of BedCall
+    cluster : list of pybedtools.Interval
 
     Returns
     -------
-    cluster : list of BedCall
+    cluster : list of pybedtools.Interval
     """
 
-    calldict = defaultdict(list)
+    interval_dict = defaultdict(list)
     variants = deque()
 
     # Get all calls in each sample
-    for call in cluster:
-        calldict[call.sample].append(call)
+    for interval in cluster:
+        sample = interval.fields[4]
+        interval_dict[sample].append(interval)
 
     # If a sample has only one call, keep it, otherwise merge
-    for sample, calls in calldict.items():
-        if len(calls) == 1:
-            variants.append(calls[0])
+    for sample, intervals in interval_dict.items():
+        if len(intervals) == 1:
+            variants.append(intervals[0])
             continue
 
         # Track IDs of merged variants
-        ID = ','.join([call.ID for call in calls])
+        name = ','.join([interval.name for interval in intervals])
 
         # To merge variants in a sample, take broadest range
-        start = np.min([call.start for call in calls])
-        end = np.max([call.end for call in calls])
+        start = np.min([interval.start for interval in intervals])
+        end = np.max([interval.end for interval in intervals])
 
-        chrom = calls[0].chrom
-        sample = calls[0].sample
-        svtype = calls[0].svtype
+        interval = intervals[0]
+        interval.start = start
+        interval.end = end
+        interval.name = name
 
-        merged = BedCall(chrom, start, end, ID, sample, svtype)
-        variants.append(merged)
+        variants.append(interval)
 
     return list(variants)
 
@@ -192,11 +141,14 @@ def main(argv):
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('bed', help='SV calls to cluster. Columns: #chr, '
                         'start, end, name, sample, svtype')
+    parser.add_argument('-f', '--frac', type=float, default=0.8,
+                        help='Minimum reciprocal overlap fraction to link '
+                        'variants. [0.8]')
     parser.add_argument('-r', '--region', help='Region to cluster '
                         '(chrom:start-end). Requires tabixed bed.')
     parser.add_argument('-p', '--prefix', default='prefix',
                         help='Cluster ID prefix')
-    parser.add_argument('-f', '--max-freq',
+    parser.add_argument('--max-freq',
                         type=float, default=1.0,
                         help='Max population frequency to allow [1.0]')
     parser.add_argument('-l', '--preserve-links',
@@ -222,16 +174,15 @@ def main(argv):
     # Drop any columns beyond those required
     bed = bed.cut(range(6))
 
-    
-
-
     header = ('#chrom start end name svtype sample call_name vaf vac '
               'pre_rmsstd post_rmsstd')
     header = '\t'.join(header.split()) + '\n'
     args.fout.write(header)
 
-    clusters, samples = bedcluster(args.bed, args.variant_list,
-                                   args.preserve_links)
+    clusters = bedcluster(bed, args.frac)
+
+    # Get samples for VAF calculation
+    samples = sorted(set([interval.fields[4] for interval in bed.intervals]))
     num_samples = float(len(samples))
 
     for i, cluster in enumerate(clusters):
@@ -249,10 +200,13 @@ def main(argv):
             # Report median region of overlap
             start = str(int(np.median([int(call.start) for call in cluster])))
             end = str(int(np.median([int(call.end) for call in cluster])))
-            cluster = [BedCall(c.chrom, start, end, *c[3:]) for c in cluster]
+
+            for interval in cluster:
+                interval.start = start
+                interval.end = end
 
         # Get variant frequency info
-        vac = len(set([call.sample for call in cluster]))
+        vac = len(set([call.fields[4] for call in cluster]))
         vaf = vac / num_samples
 
         # Filter clusters exceeding max population freq
@@ -262,9 +216,10 @@ def main(argv):
         # Assign cluster ID
         cid = args.prefix + ('_%d' % i)
 
-        for call in cluster:
-            entry = ('{chrom}\t{start}\t{end}\t{{cid}}\t{svtype}\t'
-                     '{sample}\t{ID}').format(**call._asdict())
+        for interval in cluster:
+            entry = '{0}\t{1}\t{2}\t{{cid}}\t{5}\t{4}\t{3}'
+            entry = entry.format(*interval.fields)
+
             entry = (entry + '\t{vaf:.3f}\t{vac}\t{pre_RMSSTD:.3f}\t'
                      '{post_RMSSTD:.3f}\n').format(**locals())
 
