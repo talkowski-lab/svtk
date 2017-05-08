@@ -188,8 +188,8 @@ def main(argv):
         # Merge coordinates AFTER getting min/max per sample
         if args.merge_coordinates:
             # Report median region of overlap
-            start = str(int(np.median([int(call.start) for call in cluster])))
-            end = str(int(np.median([int(call.end) for call in cluster])))
+            start = int(np.median([int(call.start) for call in cluster]))
+            end = int(np.median([int(call.end) for call in cluster]))
 
             for interval in cluster:
                 interval.start = start
