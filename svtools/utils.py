@@ -8,6 +8,8 @@ utils.py
 Helper functions for svtools.
 """
 
+from collections import deque
+
 
 NULL_GT = [(0, 0), (None, None), (0, ), (None, )]
 
@@ -77,3 +79,27 @@ def make_bnd_alt(chrom, pos, strands):
         fmt = '[{0}[N'
 
     return fmt.format(p)
+
+
+def get_called_samples(record, include_null=False):
+    """
+    Return list of samples with variant call
+
+    Parameters
+    ----------
+    record : pysam.VariantRecord
+    include_null : bool
+        Include samples without an explicit reference (0/0) call (i.e. ./.)
+
+    Returns
+    -------
+    samples : list of str
+        Sorted list of sample IDs with a variant call
+    """
+
+    samples = deque()
+    for sample in record.samples.keys():
+        if record.samples[sample]['GT'] not in NULL_GT:
+            samples.append(sample)
+
+    return sorted(samples)
