@@ -158,6 +158,11 @@ def main(argv):
     parser.add_argument('fout', type=argparse.FileType('w'),
                         nargs='?', default=sys.stdout,
                         help='Clustered bed.')
+
+    # Print help if no arguments specified
+    if len(argv) == 0:
+        parser.print_help()
+        sys.exit(1)
     args = parser.parse_args(argv)
 
     bed = pbt.BedTool(args.bed)

@@ -78,6 +78,11 @@ def main(argv):
                         help="Don't include header in output")
     parser.add_argument('fout', type=argparse.FileType('w'), nargs='?',
                         default=sys.stdout, help='Output file [stdout]')
+
+    # Print help if no arguments specified
+    if len(argv) == 0:
+        parser.print_help()
+        sys.exit(1)
     args = parser.parse_args(argv)
 
     vcf = VariantFile(args.vcf)

@@ -174,6 +174,11 @@ def main(argv):
                         action='store_true', help='Boolean flag to indicate'
                         ' if you are using a bedtools version pre-2.24.0')
     parser.set_defaults(presubbed=False)
+
+    # Print help if no arguments specified
+    if len(argv) == 0:
+        parser.print_help()
+        sys.exit(1)
     args = parser.parse_args(argv)
 
     # Correct filename for py3/py2 string inconsistency

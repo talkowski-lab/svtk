@@ -47,6 +47,11 @@ def main(argv):
                         'samples are called 0/0 or ./.')
     parser.add_argument('--standardizer', help='Path to python file with '
                         'custom standardizer definition. (Not yet supported.)')
+
+    # Print help if no arguments specified
+    if len(argv) == 0:
+        parser.print_help()
+        sys.exit(1)
     args = parser.parse_args(argv)
 
     template = pkg_resources.resource_filename('svtools',

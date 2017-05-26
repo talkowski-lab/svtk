@@ -101,6 +101,11 @@ def main(argv):
                         '[DEL,DUP,INV,BND]')
     #  parser.add_argument('--cluster-bed', type=argparse.FileType('w'),
     #                      help='Bed of constituent calls in each cluster')
+
+    # Print help if no arguments specified
+    if len(argv) == 0:
+        parser.print_help()
+        sys.exit(1)
     args = parser.parse_args(argv)
 
     # Parse SV files and lists of samples and sources
