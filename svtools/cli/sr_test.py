@@ -9,28 +9,85 @@
 """
 
 import argparse
+import sys
 import io
 from collections import deque
 import numpy as np
 import scipy.stats as ss
 import pandas as pd
 import pysam
+import svtools.utils as svu
 
 
-class Variant:
-    def __init__(self, chrom, start, end, name, samples, svtype):
-        self.chrom = chrom
-        self.start = int(start)
-        self.end = int(end)
+class _Breakpoint:
+    def __init__(self, chrA, posA, chrB, posB, name, samples, strands):
+        """
+        Attributes
+        ----------
+        chrA : str
+        posA : int
+        chrB : str
+        posB : str
+        name : str
+        samples : list of str
+        strands : str
+            +-,-+,++,--
+        background : list of str
+        split_counts : pd.DataFrame
+        """
+        self.chrA = chrA
+        self.posA = posA
+        self.chrB = chrB
+        self.posB = posB
         self.name = name
-        self.samples = samples.split(',')
-        self.svtype = svtype.upper()
+        self.samples = samples
+        self.strands = strands
 
-        if self.svtype not in 'DEL DUP'.split():
-            msg = 'Invalid SV type: {0} [expected DEL,DUP]'.format(self.svtype)
+        # Constructed later
+        self.background = []
+        self.split_counts = None
+
+    @classmethod
+    def from_vcf(cls, record):
+        """
+        Parameters
+        ----------
+        record : pysam.VariantRecord
+        """
+
+        chrA = record.chrom
+        posA = record.pos
+        chrB = record.info['CHR2']
+        posB = record.info['END']
+
+        name = record.id
+        strands = record.info['STRANDS']
+
+        samples = svu.get_called_samples(record)
+
+        return cls(chrA, posA, chrB, posB, name, samples, strands)
+
+    @classmethod
+    def from_bed(cls, chrom, start, end, name, samples, svtype):
+        chrA = chrom
+        posA = int(start)
+        chrB = chrom
+        posB = int(end)
+
+        name = name
+        samples = samples.split(',')
+
+        if svtype.upper() not in 'DEL DUP'.split():
+            msg = 'Invalid SV type: {0} [expected del,dup,DEL,DUP]'
+            msg = msg.format(svtype)
             raise Exception(msg)
 
-        self.background = []
+        if svtype.upper() == 'DEL':
+            strands = '+-'
+        else:
+            strands = '-+'
+
+        return cls(chrA, posA, chrB, posB, name, samples, strands)
 
     def choose_background(self, samples, n_background):
         """
@@ -60,16 +117,18 @@ class Variant:
         window : int
         """
 
+        reg = '{0}:{1}-{2}'
+
         # Check if regions overlap so duplicate lines aren't fetched
-        if self.end - self.start <= 2 * window:
-            regions = ['{0}:{1}-{2}'.format(self.chrom, self.start - window,
-                                            self.end + window)]
+        if (self.chrA == self.chrB) and (self.posB - self.posA <= 2 * window):
+            regions = [
+                reg.format(self.chrA, self.posA - window, self.posB + window)
+            ]
         else:
-            regions = []
-            for pos in (self.start, self.end):
-                region = '{0}:{1}-{2}'.format(self.chrom, pos - window,
-                                              pos + window)
-                regions.append(region)
+            regions = [
+                reg.format(self.chrA, self.posA - window, self.posA + window),
+                reg.format(self.chrB, self.posB - window, self.posB + window),
+            ]
 
         counts = deque()
         for region in regions:
@@ -99,15 +158,10 @@ class Variant:
         counts = counts.loc[counts['sample'].isin(samples)].copy()
 
         # Determine whether clipped read supports start or end
-        COORD_MAP = {
-            'DEL': dict(right='start', left='end'),
-            'DUP': dict(right='end', left='start')
-        }
-        counts['coord'] = counts['clip'].replace(COORD_MAP[self.svtype])
+        self.add_coords(counts)
 
         # Filter to within window
         # (excludes spurious left/right clips at other coord)
-        self.add_dists(counts)
         counts = counts.loc[counts['dist'].abs() <= window].copy()
 
         self.split_counts = counts
@@ -121,6 +175,31 @@ class Variant:
             self.split_counts.loc[is_called, 'call_status'] = 'called'
         if (~is_called).any():
             self.split_counts.loc[~is_called, 'call_status'] = 'background'
+
+    def add_coords(self, df):
+        df['posA'] = (df.pos - self.posA).abs()
+        df['posB'] = (df.pos - self.posB).abs()
+
+        strandA, strandB = self.strands
+
+        # Map clip direction to strandedness
+        clip_map = {'right': '+', 'left': '-'}
+        df['strand'] = df['clip'].replace(clip_map)
+
+        # If strands match, pick closest pos
+        if strandA == strandB:
+            cols = 'posA posB'.split()
+            df['coord'] = df[cols].idxmin(axis=1)
+        # Else match clip to position strand
+        else:
+            coord_map = {strandA: 'posA', strandB: 'posB'}
+            df['coord'] = df['strand'].replace(coord_map)
+
+        # Choose dist to identified coord
+        df['dist'] = df.lookup(df.index, df.coord)
+
+        if strandA == strandB:
+            df.loc[df.strand != strandA, 'dist'] = np.inf
 
     def add_dists(self, df):
         # Get distance of clip position from variant start/end
@@ -139,7 +218,7 @@ class Variant:
 
         sub_dfs = []
         cols = 'sample pos count'.split()
-        for coord in 'start end'.split():
+        for coord in 'posA posB'.split():
             df = counts.loc[counts.coord == coord, cols]
 
             # Consider only positions found in a called sample
@@ -149,11 +228,7 @@ class Variant:
             idx = pd.MultiIndex.from_product(iterables=[samples, pos])
 
             df = df.set_index('sample pos'.split())
-            try:
-                df = df.reindex(idx).fillna(0).astype(int).reset_index()
-            except:
-                import ipdb
-                ipdb.set_trace()
+            df = df.reindex(idx).fillna(0).astype(int).reset_index()
             df = df.rename(columns=dict(level_0='sample', level_1='pos'))
 
             df['coord'] = coord
@@ -186,7 +261,7 @@ class Variant:
         pvals = pvals.loc[pvals.log_pval == pvals.max_pval].copy()
         pvals = pvals.drop('max_pval', axis=1)
 
-        for coord in 'start end'.split():
+        for coord in 'posA posB'.split():
             if coord not in pvals.coord.values:
                 pvals = pd.concat([pvals, self.null_series(coord)])
 
@@ -217,8 +292,8 @@ class Variant:
         cols = ('coord pos called_mean called_std bg_mean bg_std called_n '
                 'bg_n log_pval name').split()
         self.best_pvals = pd.DataFrame([
-            ['end', 0, 0, 0, 0, 0, 0, 0, 0, self.name],
-            ['start', 0, 0, 0, 0, 0, 0, 0, 0, self.name]],
+            ['posA', 0, 0, 0, 0, 0, 0, 0, 0, self.name],
+            ['posB', 0, 0, 0, 0, 0, 0, 0, 0, self.name]],
             columns=cols)
 
     def null_series(self, coord):
@@ -251,16 +326,25 @@ class Variant:
                           called_n, bg_n, -np.log10(p)])
 
 
-def BedParser(bedfile):
-    for line in bedfile:
-        yield CNV(*line.strip().split()[:6])
+def _BreakpointParser(variantfile, bed=False):
+    """
+    variantfile : pysam.Tabixfile or file
+    bed : bool, optional
+        variants is a bed
+    """
+
+    for record in variantfile:
+        if bed:
+            yield _Breakpoint.from_bed(*record.strip().split()[:6])
+        else:
+            yield _Breakpoint.from_vcf(record)
 
 
 class SRTest():
-    def __init__(self, variants, countfile, bed=False, samples=None,
+    def __init__(self, variantfile, countfile, bed=False, samples=None,
                  window=100, n_background=160):
         """
-        variants : str
+        variantfile : file
             filepath of variants file
         countfile : pysam.TabixFile
             per-coordinate, per-sample split counts
@@ -281,12 +365,11 @@ class SRTest():
             if samples is None:
                 msg = 'samples is required when providing calls in BED format.'
                 raise ValueError(msg)
-
         else:
-            vcf = pysam.VariantFile(args.variants)
-            samples = list(vcf.header.samples)
+            variantfile = pysam.VariantFile(variantfile)
+            samples = list(variantfile.header.samples)
 
-        self.variants = BedParser(bed)
+        self.breakpoints = _BreakpointParser(variantfile, bed)
 
         self.countfile = countfile
         self.samples = sorted(samples)
@@ -296,10 +379,10 @@ class SRTest():
         self.pvals = None
 
     def run(self):
-        for cnv in self.cnvs:
-            cnv.sr_test(self.samples, self.countfile, self.n_background,
-                        self.window)
-            pvals = cnv.best_pvals
+        for breakpoint in self.breakpoints:
+            breakpoint.sr_test(self.samples, self.countfile, self.n_background,
+                               self.window)
+            pvals = breakpoint.best_pvals
             cols = ('name coord pos log_pval called_mean called_std bg_mean '
                     'bg_std called_n bg_n').split()
             pvals = pvals[cols].fillna(0)
@@ -310,7 +393,7 @@ class SRTest():
             yield pvals
 
 
-def main():
+def main(argv):
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -318,7 +401,7 @@ def main():
                         help='VCF of variant calls. Standardized to include '
                         'CHR2, END, SVTYPE, STRANDS in INFO.')
 
-    parser.add_argument('-b', '--bed', action='store_true', default=False,
+    parser.add_argument('--bed', action='store_true', default=False,
                         help='Variants file is in bed format. First six cols: '
                         'chrom,start,end,name,samples,svtype')
     parser.add_argument('--samples', type=argparse.FileType('r'), default=None,
@@ -339,21 +422,28 @@ def main():
     parser.add_argument('-b', '--background', type=int, default=160,
                         help='Number of background samples to choose for '
                         'comparison in t-test [160]')
-    args = parser.parse_args()
+
+    # Print help if no arguments specified
+    if len(argv) == 0:
+        parser.print_help()
+        sys.exit(1)
+    args = parser.parse_args(argv)
 
     if args.samples is None:
-        samples = [s.strip() for s in args.samples.readlines()]
-
         if args.bed:
             msg = '--samples is required when providing calls in BED format.'
             raise argparse.ArgumentError(msg)
-
     else:
-        samples = args.samples
+        samples = [s.strip() for s in args.samples.readlines()]
+
+    if args.variants in ['-', 'stdin']:
+        variantfile = sys.stdin
+    else:
+        variantfile = open(args.variants)
 
     countfile = pysam.TabixFile(args.counts)
 
-    srtest = SRTest(args.variants, countfile, args.bed, samples,
+    srtest = SRTest(variantfile, countfile, args.bed, samples,
                     args.window, args.background)
 
     header = ('name coord pos log_pval called_mean called_std bg_mean '
@@ -365,4 +455,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1:])
