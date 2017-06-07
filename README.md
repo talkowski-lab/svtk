@@ -2,6 +2,16 @@
 
 Utilities for manipulating structural variation calls.
 
+## Installation
+
+```
+$ git clone https://github.com/talkowski-lab/svtools.git
+$ cd svtools
+$ pip install -e .
+```
+
+## Available commands
+
 ```
 SVTools: Utilities for manipulating structural variation
 
