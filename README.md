@@ -3,7 +3,6 @@
 Utilities for manipulating structural variation calls.
 
 ```
-$ svtools -h
 SVTools: Utilities for manipulating structural variation
 
 usage: svtools [-h] <subcommand> [options]
@@ -20,9 +19,13 @@ usage: svtools [-h] <subcommand> [options]
 
 [ Read-depth analysis ]
     bincov         Calculate normalized genome-wide depth of coverage.
+    rdtest*        Calculate comparative coverage statistics at CNV sites.
 
-[ Not yet implemented ]
-    rdtest         Calculate comparative coverage statistics at CNV sites.
+[ Split-read analysis ]
+    sr-count*      Pile up clipped read counts genome-wide
+    sr-test        Calculate enrichment of clipped reads at SV breakpoints
+
+* Not yet implemented
 
 optional arguments:
   -h, --help  show this help message and exit
