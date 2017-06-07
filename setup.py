@@ -24,5 +24,6 @@ setup(
         'numpy',
         'scipy',
         'pysam',
+        'pybedtools',
     ]
 )
