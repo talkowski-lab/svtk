@@ -5,7 +5,7 @@
 # Distributed under terms of the MIT license.
 
 """
-
+Calculate enrichment of clipped reads at SV breakpoints.
 """
 
 import argparse
