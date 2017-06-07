@@ -17,7 +17,7 @@ import pandas as pd
 import pysam
 
 
-class CNV:
+class Variant:
     def __init__(self, chrom, start, end, name, samples, svtype):
         self.chrom = chrom
         self.start = int(start)
@@ -257,23 +257,40 @@ def BedParser(bedfile):
 
 
 class SRTest():
-    def __init__(self, bed, samples, countfile, window=100, n_background=160):
+    def __init__(self, variants, countfile, bed=False, samples=None,
+                 window=100, n_background=160):
         """
-        bed : file
-            chrom start end name samples svtype
-        samples : list of str
-            List of all samples in cohort
+        variants : str
+            filepath of variants file
         countfile : pysam.TabixFile
+            per-coordinate, per-sample split counts
             chrom pos clip count sample
-        window : int
-            Window around CNV start/end to consider for split read enrichment
-        n_background : int
+        bed : bool, optional
+            Variants file is a BED, not a VCF.
+            BED columns: chrom start end name samples svtype
+        samples : list of str, optional
+            List of all samples to consider. By default, all samples in VCF
+            header are considered. Required when specifying `bed=True`.
+        window : int, optional
+            Window around breakpoint to consider for split read enrichment
+        n_background : int, optional
             Number of background samples to choose for comparison in t-test
         """
 
-        self.cnvs = BedParser(bed)
+        if bed:
+            if samples is None:
+                msg = 'samples is required when providing calls in BED format.'
+                raise ValueError(msg)
+
+        else:
+            vcf = pysam.VariantFile(args.variants)
+            samples = list(vcf.header.samples)
+
+        self.variants = BedParser(bed)
+
         self.countfile = countfile
         self.samples = sorted(samples)
+
         self.window = window
         self.n_background = n_background
         self.pvals = None
@@ -297,29 +314,47 @@ def main():
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('bed', type=argparse.FileType('r'),
-                        help='Bed of CNV calls. First six columns: '
+    parser.add_argument('variants',
+                        help='VCF of variant calls. Standardized to include '
+                        'CHR2, END, SVTYPE, STRANDS in INFO.')
+
+    parser.add_argument('-b', '--bed', action='store_true', default=False,
+                        help='Variants file is in bed format. First six cols: '
                         'chrom,start,end,name,samples,svtype')
-    parser.add_argument('samples', help='File listing all sample IDs.')
+    parser.add_argument('--samples', type=argparse.FileType('r'), default=None,
+                        help='File listing all sample IDs. Parsed from VCF '
+                        'header by default, required for --bed.')
+
+    # TODO: permit direct querying around bams
     parser.add_argument('counts', help='Tabix indexed file of split counts. '
                         'Columns: chrom,pos,clip,count,sample')
+
     parser.add_argument('fout', type=argparse.FileType('w'),
                         help='Output table of most significant start/end'
                         'positions')
+
     parser.add_argument('-w', '--window', type=int, default=100,
-                        help='Window around CNV start/end to consider for '
+                        help='Window around variant start/end to consider for '
                         'split read support.')
     parser.add_argument('-b', '--background', type=int, default=160,
                         help='Number of background samples to choose for '
                         'comparison in t-test [160]')
     args = parser.parse_args()
 
-    with open(args.samples) as slist:
-        samples = [s.strip() for s in slist.readlines()]
+    if args.samples is None:
+        samples = [s.strip() for s in args.samples.readlines()]
+
+        if args.bed:
+            msg = '--samples is required when providing calls in BED format.'
+            raise argparse.ArgumentError(msg)
+
+    else:
+        samples = args.samples
 
     countfile = pysam.TabixFile(args.counts)
 
-    srtest = SRTest(args.bed, samples, countfile, args.window, args.background)
+    srtest = SRTest(args.variants, countfile, args.bed, samples,
+                    args.window, args.background)
 
     header = ('name coord pos log_pval called_mean called_std bg_mean '
               'bg_std called_n bg_n').split()

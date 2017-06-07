@@ -103,3 +103,12 @@ def get_called_samples(record, include_null=False):
             samples.append(sample)
 
     return sorted(samples)
+
+
+class Pedigree:
+    def __init__(self, famfile):
+        for line in famfile:
+            data = line.strip().split()
+
+            fam, ID, father, mother, sex, pheno = data
+
