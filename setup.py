@@ -23,7 +23,7 @@ setup(
     install_requires=[
         'numpy',
         'scipy',
-        'pysam',
+        'pysam==0.11',
         'pybedtools',
         'cython',
     ]
