@@ -83,8 +83,6 @@ def main(argv):
                         type=float, default=0.1,
                         help='Minimum reciprocal overlap between variants. '
                         '[0.1]')
-    parser.add_argument('-m', '--match-strands', default=False,
-                        action='store_true')
     parser.add_argument('-x', '--blacklist', metavar='BED.GZ',
                         type=TabixFile, default=None,
                         help='Tabix indexed bed of blacklisted regions. Any '
@@ -122,8 +120,7 @@ def main(argv):
     svtypes = args.svtypes.split(',')
 
     svc = VCFCluster(vcfs, dist=args.dist, blacklist=args.blacklist,
-                     frac=args.frac, match_strands=args.match_strands,
-                     svtypes=svtypes, region=args.region)
+                     frac=args.frac, svtypes=svtypes, region=args.region)
 
     # Open new file
     fout = VariantFile(args.fout, mode='w', header=svc.header)
