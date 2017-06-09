@@ -117,7 +117,8 @@ class SVRecord(GSNode):
         svtype_match = self.svtype == other.svtype
 
         if match_strands:
-            strand_match = self.info['STRANDS'] == other.info['STRANDS']
+            strand_match = (self.record.info['STRANDS'] ==
+                            other.record.info['STRANDS'])
         else:
             strand_match = True
 
