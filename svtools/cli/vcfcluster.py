@@ -123,7 +123,11 @@ def main(argv):
                      frac=args.frac, svtypes=svtypes, region=args.region)
 
     # Open new file
-    fout = VariantFile(args.fout, mode='w', header=svc.header)
+    if args.fout in '- stdout'.split():
+        fout = sys.stdout
+    else:
+        fout = open(args.fout, 'w')
+    fout = VariantFile(fout, mode='w', header=svc.header)
 
     for i, (record, cluster) in enumerate(svc.cluster()):
         # Name record
