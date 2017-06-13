@@ -153,26 +153,24 @@ def main(argv):
     parser.add_argument('-n', '--norm_out', type=str,
                         help='Output bed file of normalized coverage')
     parser.add_argument('-b', '--binsize', type=int, default=1000,
-                        help='Bin size in bp (default: 1000)')
+                        help='Bin size (bp) [1000]')
     parser.add_argument('-m', '--mode', default='nucleotide',
                         choices=['nucleotide', 'physical'],
                         help='Evaluate nucleotide or physical coverage '
-                             '(default: nucleotide)')
+                             '[nucleotide]')
     parser.add_argument('-x', '--blacklist', type=str, default=None,
                         help='BED file of regions to ignore')
-    parser.add_argument('-z', dest='gzip', default=False,
-                        action='store_true', help='Boolean flag to gzip output'
-                        ' bed files')
+    parser.add_argument('-z', '--gzip', default=False, action='store_true',
+                        help='Compress output bed files')
     parser.add_argument('-p', '--presubsetted', dest='presubbed',
-                        action='store_true', help='Boolean flag to indicate'
-                        ' if input bam is already subsetted to desired chr',
-                        default=False)
-    parser.add_argument('-v', '--overlap', nargs=1, type=float, default=0.05,
-                        help='Maximum tolerated blacklist overlap before '
-                        'excluding bin')
+                        action='store_true', default=False,
+                        help='Input bam is already subsetted to desired chr')
+    parser.add_argument('-v', '--overlap', type=float, default=0.05,
+                        help='Maximum fraction of each bin permitted to '
+                        'overlap with blacklist regions. [0.05]')
     parser.add_argument('--oldBT', dest='oldBT', default=False,
-                        action='store_true', help='Boolean flag to indicate'
-                        ' if you are using a bedtools version pre-2.24.0')
+                        action='store_true',
+                        help='Using a bedtools version pre-2.24.0')
     parser.set_defaults(presubbed=False)
 
     # Print help if no arguments specified
