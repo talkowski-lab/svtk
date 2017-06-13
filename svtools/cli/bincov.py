@@ -156,10 +156,10 @@ def main(argv):
                         help='Bin size (bp) [1000]')
     parser.add_argument('-m', '--mode', default='nucleotide',
                         choices=['nucleotide', 'physical'],
-                        help='Evaluate nucleotide or physical coverage '
+                        help='Type of coverage to calculate '
                              '[nucleotide]')
     parser.add_argument('-x', '--blacklist', type=str, default=None,
-                        help='BED file of regions to ignore')
+                        help='BED file of regions to exclude')
     parser.add_argument('-z', '--gzip', default=False, action='store_true',
                         help='Compress output bed files')
     parser.add_argument('-p', '--presubsetted', dest='presubbed',
