@@ -218,8 +218,12 @@ class _Breakpoint:
 
         sub_dfs = []
         cols = 'sample pos count'.split()
+
         for coord in 'posA posB'.split():
-            df = counts.loc[counts.coord == coord, cols]
+            # Filter tlocs
+            chrom = getattr(self, 'chr' + coord[-1])
+            df = counts.loc[(counts.coord == coord) &
+                            (counts.chrom == chrom), cols]
 
             # Consider only positions found in a called sample
             pos = df.loc[df['sample'].isin(self.samples), 'pos']
@@ -289,17 +293,14 @@ class _Breakpoint:
             self.choose_best_coords()
 
     def null_score(self):
-        cols = ('coord pos called_mean called_std bg_mean bg_std called_n '
-                'bg_n log_pval name').split()
-        self.best_pvals = pd.DataFrame([
-            ['posA', 0, 0, 0, 0, 0, 0, 0, 0, self.name],
-            ['posB', 0, 0, 0, 0, 0, 0, 0, 0, self.name]],
-            columns=cols)
+        self.best_pvals = pd.concat(
+            [self.null_series('posA'), self.null_series('posB')])
 
     def null_series(self, coord):
         cols = ('coord pos called_mean called_std bg_mean bg_std called_n '
                 'bg_n log_pval name').split()
-        return pd.DataFrame([[coord, 0, 0, 0, 0, 0, 0, 0, 0, self.name]],
+        return pd.DataFrame([[coord, 0, 0, 0, 0, 0, len(self.samples),
+                              len(self.background), 0, self.name]],
                             columns=cols)
 
     @staticmethod
@@ -333,7 +334,16 @@ def _BreakpointParser(variantfile, bed=False):
         variants is a bed
     """
 
+    def _strand_check(record):
+        return ('STRANDS' in record.info.keys() and
+                record.info['STRANDS'] in '++ +- -+ --'.split())
+
     for record in variantfile:
+        # Skip non-stranded variants (e.g. WHAM inversions)
+        # TODO: log skipped records
+        if not _strand_check(record):
+            continue
+
         if bed:
             yield _Breakpoint.from_bed(*record.strip().split()[:6])
         else:
@@ -414,14 +424,14 @@ def main(argv):
 
     parser.add_argument('fout', type=argparse.FileType('w'),
                         help='Output table of most significant start/end'
-                        'positions')
+                        'positions.')
 
     parser.add_argument('-w', '--window', type=int, default=100,
                         help='Window around variant start/end to consider for '
-                        'split read support.')
+                        'split read support. [100]')
     parser.add_argument('-b', '--background', type=int, default=160,
                         help='Number of background samples to choose for '
-                        'comparison in t-test [160]')
+                        'comparison in t-test. [160]')
 
     # Print help if no arguments specified
     if len(argv) == 0:
@@ -430,6 +440,7 @@ def main(argv):
     args = parser.parse_args(argv)
 
     if args.samples is None:
+        samples = None
         if args.bed:
             msg = '--samples is required when providing calls in BED format.'
             raise argparse.ArgumentError(msg)
