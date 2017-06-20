@@ -242,41 +242,25 @@ class _Breakpoint:
 
     def test_counts(self):
         pvals = self.split_counts.groupby('coord pos'.split())\
-                                 .apply(self.calc_ttest)
+                                 .apply(self.calc_test)
+
         cols = {
-            0: 'called_mean',
-            1: 'called_std',
-            2: 'bg_mean',
-            3: 'bg_std',
-            4: 'called_n',
-            5: 'bg_n',
-            6: 'log_pval'
+            0: 'called_median',
+            1: 'bg_median',
+            2: 'log_pval'
         }
 
         self.pvals = pvals.rename(columns=cols).reset_index()
 
     @staticmethod
-    def calc_ttest(df):
-        def _summary_stats(series):
-            return series.mean(), series.std(), series.shape[0]
+    def calc_test(df):
+        statuses = 'called background'.split()
+        medians = df.groupby('call_status')['count'].median()
+        medians = medians.reindex(statuses).fillna(0).astype(int)
 
-        called = df.loc[df.call_status == 'called', 'count']
-        called_mu, called_sigma, called_n = _summary_stats(called)
+        pval = ss.poisson.cdf(medians.background, medians.called)
 
-        background = df.loc[df.call_status == 'background', 'count']
-        bg_mu, bg_sigma, bg_n = _summary_stats(background)
-
-        if bg_n == 0:
-            p = 1
-        else:
-            t, _p = ss.ttest_ind_from_stats(called_mu, called_sigma, called_n,
-                                            bg_mu, bg_sigma, bg_n)
-
-            # One-sided test
-            p = _p / 2 if t > 0 else 1
-
-        return pd.Series([called_mu, called_sigma, bg_mu, bg_sigma,
-                          called_n, bg_n, -np.log10(p)])
+        return pd.Series([medians.called, medians.background, -np.log10(pval)])
 
     def choose_best_coords(self):
         # Pick coordinates with most significant enrichment
@@ -329,11 +313,8 @@ class _Breakpoint:
             [self.null_series('posA'), self.null_series('posB')])
 
     def null_series(self, coord):
-        cols = ('coord pos called_median bg_median called_n '
-                'bg_n log_pval name').split()
-        return pd.DataFrame([[coord, 0, 0, 0, 0, 0, len(self.samples),
-                              len(self.background), 0, self.name]],
-                            columns=cols)
+        cols = 'name coord pos called_median bg_median log_pval'.split()
+        return pd.DataFrame([[self.name, coord, 0, 0, 0, 0]], columns=cols)
 
 
 def _BreakpointParser(variantfile, bed=False):
@@ -402,12 +383,9 @@ class SRTest():
             breakpoint.sr_test(self.samples, self.countfile, self.n_background,
                                self.window)
             pvals = breakpoint.best_pvals
-            cols = ('name coord pos log_pval called_mean called_std bg_mean '
-                    'bg_std called_n bg_n').split()
+            cols = 'name coord pos log_pval called_median bg_median'.split()
             pvals = pvals[cols].fillna(0)
-
-            for col in 'pos called_n bg_n'.split():
-                pvals[col] = pvals[col].astype(int)
+            pvals['pos'] = pvals['pos'].astype(int)
 
             yield pvals
 
@@ -466,8 +444,7 @@ def main(argv):
     srtest = SRTest(variantfile, countfile, args.bed, samples,
                     args.window, args.background)
 
-    header = ('name coord pos log_pval called_mean called_std bg_mean '
-              'bg_std called_n bg_n').split()
+    header = 'name coord pos log_pval called_median bg_median'.split()
     args.fout.write('\t'.join(header) + '\n')
 
     for pvals in srtest.run():
