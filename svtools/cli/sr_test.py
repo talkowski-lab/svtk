@@ -240,7 +240,7 @@ class _Breakpoint:
 
         self.split_counts = pd.concat(sub_dfs)
 
-    def ttest_counts(self):
+    def test_counts(self):
         pvals = self.split_counts.groupby('coord pos'.split())\
                                  .apply(self.calc_ttest)
         cols = {
@@ -254,6 +254,29 @@ class _Breakpoint:
         }
 
         self.pvals = pvals.rename(columns=cols).reset_index()
+
+    @staticmethod
+    def calc_ttest(df):
+        def _summary_stats(series):
+            return series.mean(), series.std(), series.shape[0]
+
+        called = df.loc[df.call_status == 'called', 'count']
+        called_mu, called_sigma, called_n = _summary_stats(called)
+
+        background = df.loc[df.call_status == 'background', 'count']
+        bg_mu, bg_sigma, bg_n = _summary_stats(background)
+
+        if bg_n == 0:
+            p = 1
+        else:
+            t, _p = ss.ttest_ind_from_stats(called_mu, called_sigma, called_n,
+                                            bg_mu, bg_sigma, bg_n)
+
+            # One-sided test
+            p = _p / 2 if t > 0 else 1
+
+        return pd.Series([called_mu, called_sigma, bg_mu, bg_sigma,
+                          called_n, bg_n, -np.log10(p)])
 
     def choose_best_coords(self):
         # Pick coordinates with most significant enrichment
@@ -282,53 +305,35 @@ class _Breakpoint:
         self.best_pvals = pvals
 
     def sr_test(self, samples, countfile, n_background, window):
+        # Choose background samples
         self.choose_background(samples, n_background)
-        self.load_counts(countfile, window)
 
+        # Load counts and return null score if no splits found
+        self.load_counts(countfile, window)
         if self.split_counts.shape[0] == 0:
             self.null_score()
             return
 
+        # Filter counts and return null score if no splits left
         self.process_counts(window)
         if self.split_counts.shape[0] == 0:
             self.null_score()
-        else:
-            self.ttest_counts()
-            self.choose_best_coords()
+            return
+
+        # Test sites for significant enrichment of splits and return best
+        self.test_counts()
+        self.choose_best_coords()
 
     def null_score(self):
         self.best_pvals = pd.concat(
             [self.null_series('posA'), self.null_series('posB')])
 
     def null_series(self, coord):
-        cols = ('coord pos called_mean called_std bg_mean bg_std called_n '
+        cols = ('coord pos called_median bg_median called_n '
                 'bg_n log_pval name').split()
         return pd.DataFrame([[coord, 0, 0, 0, 0, 0, len(self.samples),
                               len(self.background), 0, self.name]],
                             columns=cols)
-
-    @staticmethod
-    def calc_ttest(df):
-        def _summary_stats(series):
-            return series.mean(), series.std(), series.shape[0]
-
-        called = df.loc[df.call_status == 'called', 'count']
-        called_mu, called_sigma, called_n = _summary_stats(called)
-
-        background = df.loc[df.call_status == 'background', 'count']
-        bg_mu, bg_sigma, bg_n = _summary_stats(background)
-
-        if bg_n == 0:
-            p = 1
-        else:
-            t, _p = ss.ttest_ind_from_stats(called_mu, called_sigma, called_n,
-                                            bg_mu, bg_sigma, bg_n)
-
-            # One-sided test
-            p = _p / 2 if t > 0 else 1
-
-        return pd.Series([called_mu, called_sigma, bg_mu, bg_sigma,
-                          called_n, bg_n, -np.log10(p)])
 
 
 def _BreakpointParser(variantfile, bed=False):
