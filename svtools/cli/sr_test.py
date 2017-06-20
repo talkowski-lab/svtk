@@ -284,8 +284,12 @@ class _Breakpoint:
     def sr_test(self, samples, countfile, n_background, window):
         self.choose_background(samples, n_background)
         self.load_counts(countfile, window)
-        self.process_counts(window)
 
+        if self.split_counts.shape[0] == 0:
+            self.null_score()
+            return
+
+        self.process_counts(window)
         if self.split_counts.shape[0] == 0:
             self.null_score()
         else:
