@@ -131,10 +131,15 @@ class SVRecord(GSNode):
         if self.svtype != other.svtype:
             return False
 
+        # Require INS subclass to match
+        if self.svtype == 'INS':
+            if self.record.alts[0] != other.record.alts[0]:
+                return False
+
         # If strands are required to match and don't, skip remaining calcs
-        strands = self.record.info['STRANDS'], other.record.info['STRANDS']
-        if match_strands and (strands[0] != strands[1]):
-            return False
+        if match_strands:
+            if self.record.info['STRANDS'] != other.record.info['STRANDS']:
+                return False
 
         return(super().clusters_with(other, dist) and
                self.overlaps(other, frac))
