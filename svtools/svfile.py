@@ -114,21 +114,55 @@ class SVRecord(GSNode):
         super().__init__(chrA, posA, chrB, posB, name)
 
     def clusters_with(self, other, dist, frac=0.0, match_strands=False):
-        svtype_match = self.svtype == other.svtype
+        """
+        Check if two SV cluster with each other.
 
-        if match_strands:
-            strand_match = (self.record.info['STRANDS'] ==
-                            other.record.info['STRANDS'])
-        else:
-            strand_match = True
+        Default behavior is to check whether coordinates are within a specified
+        window. Here the following additional criteria are required:
+        1) SV types match
+        2) SV regions share a minimum reciprocal overlap
+           * Not applicable to translocations
+           * Insertion "regions" are calculated as the insertion site plus the
+             predicted length of the insertion.
+        3) Strands of each breakpoint match (optional)
+        """
 
-        if self.is_tloc or other.is_tloc:
-            overlap = True
-        else:
-            overlap = recip(self.posA, self.posB, other.posA, other.posB, frac)
+        # If svtypes don't match, skip remaining calculations for efficiency
+        if self.svtype != other.svtype:
+            return False
+
+        # If strands are required to match and don't, skip remaining calcs
+        strands = self.record.info['STRANDS'], other.record.info['STRANDS']
+        if match_strands and (strands[0] != strands[1]):
+            return False
 
         return(super().clusters_with(other, dist) and
-               svtype_match and overlap and strand_match)
+               self.overlaps(other, frac))
+
+    def overlaps(self, other, frac=0.0):
+        """
+        Check if two records meet minimum reciprocal overlap.
+
+        1) DEL, DUP, INV - reciprocal overlap calculated between SV intervals
+        2) INS - intervals are calculated as insertion site plus SVLEN
+        3) BND - always true
+        """
+
+        if self.is_tloc:
+            return True
+        if self.svtype == 'INS':
+            # If either record's insertion length is unknown, consider
+            # overlap met
+            svlens = self.record.info['SVLEN'], other.record.info['SVLEN']
+            if svlens[0] == -1 or svlens[1] == -1:
+                return True
+            # Otherwise, model insertion region as (coord + ins length)
+            else:
+                posBs = (self.posA + svlens[0], other.posA + svlens[1])
+        else:
+            posBs = (self.posB, other.posB)
+
+        return recip(self.posA, posBs[0], other.posA, posBs[1], frac)
 
     @property
     def svtype(self):
