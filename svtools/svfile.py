@@ -260,6 +260,11 @@ class SVRecordCluster:
         # SVLEN for intra-chromosomal is -1
         if base_record.is_tloc:
             new_record.info['SVLEN'] = -1
+        # SVLEN for insertions is median of observed insertions
+        elif base_record.record.info['SVTYPE'] == 'INS':
+            svlens = [r.record.info['SVLEN'] for r in self.records]
+            svlens = [svlen for svlen in svlens if svlen > -1]
+            new_record.info['SVLEN'] = int(np.around(np.median(svlens)))
         else:
             new_record.info['SVLEN'] = END - POS
 
