@@ -264,7 +264,11 @@ class SVRecordCluster:
         elif base_record.record.info['SVTYPE'] == 'INS':
             svlens = [r.record.info['SVLEN'] for r in self.records]
             svlens = [svlen for svlen in svlens if svlen > -1]
-            new_record.info['SVLEN'] = int(np.around(np.median(svlens)))
+            if len(svlens) == 0:
+                svlen = -1
+            else:
+                svlen = int(np.around(np.median(svlens)))
+            new_record.info['SVLEN'] = svlen
         else:
             new_record.info['SVLEN'] = END - POS
 
