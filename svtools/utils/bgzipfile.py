@@ -25,6 +25,10 @@ class BgzipFile:
             self.file = open(self.filename, 'wb')
 
         if self.bgzip:
+            if not self.filename.endswith('gz'):
+                msg = 'Bgzipped filename "{0}" does not end with .gz'
+                raise Exception(msg.format(self.filename))
+
             self.pipe = subprocess.Popen(['bgzip', '-c'],
                                          stdin=subprocess.PIPE,
                                          stdout=self.file)
