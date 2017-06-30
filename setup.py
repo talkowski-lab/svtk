@@ -9,6 +9,8 @@
 """
 
 from setuptools import setup
+from Cython.Build import cythonize
+import pysam
 
 setup(
     name='svtools',
@@ -20,10 +22,12 @@ setup(
     package_data={'svtools': ['data/standard_template.vcf',
                               'data/vcfcluster_template.vcf']},
     scripts=['scripts/svtools'],
+    ext_modules=cythonize('svtools/utils/helpers.pyx'),
+    include_dirs=pysam.get_include(),
     install_requires=[
         'numpy',
         'scipy',
-        'pysam==0.11',
+        'pysam',
         'pybedtools',
         'cython',
     ]
