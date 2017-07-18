@@ -18,6 +18,7 @@ individual coordinates.
 
 import argparse
 import sys
+import os
 from collections import namedtuple, deque, defaultdict
 import numpy as np
 from scipy import sparse
@@ -40,7 +41,7 @@ def rmsstd(intervals):
     return np.sqrt(SS)
 
 
-def bedcluster(bed, frac=0.8):
+def bedcluster(bed, frac=0.8, intersection=None):
     """
     Single linkage clustering of a bed file based on reciprocal overlap.
 
@@ -50,6 +51,10 @@ def bedcluster(bed, frac=0.8):
         Columns: chr, start, end, name, sample, svtype.
     frac : float
         Minimum reciprocal overlap for two variants to be linked together.
+    intersection : pybedtools.BedTool, optional
+        Pre-intersected bed. Sometimes necessary for large bed files.
+        Columns: (chrA, startA, endA, nameA, sampleA, svtypeA,
+                  chrB, startB, endB, nameB, sampleB, svtypeB)
 
     Returns
     -------
@@ -66,8 +71,9 @@ def bedcluster(bed, frac=0.8):
         variant_indexes[variant.strip()] = i
 
     # Self-intersect the bed
-    intersection = bed.intersect(bed, wa=True, wb=True, loj=True,
-                                 r=True, f=frac)
+    if intersection is None:
+        intersection = bed.intersect(bed, wa=True, wb=True, loj=True,
+                                     r=True, f=frac)
 
     # Cluster intervals based on reciprocal overlap
     for interval in intersection.intervals:
@@ -144,6 +150,9 @@ def main(argv):
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('bed', help='SV calls to cluster. Columns: #chr, '
                         'start, end, name, sample, svtype')
+    parser.add_argument('fout', type=argparse.FileType('w'),
+                        nargs='?', default=sys.stdout,
+                        help='Clustered bed.')
     parser.add_argument('-f', '--frac', type=float, default=0.8,
                         help='Minimum reciprocal overlap fraction to link '
                         'variants. [0.8]')
@@ -155,9 +164,10 @@ def main(argv):
                         action='store_true', default=False,
                         help='Report median of start and end positions in '
                         'each cluster as final coordinates of cluster.')
-    parser.add_argument('fout', type=argparse.FileType('w'),
-                        nargs='?', default=sys.stdout,
-                        help='Clustered bed.')
+    parser.add_argument('-T', '--tmpdir', default=None,
+                        help='Temporary directory [/tmp]')
+    parser.add_argument('-s', '--intersection', default=None,
+                        help='Pre-computed self-intersection of bed.')
 
     # Print help if no arguments specified
     if len(argv) == 0:
@@ -165,9 +175,14 @@ def main(argv):
         sys.exit(1)
     args = parser.parse_args(argv)
 
+    # Set directory root for pybedtools temp files
+    if args.tmpdir is not None:
+        os.environ['TMPDIR'] = args.tmpdir
+
+    # Load bed and fetch query region if specified
     bed = pbt.BedTool(args.bed)
     if args.region:
-        bed = bed.tabix_intervals(args.region)
+        bed = bed.tabix_intervals(args.region).saveas()
 
     # Drop any columns beyond those required
     bed = bed.cut(range(6))
@@ -177,7 +192,13 @@ def main(argv):
     header = '\t'.join(header.split()) + '\n'
     args.fout.write(header)
 
-    clusters = bedcluster(bed, args.frac)
+    # Load self-intersection if provided
+    if args.intersection is not None:
+        intersection = pbt.BedTool(args.intersection)
+    else:
+        intersection = None
+
+    clusters = bedcluster(bed, args.frac, intersection)
 
     # Get samples for VAF calculation
     samples = sorted(set([interval.fields[4] for interval in bed.intervals]))
