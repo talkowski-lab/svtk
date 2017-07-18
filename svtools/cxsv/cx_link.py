@@ -19,17 +19,44 @@ import natsort
 import svtools.utils as svu
 
 
-def shared_samples(recA, recB, min_thresh=0.5, max_thresh=0.8):
+def samples_overlap(recA, recB, upper_thresh=0.8, lower_thresh=0.5):
+    """
+    Report if the samples called in two VCF records overlap sufficiently.
+
+    The fraction of each record's samples which are shared with the other
+    record is calculated. The record with a greater fraction of shared samples
+    must exceed the upper threshold AND the record with a lesser fraction of
+    shared samples must exceed the lower threshold. This is intended to
+    maximize sensitivity in rare variants with a false negative in one
+    breakpoint.
+
+    Parameters
+    ----------
+    recA : pysam.VariantRecord
+    recB : pysam.VariantRecord
+    upper_thresh : float, optional
+        Minimum sample overlap in record with greater overlap
+    lower_thresh : float, optional
+        Minimum sample overlap in record with lesser overlap
+
+    Returns
+    -------
+    samples_overlap : bool
+        Samples shared between records meet required thresholds.
+    """
+
+    # Get lists of called samples for each record
     samplesA = set(svu.get_called_samples(recA))
     samplesB = set(svu.get_called_samples(recB))
 
+    # Compute fraction of each record's samples which are shared
     shared = samplesA & samplesB
     fracA = len(shared) / len(samplesA)
     fracB = len(shared) / len(samplesB)
 
     min_frac, max_frac = sorted([fracA, fracB])
 
-    return min_frac >= min_thresh and max_frac >= max_thresh
+    return min_frac >= lower_thresh and max_frac >= upper_thresh
 
 
 def extract_breakpoints(vcfpath, IDs):
@@ -171,7 +198,7 @@ def cx_link(vcfpath, bkpt_window=100):
     # Build sparse graph from links
     G = sps.eye(n_bkpts, dtype=np.uint16, format='lil')
     for i, j in keyed_links:
-        if shared_samples(bkpts[i], bkpts[j]):
+        if samples_overlap(bkpts[i], bkpts[j]):
             G[i, j] = 1
 
     # Generate lists of clustered breakpoints
