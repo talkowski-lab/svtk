@@ -110,6 +110,7 @@ class PEBreakpoint(pesr.Breakpoint):
         stats = [medians.called, medians.background, -np.log10(pval)]
         columns = 'called_median bg_median log_pval'.split()
         self.stats = pd.DataFrame([stats], columns=columns)
+        self.stats.log_pval = self.stats.log_pval.abs()
 
     def null_score(self):
         columns = 'called_median bg_median log_pval'.split()
@@ -136,9 +137,14 @@ class PETest:
         self.n_background = n_background
 
     def run(self):
+        def _strand_check(record):
+            return ('STRANDS' in record.info.keys() and
+                    record.info['STRANDS'] in '++ +- -+ --'.split())
+
         for record in self.variants:
-            # Temporary tloc filter
-            if record.chrom != record.info['CHR2']:
+            # Skip non-stranded variants (e.g. WHAM inversions)
+            # TODO: log skipped records
+            if not _strand_check(record):
                 continue
 
             breakpoint = PEBreakpoint.from_vcf(record)
@@ -195,6 +201,9 @@ def main(argv):
 
     petest = PETest(variantfile, discfile, args.window_in, args.window_out,
                     args.background)
+
+    header = 'name log_pval called_median bg_median'.split()
+    args.fout.write('\t'.join(header) + '\n')
 
     for stats in petest.run():
         stats.to_csv(args.fout, sep='\t', index=False, header=False)
