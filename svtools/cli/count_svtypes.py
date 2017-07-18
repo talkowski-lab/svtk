@@ -76,6 +76,8 @@ def main(argv):
     parser.add_argument('vcf')
     parser.add_argument('--no-header', action='store_true', default=False,
                         help="Don't include header in output")
+    parser.add_argument('--total', action='store_true', default=False,
+                        help='Sum variant counts across samples')
     parser.add_argument('fout', type=argparse.FileType('w'), nargs='?',
                         default=sys.stdout, help='Output file [stdout]')
 
@@ -87,6 +89,9 @@ def main(argv):
 
     vcf = VariantFile(args.vcf)
     counts = count_svtypes(vcf)
+
+    if args.total:
+        counts = counts.groupby('svtype')['count'].sum().reset_index()
 
     header = not args.no_header
     counts.to_csv(args.fout, sep='\t', index=False, header=header)
