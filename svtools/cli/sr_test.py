@@ -170,7 +170,7 @@ class SRBreakpoint(pesr.Breakpoint):
     def calc_test(df):
         statuses = 'called background'.split()
         medians = df.groupby('call_status')['count'].median()
-        medians = medians.reindex(statuses).fillna(0).astype(int)
+        medians = medians.reindex(statuses).fillna(0)  # .round().astype(int)
 
         pval = ss.poisson.cdf(medians.background, medians.called)
 
@@ -202,7 +202,15 @@ class SRBreakpoint(pesr.Breakpoint):
         pvals['name'] = self.name
         self.best_pvals = pvals
 
-    def sr_test(self, samples, countfile, n_background, window):
+    def normalize_counts(self, cov):
+        counts = self.split_counts
+        counts = pd.merge(counts, cov, on='sample', how='left')
+        counts['norm_count'] = counts['count'] / counts['MEDIAN_COVERAGE']
+        counts = counts['sample pos norm_count coord call_status'.split()]
+        counts = counts.rename(columns={'norm_count': 'count'})
+        self.split_counts = counts
+
+    def sr_test(self, samples, countfile, n_background, window, cov=None):
         # Choose background samples
         self.choose_background(samples, n_background)
 
@@ -218,13 +226,45 @@ class SRBreakpoint(pesr.Breakpoint):
             self.null_score()
             return
 
+        if cov is not None:
+            self.normalize_counts(cov)
+
         # Test sites for significant enrichment of splits and return best
         self.test_counts()
         self.choose_best_coords()
+        self.test_total()
+
+    def test_total(self):
+        pvals = self.best_pvals.set_index('coord')
+        posA = pvals.loc['posA'].pos
+        posB = pvals.loc['posB'].pos
+
+        counts = self.split_counts
+        mask = (((counts.coord == 'posA') & (counts.pos == posA)) |
+                ((counts.coord == 'posB') & (counts.pos == posB)))
+
+        counts = counts.loc[mask]
+        totals = counts.groupby('sample call_status'.split())['count'].sum()
+        pvals = self.calc_test(totals.reset_index()).to_frame().transpose()
+
+        cols = {
+            0: 'called_median',
+            1: 'bg_median',
+            2: 'log_pval'
+        }
+
+        pvals = pvals.rename(columns=cols)
+        pvals['coord'] = 'sum'
+        pvals['pos'] = 0
+        pvals['name'] = self.name
+
+        self.best_pvals = pd.concat([self.best_pvals, pvals])
 
     def null_score(self):
         self.best_pvals = pd.concat(
-            [self.null_series('posA'), self.null_series('posB')])
+            [self.null_series('posA'),
+             self.null_series('posB'),
+             self.null_series('sum')])
 
     def null_series(self, coord):
         cols = 'name coord pos called_median bg_median log_pval'.split()
@@ -249,14 +289,14 @@ def _BreakpointParser(variantfile, bed=False):
             continue
 
         if bed:
-            yield _Breakpoint.from_bed(*record.strip().split()[:6])
+            yield SRBreakpoint.from_bed(*record.strip().split()[:6])
         else:
-            yield _Breakpoint.from_vcf(record)
+            yield SRBreakpoint.from_vcf(record)
 
 
 class SRTest():
     def __init__(self, variantfile, countfile, bed=False, samples=None,
-                 window=100, n_background=160):
+                 window=100, n_background=160, cov=None, statsfile=None):
         """
         variantfile : file
             filepath of variants file
@@ -273,6 +313,11 @@ class SRTest():
             Window around breakpoint to consider for split read enrichment
         n_background : int, optional
             Number of background samples to choose for comparison in t-test
+        cov : dict of {str: int}, optional
+            Per-sample median coverage. Split counts will be normalized by
+            these values if provided.
+        statsfile : file, optional
+            If provided, write per-sample stats to disk
         """
 
         if bed:
@@ -291,15 +336,28 @@ class SRTest():
         self.window = window
         self.n_background = n_background
         self.pvals = None
+        self.cov = cov
+        self.statsfile = statsfile
 
     def run(self):
         for breakpoint in self.breakpoints:
             breakpoint.sr_test(self.samples, self.countfile, self.n_background,
-                               self.window)
+                               self.window, self.cov)
             pvals = breakpoint.best_pvals
             cols = 'name coord pos log_pval called_median bg_median'.split()
             pvals = pvals[cols].fillna(0)
-            pvals['pos'] = pvals['pos'].astype(int)
+
+            int_cols = ['pos']  # called_median bg_median'.split()
+            for col in int_cols:
+                pvals[col] = pvals[col].round().astype(int)
+            #  pvals['pos'] = pvals['pos'].astype(int)
+            pvals.log_pval = np.abs(pvals.log_pval)
+
+            import ipdb
+            ipdb.set_trace()
+
+            if self.statsfile:
+                breakpoint.write_counts(self.statsfile)
 
             yield pvals
 
@@ -333,6 +391,11 @@ def main(argv):
     parser.add_argument('-b', '--background', type=int, default=160,
                         help='Number of background samples to choose for '
                         'comparison in t-test. [160]')
+    parser.add_argument('--coverage-csv', default=None,
+                        help='Median coverage statistics for each library '
+                        '(optional). If provided, each sample\'s split counts '
+                        'will be normalized accordingly. CSV: '
+                        'sample,MEDIAN_COVERAGE,MAD_COVERAGE')
 
     # Print help if no arguments specified
     if len(argv) == 0:
@@ -353,10 +416,24 @@ def main(argv):
     else:
         variantfile = open(args.variants)
 
+    if args.coverage_csv is not None:
+        cov = pd.read_csv(args.coverage_csv)
+        required_cols = 'sample MEDIAN_COVERAGE'.split()
+        for required_col in required_cols:
+            if required_col not in cov.columns:
+                msg = 'Required column {0} not in coverage csv'
+                raise ValueError(msg)
+
+        cov = cov[required_cols]
+        #  cov = pd.Series(cov.MEDIAN_COVERAGE.values, index=cov['sample'])
+        #  cov = cov.to_dict()
+    else:
+        cov = None
+
     countfile = pysam.TabixFile(args.counts)
 
     srtest = SRTest(variantfile, countfile, args.bed, samples,
-                    args.window, args.background)
+                    args.window, args.background, cov)
 
     header = 'name coord pos log_pval called_median bg_median'.split()
     args.fout.write('\t'.join(header) + '\n')
