@@ -19,6 +19,7 @@ usage: svtools [-h] <subcommand> [options]
 
 [ Preprocessing ]
     standardize   Convert SV calls to a standardized format.
+    rdtest2vcf    Convert an RdTest-formatted bed to a standardized VCF.
 
 [ Algorithm integration ]
     vcfcluster     Cluster SV calls from a list of VCFs. (Generally PE/SR.)
