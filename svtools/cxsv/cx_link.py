@@ -161,6 +161,15 @@ def resolve_cx(cluster):
     if cluster_type != 'CANDIDATE':
         return cluster_type, cluster
 
+    # Assign stranded breakpoints
+    if inversions[0].info['STRANDS'] == '++':
+        FF, RR = inversions
+    else:
+        RR, FF = inversions
+
+    if len(cnvs) > 2:
+        cnvs = filter_multiple_cnvs(FF, RR, cnvs)
+
 
 def cx_link(vcfpath, bkpt_window=100):
     """
