@@ -8,63 +8,69 @@
 
 """
 
-import argparse
-from collections import namedtuple, defaultdict
+from collections import defaultdict
 import numpy as np
-from natsort import natsorted
 import svtools.utils as svu
 
 
-fields = 'chr start end name strands'.split()
-Inv = namedtuple('Inv', fields)
+def breakpoint_ordering(FF, RR, mh_buffer=50):
+    del_order = ((RR.pos > FF.pos - mh_buffer) and
+                 (FF.info['END'] > RR.pos) and
+                 (RR.info['END'] > FF.info['END'] - mh_buffer))
 
-fields = 'chr start end name cnv_type'.split()
-CNV = namedtuple('CNV', fields)
+    dup5_order = ((RR.pos < FF.pos) and
+                  (FF.pos < FF.info['END']) and
+                  (FF.info['END'] < RR.info['END'] + mh_buffer))
+
+    dup3_order = ((FF.pos < RR.pos + mh_buffer) and
+                  (RR.pos < RR.info['END']) and
+                  (RR.info['END'] < FF.info['END']))
+
+    dupINVdup_order = (RR.pos < FF.pos < RR.info['END'] < FF.info['END'])
+
+    if del_order:
+        return 'SIMPLE/DEL'
+    elif dup5_order:
+        return 'DUP5/INS3'
+    elif dup3_order:
+        return 'DUP3/INS5'
+    elif dupINVdup_order:
+        return 'dupINVdup'
+    else:
+        return 'UNK'
 
 
 def breakpoints_match(FF, RR, svtype, mh_buffer=50):
-    del_order = ((RR.start > FF.start - mh_buffer) and
-                 (FF.end > RR.start) and
-                 (RR.end > FF.end - mh_buffer))
-
-    dup5_order = ((RR.start < FF.start) and
-                  (FF.start < FF.end) and
-                  (FF.end < RR.end + mh_buffer))
-
-    dup3_order = ((FF.start < RR.start + mh_buffer) and
-                  (RR.start < RR.end) and
-                  (RR.end < FF.end))
-
-    dupINVdup_order = (RR.start < FF.start < RR.end < FF.end)
+    order = breakpoint_ordering(FF, RR, mh_buffer)
 
     if svtype in 'delINV INVdel delINVdel'.split():
-        return del_order
+        return order == 'SIMPLE/DEL'
     elif svtype in 'dupINV dupINVdel'.split():
-        return dup5_order
+        return order == 'DUP5/INS3'
     elif svtype in 'INVdup delINVdup'.split():
-        return dup3_order
+        return order == 'DUP3/INS5'
     else:
-        return dupINVdup_order
+        return order == 'dupINVdup'
 
 
-def classify_2_cnv(FF, RR, cnv5, cnv3, min_frac=0.5):
-    cnv_type5 = cnv5.cnv_type.lower()
-    cnv_type3 = cnv3.cnv_type.lower()
-
-    if cnv_type5 == 'del':
-        interval5 = (FF.start, RR.start)
+def classify_2_cnv(FF, RR, cnvs, min_frac=0.5):
+    cnv5, cnv3 = sorted(cnvs, key=lambda r: r.pos)
+    if cnv5.info['SVTYPE'] == 'DEL':
+        interval5 = (FF.pos, RR.pos)
     else:
-        interval5 = (RR.start, FF.start)
-    frac5 = recip_overlap(cnv5.start, cnv5.end, *interval5)
+        interval5 = (RR.pos, FF.pos)
+    frac5 = svu.reciprocal_overlap(cnv5.pos, cnv5.info['END'], *interval5)
 
-    if cnv_type3 == 'del':
-        interval3 = (FF.end, RR.end)
+    if cnv3.info['SVTYPE'] == 'DEL':
+        interval3 = (FF.info['END'], RR.info['END'])
     else:
-        interval3 = (RR.end, FF.end)
-    frac3 = recip_overlap(cnv3.start, cnv3.end, *interval3)
+        interval3 = (RR.info['END'], FF.info['END'])
+    frac3 = svu.reciprocal_overlap(cnv3.pos, cnv3.info['END'], *interval3)
 
     if frac5 >= min_frac and frac3 >= min_frac:
-        svtype = cnv_type5 + 'INV' + cnv_type3
+        svtype = (cnv5.info['SVTYPE'].lower() +
+                  'INV' +
+                  cnv3.info['SVTYPE'].lower())
     elif frac5 >= min_frac and frac3 < min_frac:
         svtype = classify_1_cnv(FF, RR, cnv5)
     elif frac5 < min_frac and frac3 >= min_frac:
@@ -78,32 +84,34 @@ def classify_2_cnv(FF, RR, cnv5, cnv3, min_frac=0.5):
 def classify_1_cnv(FF, RR, cnv, min_frac=0.5,
                    min_bkpt_cnv_size=500, max_bkpt_cnv_size=4000):
 
-    cnv_type = cnv.cnv_type.lower()
+    cnv_type = cnv.info['SVTYPE'].lower()
+
     if cnv_type == 'del':
-        interval5 = (FF.start, RR.start)
-        interval3 = (FF.end, RR.end)
+        interval5 = (FF.pos, RR.pos)
+        interval3 = (FF.info['END'], RR.info['END'])
     else:
-        interval5 = (RR.start, FF.start)
-        interval3 = (RR.end, FF.end)
+        interval5 = (RR.pos, FF.pos)
+        interval3 = (RR.info['END'], FF.info['END'])
 
     # First check if paired CNV were likely merged
-    start = min(FF.start, RR.start)
-    end = max(FF.end, RR.end)
-    total_frac = recip_overlap(cnv.start, cnv.end, start, end)
-    frac5 = overlap_frac(*interval5, cnv.start, cnv.end)
-    frac3 = overlap_frac(*interval3, cnv.start, cnv.end)
+    start = min(FF.pos, RR.pos)
+    end = max(FF.info['END'], RR.info['END'])
+    total_frac = svu.reciprocal_overlap(cnv.pos, cnv.info['END'], start, end)
+
+    frac5 = svu.overlap_frac(*interval5, cnv.pos, cnv.info['END'])
+    frac3 = svu.overlap_frac(*interval3, cnv.pos, cnv.info['END'])
 
     if total_frac > 0.9 and frac5 > 0.95 and frac3 > 0.95:
         svtype = cnv_type + 'INV' + cnv_type  # + '_merged'
         return svtype
 
-    frac5 = recip_overlap(cnv.start, cnv.end, *interval5)
-    frac3 = recip_overlap(cnv.start, cnv.end, *interval3)
+    frac5 = svu.reciprocal_overlap(cnv.pos, cnv.info['END'], *interval5)
+    frac3 = svu.reciprocal_overlap(cnv.pos, cnv.info['END'], *interval3)
 
     if frac5 >= min_frac and frac3 < min_frac:
         svtype = cnv_type + 'INV'
 
-        dist3 = RR.end - FF.end
+        dist3 = RR.info['END'] - FF.info['END']
         if min_bkpt_cnv_size <= dist3 < max_bkpt_cnv_size:
             svtype = svtype + 'del'
         elif min_bkpt_cnv_size <= -dist3 < max_bkpt_cnv_size:
@@ -112,7 +120,7 @@ def classify_1_cnv(FF, RR, cnv, min_frac=0.5,
     elif frac5 < min_frac and frac3 >= min_frac:
         svtype = 'INV' + cnv_type
 
-        dist5 = RR.start - FF.start
+        dist5 = RR.pos - FF.pos
         if min_bkpt_cnv_size <= dist5 < max_bkpt_cnv_size:
             svtype = 'del' + svtype
         elif min_bkpt_cnv_size <= -dist5 < max_bkpt_cnv_size:
@@ -205,6 +213,39 @@ def filter_multiple_cnvs(FF, RR, cnvs, min_frac=0.5):
     return sorted(cnvs, key=lambda record: record.pos)
 
 
+def classify_0_cnv(FF, RR, cpx_size=300):
+    order = breakpoint_ordering(FF, RR, mh_buffer=50)
+
+    if order == 'SIMPLE/DEL':
+        start_dist = RR.pos - FF.pos
+        end_dist = RR.info['END'] - FF.info['END']
+
+        if start_dist < cpx_size and end_dist < cpx_size:
+            return 'SIMPLE'
+        elif start_dist >= cpx_size and end_dist < cpx_size:
+            return 'delINV'
+        elif start_dist < cpx_size and end_dist >= cpx_size:
+            return 'INVdel'
+        else:
+            return 'delINVdel'
+
+    elif order == 'dupINVdup':
+        start_dist = FF.pos - RR.pos
+        end_dist = FF.info['END'] - RR.info['END']
+
+        if start_dist >= cpx_size and end_dist >= cpx_size:
+            return 'dupINVdup'
+        elif start_dist >= cpx_size:
+            return 'DUP5/INS3'
+        elif end_dist >= cpx_size:
+            return 'DUP3/INS5'
+        else:
+            return 'UNK'
+
+    # DUP5/INS3, DUP3/INS5, and UNK don't require add'l check
+    else:
+        return order
+
 # TODO:
 # Define complex inversion class to store classification, breakpoints, and CNVs
 
@@ -224,15 +265,16 @@ def classify_complex_inversion(FF, RR, cnvs):
         cnvs = filter_multiple_cnvs(FF, RR, cnvs)
 
     if len(cnvs) == 0:
-        svtype = 'SIMPLE'
+        #  return 'SIMPLE'
+        return classify_0_cnv(FF, RR)
     elif len(cnvs) == 1:
         svtype = classify_1_cnv(FF, RR, cnvs[0])
     elif len(cnvs) == 2:
         svtype = classify_2_cnv(FF, RR, cnvs)
     else:
-        svtype = 'MULT_CNVS'
+        return 'MULT_CNVS'
 
-    if breakpoints_match(self.FF, self.RR, svtype, mh_buffer=50):
+    if breakpoints_match(FF, RR, svtype, mh_buffer=50):
         return svtype
     else:
         return 'COMPLEX_INS'
