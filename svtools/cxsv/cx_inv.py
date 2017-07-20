@@ -303,7 +303,7 @@ def filter_multiple_cnvs(FF, RR, cnvs, min_frac=0.5):
             # get coordinates
             start = int(np.median([c.pos for c in cnvlist]))
             end = int(np.median([c.info['END'] for c in cnvlist]))
-            name = '__'.join([c.name for c in cnvlist])
+            name = '__'.join([c.id for c in cnvlist])
 
             merged_cnv.pos = start
             merged_cnv.info['END'] = end
