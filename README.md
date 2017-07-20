@@ -19,6 +19,7 @@ usage: svtools [-h] <subcommand> [options]
 
 [ Preprocessing ]
     standardize   Convert SV calls to a standardized format.
+    rdtest2vcf    Convert an RdTest-formatted bed to a standardized VCF.
 
 [ Algorithm integration ]
     vcfcluster     Cluster SV calls from a list of VCFs. (Generally PE/SR.)
@@ -32,8 +33,12 @@ usage: svtools [-h] <subcommand> [options]
     rdtest*        Calculate comparative coverage statistics at CNV sites.
 
 [ Split-read analysis ]
-    sr-count*      Pile up clipped read counts genome-wide
-    sr-test        Calculate enrichment of clipped reads at SV breakpoints
+    sr-count*      Pile up clipped read counts genome-wide.
+    sr-test        Calculate enrichment of clipped reads at SV breakpoints.
+
+[ Variant analysis ]
+    link-cx        Resolve complex variants from VCF of breakpoints.
+    annotate*
 
 * Not yet implemented
 
