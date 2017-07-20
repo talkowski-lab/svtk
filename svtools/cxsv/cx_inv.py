@@ -5,7 +5,7 @@
 # Distributed under terms of the MIT license.
 
 """
-
+Classification of complex inversion events.
 """
 
 from collections import defaultdict
@@ -14,18 +14,44 @@ import svtools.utils as svu
 
 
 def breakpoint_ordering(FF, RR, mh_buffer=50):
+    """
+    Match paired breakpoints to known coordinate orderings.
+
+    e.g. in a simple inversion, FF_start < RR_start < FF_end < RR_end.
+
+    Parameters
+    ----------
+    FF : pysam.VariantRecord
+    RR : pysam.VariantRecord
+    mh_buffer : int, optional
+        Microhomology buffer. Add window to coordinates to permit fuzzy match.
+
+    Returns
+    -------
+    ordering : str
+        SIMPLE/DEL, DUP5/INS3, DUP3/INS5, dupINVdup, or UNK.
+    """
+
+    # Check if breakpoints match simple/deletion ordering
+    # (FF_start < RR_start < FF_end < RR_end)
     del_order = ((RR.pos > FF.pos - mh_buffer) and
                  (FF.info['END'] > RR.pos) and
                  (RR.info['END'] > FF.info['END'] - mh_buffer))
 
+    # Check if breakpoints match 5' dup ordering
+    # (RR_start < FF_start < FF_end < RR_end)
     dup5_order = ((RR.pos < FF.pos) and
                   (FF.pos < FF.info['END']) and
                   (FF.info['END'] < RR.info['END'] + mh_buffer))
 
+    # Check if breakpoints match 3' dup ordering
+    # (FF_start < RR_start < RR_end < FF_end)
     dup3_order = ((FF.pos < RR.pos + mh_buffer) and
                   (RR.pos < RR.info['END']) and
                   (RR.info['END'] < FF.info['END']))
 
+    # Check if breakpoints match dupINVdup ordering
+    # (RR_start < FF_start < RR_end < FF_end)
     dupINVdup_order = (RR.pos < FF.pos < RR.info['END'] < FF.info['END'])
 
     if del_order:
@@ -41,6 +67,25 @@ def breakpoint_ordering(FF, RR, mh_buffer=50):
 
 
 def breakpoints_match(FF, RR, svtype, mh_buffer=50):
+    """
+    Test if the coordinate ordering matches the class predicted by CNV overlap.
+
+    Parameters
+    ----------
+    FF : pysam.VariantRecord
+    RR : pysam.VariantRecord
+    svtype : str
+        Class of complex SV predicted by CNV overlap.
+        (delINV, INVdel, delINVdel, dupINV, dupINVdel, INVdup, delINVdup,
+         dupINVdup)
+    mh_buffer : int, optional
+        Microhomology buffer. Add window to coordinates to permit fuzzy match.
+
+    Returns
+    -------
+    ordering : str
+        SIMPLE/DEL, DUP5/INS3, DUP3/INS5, dupINVdup, or UNK
+    """
     order = breakpoint_ordering(FF, RR, mh_buffer)
 
     if svtype in 'delINV INVdel delINVdel'.split():
@@ -54,19 +99,44 @@ def breakpoints_match(FF, RR, svtype, mh_buffer=50):
 
 
 def classify_2_cnv(FF, RR, cnvs, min_frac=0.5):
+    """
+    Classify the cxSV class of a pair of inv bkpts and two associated CNVs.
+
+    Matches each CNV to a 5' or 3' location, as constrained by the breakpoint
+    coordinates.
+
+    Parameters
+    ----------
+    FF : pysam.VariantRecord
+    RR : pysam.VariantRecord
+    cnvs : [pysam.VariantRecord, pysam.VariantRecord]
+    min_frac : float, optional
+        Minimum reciprocal overlap of each cnv with a candidate CNV interval
+        defined by the breakpoint coordinates.
+
+    Returns
+    -------
+    svtype : str
+    """
+
+    # Assign CNVs to 5' or 3' based on ordering
     cnv5, cnv3 = sorted(cnvs, key=lambda r: r.pos)
+
+    # Check if 5' CNV matches breakpoints
     if cnv5.info['SVTYPE'] == 'DEL':
         interval5 = (FF.pos, RR.pos)
     else:
         interval5 = (RR.pos, FF.pos)
     frac5 = svu.reciprocal_overlap(cnv5.pos, cnv5.info['END'], *interval5)
 
+    # Check if 3' CNV matches breakpoints
     if cnv3.info['SVTYPE'] == 'DEL':
         interval3 = (FF.info['END'], RR.info['END'])
     else:
         interval3 = (RR.info['END'], FF.info['END'])
     frac3 = svu.reciprocal_overlap(cnv3.pos, cnv3.info['END'], *interval3)
 
+    # Report cxSV class based on whether CNVs matched intervals
     if frac5 >= min_frac and frac3 >= min_frac:
         svtype = (cnv5.info['SVTYPE'].lower() +
                   'INV' +
@@ -76,16 +146,42 @@ def classify_2_cnv(FF, RR, cnvs, min_frac=0.5):
     elif frac5 < min_frac and frac3 >= min_frac:
         svtype = classify_1_cnv(FF, RR, cnv3)
     else:
-        return 'CNV_2_FAIL'
+        svtype = 'CNV_2_FAIL'
 
     return svtype
 
 
 def classify_1_cnv(FF, RR, cnv, min_frac=0.5,
                    min_bkpt_cnv_size=500, max_bkpt_cnv_size=4000):
+    """
+    Classify the cxSV class of a pair of inv bkpts and one associated CNV.
 
+    Matches each CNV to a 5' or 3' location, as constrained by the breakpoint
+    coordinates. After matching CNV, check if distance between breakpoints
+    at other end is sufficient to call a second flanking CNV.
+
+    Parameters
+    ----------
+    FF : pysam.VariantRecord
+    RR : pysam.VariantRecord
+    cnvs : [pysam.VariantRecord, pysam.VariantRecord]
+    min_frac : float, optional
+        Minimum reciprocal overlap of each cnv with a candidate CNV interval
+        defined by the breakpoint coordinates.
+    min_bkpt_cnv_size : int, optional
+        Minimum distance between breakpoints to call flanking CNV.
+    max_bkpt_cnv_size : int, optional
+        Maximum distance between breakpoints to call flanking CNV.
+
+    Returns
+    -------
+    svtype : str
+    """
+
+    # Make CNV class lowercase (for later concatenation with INV)
     cnv_type = cnv.info['SVTYPE'].lower()
 
+    # Determine eligible 5'/3' CNV intervals defined by the breakpoints
     if cnv_type == 'del':
         interval5 = (FF.pos, RR.pos)
         interval3 = (FF.info['END'], RR.info['END'])
@@ -93,21 +189,24 @@ def classify_1_cnv(FF, RR, cnv, min_frac=0.5,
         interval5 = (RR.pos, FF.pos)
         interval3 = (RR.info['END'], FF.info['END'])
 
-    # First check if paired CNV were likely merged
+    # Check overlap of CNV against full inversion length
     start = min(FF.pos, RR.pos)
     end = max(FF.info['END'], RR.info['END'])
     total_frac = svu.reciprocal_overlap(cnv.pos, cnv.info['END'], start, end)
-
     frac5 = svu.overlap_frac(*interval5, cnv.pos, cnv.info['END'])
     frac3 = svu.overlap_frac(*interval3, cnv.pos, cnv.info['END'])
 
+    # If one CNV spans the entire event, it likely represents two CNV merged
+    # during preprocessing or clustering
     if total_frac > 0.9 and frac5 > 0.95 and frac3 > 0.95:
         svtype = cnv_type + 'INV' + cnv_type  # + '_merged'
         return svtype
 
+    # Otherwise, check whether it's 5' or 3'
     frac5 = svu.reciprocal_overlap(cnv.pos, cnv.info['END'], *interval5)
     frac3 = svu.reciprocal_overlap(cnv.pos, cnv.info['END'], *interval3)
 
+    # 5' CNV; check 3' breakpoints for small flanking CNV
     if frac5 >= min_frac and frac3 < min_frac:
         svtype = cnv_type + 'INV'
 
@@ -117,6 +216,7 @@ def classify_1_cnv(FF, RR, cnv, min_frac=0.5,
         elif min_bkpt_cnv_size <= -dist3 < max_bkpt_cnv_size:
             svtype = svtype + 'dup'
 
+    # 3' CNV; check 5' breakpoints for small flanking CNV
     elif frac5 < min_frac and frac3 >= min_frac:
         svtype = 'INV' + cnv_type
 
@@ -126,6 +226,7 @@ def classify_1_cnv(FF, RR, cnv, min_frac=0.5,
         elif min_bkpt_cnv_size <= -dist5 < max_bkpt_cnv_size:
             svtype = 'dup' + svtype
 
+    # Couldn't match the CNV
     else:
         return 'CNV_1_unclassified'
 
@@ -142,16 +243,16 @@ def filter_multiple_cnvs(FF, RR, cnvs, min_frac=0.5):
     Parameters
     ----------
     FF : pysam.VariantRecord
-        FF inversion breakpoint
-    RR : pysam.VariantRecord
+        FF inversion breakpoint.
+    RR : pysam.VariantRecord.
         RR inversion breakpoint
     cnvs : list of pysam.VariantRecord
-        List of CNVs overlapping breakpoints
+        List of CNVs overlapping breakpoints.
 
     Returns
     -------
     cnvs : list of pysam.VariantRecord
-        Filtered and merged CNVs
+        Filtered and merged CNVs.
     """
 
     # Identify eligible intervals for flanking CNV, defined by inv breakpoints
@@ -213,31 +314,53 @@ def filter_multiple_cnvs(FF, RR, cnvs, min_frac=0.5):
     return sorted(cnvs, key=lambda record: record.pos)
 
 
-def classify_0_cnv(FF, RR, cpx_size=300):
+def classify_0_cnv(FF, RR, min_bkpt_cnv_size=300):
+    """
+    Classify the cxSV class of a pair of inv bkpts with no associated CNVs.
+
+    Matches breakpoint ordering to a known class, then tests if breakpoint
+    distances are sufficient to call a CNV that was missed by integration
+    pipeline.
+
+    Parameters
+    ----------
+    FF : pysam.VariantRecord
+    RR : pysam.VariantRecord
+    min_bkpt_cnv_size : int, optional
+        Minimum distance between breakpoints to call flanking CNV.
+
+    Returns
+    -------
+    svtype : str
+    """
+
+    # Identify breakpoint ordering
     order = breakpoint_ordering(FF, RR, mh_buffer=50)
 
+    # Check for flanking deletions around a "simple" inversion
     if order == 'SIMPLE/DEL':
         start_dist = RR.pos - FF.pos
         end_dist = RR.info['END'] - FF.info['END']
 
-        if start_dist < cpx_size and end_dist < cpx_size:
+        if start_dist < min_bkpt_cnv_size and end_dist < min_bkpt_cnv_size:
             return 'SIMPLE'
-        elif start_dist >= cpx_size and end_dist < cpx_size:
+        elif start_dist >= min_bkpt_cnv_size and end_dist < min_bkpt_cnv_size:
             return 'delINV'
-        elif start_dist < cpx_size and end_dist >= cpx_size:
+        elif start_dist < min_bkpt_cnv_size and end_dist >= min_bkpt_cnv_size:
             return 'INVdel'
         else:
             return 'delINVdel'
 
+    # Check for flanking dups
     elif order == 'dupINVdup':
         start_dist = FF.pos - RR.pos
         end_dist = FF.info['END'] - RR.info['END']
 
-        if start_dist >= cpx_size and end_dist >= cpx_size:
+        if start_dist >= min_bkpt_cnv_size and end_dist >= min_bkpt_cnv_size:
             return 'dupINVdup'
-        elif start_dist >= cpx_size:
+        elif start_dist >= min_bkpt_cnv_size:
             return 'DUP5/INS3'
-        elif end_dist >= cpx_size:
+        elif end_dist >= min_bkpt_cnv_size:
             return 'DUP3/INS5'
         else:
             return 'UNK'
@@ -246,19 +369,24 @@ def classify_0_cnv(FF, RR, cpx_size=300):
     else:
         return order
 
-# TODO:
-# Define complex inversion class to store classification, breakpoints, and CNVs
 
 def classify_complex_inversion(FF, RR, cnvs):
     """
+    Classify the complex class of an inversion and associated CNVs.
+
     Parameters
     ----------
     FF : pysam.VariantRecord
-        FF inversion breakpoint
+        FF inversion breakpoint.
     RR : pysam.VariantRecord
-        RR inversion breakpoint
+        RR inversion breakpoint.
     cnvs : list of pysam.VariantRecord
-        List of overlapping CNVs
+        List of overlapping CNVs.
+
+    Returns
+    -------
+    svtype : str
+        Complex SV class.
     """
 
     if len(cnvs) > 2:
@@ -278,55 +406,3 @@ def classify_complex_inversion(FF, RR, cnvs):
         return svtype
     else:
         return 'COMPLEX_INS'
-
-#  class DoubleEndLink(Link):
-    #  def __init__(self, link):
-        #  self.samples = link.samples
-        #  self.cnvs = sorted(link.cnvs)
-        #  self.invs = sorted(link.invs)
-        #  self._svtype = None
-
-        #  if self.invs[0].strands == 'FF':
-            #  self.FF = self.invs[0]
-            #  self.RR = self.invs[1]
-        #  else:
-            #  self.FF = self.invs[1]
-            #  self.RR = self.invs[0]
-
-        #  self.start = min(self.FF.start, self.RR.start)
-        #  self.chrom = self.FF.chr
-
-    #  def get_svtype(self, min_frac=0.5, min_span_frac=0.9,
-                   #  min_bkpt_cnv_size=500, max_bkpt_cnv_size=4000):
-        #  """
-        #  In cases where there is one supporting depth CNV, check if
-        #  breakpoints at other end support small CNV
-
-        #  Parameters
-        #  ----------
-        #  min_bkpt_cnv_size : int
-            #  Minimum distance between breakpoints to report CNV w/o depth
-        #  max_bkpt_cnv_size : int
-            #  Maximum distance between breakpoints to report CNV w/o depth
-        #  """
-
-        #  #  check_name = 'DLM.519_20_9087'
-        #  #  if self.FF.name == check_name:
-            #  #  import ipdb
-            #  #  ipdb.set_trace()
-
-
-
-#  def parse_complex_sv(inv_poly_overlap):
-    #  for link in parse_flanking_cnv(inv_poly_overlap):
-        #  #  check_name = 'DLM.519_11_11928'
-        #  #  if sorted(link.invs)[0].name == check_name:
-            #  #  import ipdb
-            #  #  ipdb.set_trace()
-        #  if link.svtype == 'CANDIDATE':
-            #  link = DoubleEndLink(link)
-            #  svtype = link.svtype
-            #  exclude = 'CNV_1_unclassified CNV_2_FAIL COMPLEX_MULTI_CNV'.split()
-            #  if svtype not in exclude:
-                #  yield link
-
