@@ -8,7 +8,6 @@
 
 """
 
-import argparse
 import itertools
 from collections import deque
 import numpy as np
@@ -17,6 +16,7 @@ import pysam
 import pybedtools as pbt
 import natsort
 import svtools.utils as svu
+from .cx_inv import classify_complex_inversion
 
 
 def samples_overlap(recA, recB, upper_thresh=0.8, lower_thresh=0.5):
@@ -145,21 +145,30 @@ def resolve_cx(cluster):
     """
 
     inversions = [rec for rec in cluster if rec.info['SVTYPE'] == 'INV']
+    tlocs = [rec for rec in cluster if rec.info['SVTYPE'] == 'BND']
+
     cnvtypes = 'DEL DUP'.split()
     cnvs = [rec for rec in cluster if rec.info['SVTYPE'] in cnvtypes]
 
     # Restrict to double-ended inversion events with appropriate strand pairing
-    if len(inversions) == 1:
+    if len(inversions) == 0:
+        if len(tlocs) > 0:
+            cluster_type = 'INTERCHROMOSOMAL'
+        else:
+            cluster_type = 'ERROR_CNV_ONLY'
+    elif len(inversions) == 1:
         cluster_type = 'SINGLE_ENDER'
     elif len(inversions) > 2:
         cluster_type = 'COMPLEX_3plus'
     elif inversions[0].info['STRANDS'] == inversions[1].info['STRANDS']:
         cluster_type = 'MATCHED_STRANDS'
+    elif len(tlocs) > 0:
+        cluster_type = 'MIXED_INV_TLOC'
     else:
         cluster_type = 'CANDIDATE'
 
     if cluster_type != 'CANDIDATE':
-        return cluster_type, cluster
+        return cluster_type, None
 
     # Assign stranded breakpoints
     if inversions[0].info['STRANDS'] == '++':
@@ -167,11 +176,68 @@ def resolve_cx(cluster):
     else:
         RR, FF = inversions
 
-    if len(cnvs) > 2:
-        cnvs = filter_multiple_cnvs(FF, RR, cnvs)
+    svtype = classify_complex_inversion(FF, RR, cnvs)
+
+    return svtype, make_bed_entry(FF, RR, cnvs, svtype)
 
 
-def cx_link(vcfpath, bkpt_window=100):
+def make_bed_entry(FF, RR, cnvs, svtype):
+    start = min(FF.pos, RR.pos)
+    end = max(FF.info['END'], RR.info['END'])
+    chrom = FF.chrom
+
+    FF_samples = svu.get_called_samples(FF)
+    RR_samples = svu.get_called_samples(RR)
+    samples = sorted(set().union(FF_samples, RR_samples))
+
+    FF_name = FF.id
+    RR_name = RR.id
+    if len(cnvs) == 0:
+        CNV_names = '.'
+    else:
+        CNV_names = ','.join([cnv.id for cnv in cnvs])
+
+    intervals = []
+    inv_start = RR.pos
+    inv_end = FF.info['END']
+    intervals = ['INV_{chrom}:{inv_start}-{inv_end}'.format(**locals())]
+
+    interval = '{cnv_type}_{chrom}:{cnv_start}-{cnv_end}'
+    if svtype.startswith('del'):
+        cnv_start = FF.pos
+        cnv_end = RR.pos
+        cnv_type = 'DEL5'
+        intervals.append(interval.format(**locals()))
+
+    if svtype.endswith('del'):
+        cnv_start = FF.info['END']
+        cnv_end = RR.info['END']
+        cnv_type = 'DEL3'
+        intervals.append(interval.format(**locals()))
+
+    if svtype.startswith('dup'):
+        cnv_start = RR.pos
+        cnv_end = FF.pos
+        cnv_type = 'DUP5'
+        intervals.append(interval.format(**locals()))
+
+    if svtype.endswith('dup'):
+        cnv_start = RR.info['END']
+        cnv_end = FF.info['END']
+        cnv_type = 'DUP3'
+        intervals.append(interval.format(**locals()))
+
+    intervals = ';'.join(intervals)
+    samples = ','.join(samples)
+
+    entry = ('{chrom}\t{start}\t{end}\t{{name}}\t{svtype}\t'
+             '{intervals}\t{FF_name}\t{RR_name}\t{CNV_names}\t{samples}\n')
+    entry = entry.format(**locals())
+
+    return entry
+
+
+def link_cx(vcfpath, bkpt_window=100):
     """
     Parameters
     ----------
@@ -219,20 +285,4 @@ def cx_link(vcfpath, bkpt_window=100):
     # Remove clusters of one variant - leftover from shared sample filtering
     clusters = [c for c in clusters if len(c) > 1]
 
-    for cluster in clusters:
-        variant = resolve_cx(cluster)
     return clusters
-
-
-def main():
-    parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('vcf', help='Breakpoint VCFs.')
-    args = parser.parse_args()
-
-    cx_link(args.vcf)
-
-
-if __name__ == '__main__':
-    main()
