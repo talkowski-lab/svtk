@@ -1,0 +1,521 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>svtools.standardize package &mdash; svtools 0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../../genindex.html"/>
+        <link rel="search" title="Search" href="../../search.html"/>
+    <link rel="top" title="svtools 0.1 documentation" href="../../index.html"/> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> svtools
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">svtools.standardize package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-svtools.standardize.standardize">svtools.standardize.standardize module</a></li>
+<li><a class="reference internal" href="#module-svtools.standardize.std_delly">svtools.standardize.std_delly module</a></li>
+<li><a class="reference internal" href="#module-svtools.standardize.std_lumpy">svtools.standardize.std_lumpy module</a></li>
+<li><a class="reference internal" href="#module-svtools.standardize.std_manta">svtools.standardize.std_manta module</a></li>
+<li><a class="reference internal" href="#module-svtools.standardize.std_wham">svtools.standardize.std_wham module</a></li>
+<li><a class="reference internal" href="#module-svtools.standardize">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">svtools</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+      <li>svtools.standardize package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/docs/source/svtools.standardize.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="svtools-standardize-package">
+<h1>svtools.standardize package<a class="headerlink" href="#svtools-standardize-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-svtools.standardize.standardize">
+<span id="svtools-standardize-standardize-module"></span><h2>svtools.standardize.standardize module<a class="headerlink" href="#module-svtools.standardize.standardize" title="Permalink to this headline">¶</a></h2>
+<p>standardize.py</p>
+<p>Standardize a VCF of SV calls.</p>
+<p>Each record corresponds to a single SV breakpoint and will have the following
+INFO fields, with specified constraints:</p>
+<blockquote>
+<div>SVTYPE:  SV type [DEL,DUP,INV,BND]
+CHR2:    Secondary chromosome [Must be lexicographically greater than CHROM]
+END:     SV end position (or position on CHR2 in translocations)
+STRANDS: Breakpoint strandedness [++,+-,-+,&#8211;]
+SVLEN:   SV length (-1 if translocation)</div></blockquote>
+<p>Copyright © 2017 Matthew Stone &lt;<a class="reference external" href="mailto:mstone5&#37;&#52;&#48;mgh&#46;harvard&#46;edu">mstone5<span>&#64;</span>mgh<span>&#46;</span>harvard<span>&#46;</span>edu</a>&gt;
+Distributed under terms of the MIT license.</p>
+<dl class="class">
+<dt id="svtools.standardize.standardize.VCFStandardizer">
+<em class="property">class </em><code class="descclassname">svtools.standardize.standardize.</code><code class="descname">VCFStandardizer</code><span class="sig-paren">(</span><em>raw_vcf</em>, <em>std_vcf</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.standardize.standardize.VCFStandardizer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="svtools.standardize.standardize.VCFStandardizer.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>raw_vcf</em>, <em>std_vcf</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.standardize.standardize.VCFStandardizer.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Standardize a VCF.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>raw_vcf</strong> (<em>pysam.VariantFile</em>) &#8211; Input VCF.</li>
+<li><strong>std_vcf</strong> (<em>pysam.VariantFile</em>) &#8211; Standardized VCF.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="svtools.standardize.standardize.VCFStandardizer.create">
+<em class="property">classmethod </em><code class="descname">create</code><span class="sig-paren">(</span><em>source</em>, <em>*args</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.standardize.standardize.VCFStandardizer.create" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="classmethod">
+<dt id="svtools.standardize.standardize.VCFStandardizer.register">
+<em class="property">classmethod </em><code class="descname">register</code><span class="sig-paren">(</span><em>source</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.standardize.standardize.VCFStandardizer.register" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="svtools.standardize.standardize.VCFStandardizer.standardize_alts">
+<code class="descname">standardize_alts</code><span class="sig-paren">(</span><em>std_rec</em>, <em>raw_rec</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.standardize.standardize.VCFStandardizer.standardize_alts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Standardize ALT field.</p>
+<p>Default behavior is to standardize BND alt to VCF spec and leave
+other SVTYPE alts untouched.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="svtools.standardize.standardize.VCFStandardizer.standardize_format">
+<code class="descname">standardize_format</code><span class="sig-paren">(</span><em>std_rec</em>, <em>raw_rec</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.standardize.standardize.VCFStandardizer.standardize_format" title="Permalink to this definition">¶</a></dt>
+<dd><p>Copy desired FORMAT fields to new record.</p>
+<p>By default, only GT is copied.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="svtools.standardize.standardize.VCFStandardizer.standardize_info">
+<code class="descname">standardize_info</code><span class="sig-paren">(</span><em>std_rec</em>, <em>raw_rec</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.standardize.standardize.VCFStandardizer.standardize_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Standardize VCF record INFO.</p>
+<p>When implementing this function, assume the basic data fields (CHROM,
+POS, ID, REF, ALTS, and FILTER) have been copied directly from the
+original record.</p>
+<p>The default implementation is a placeholder for testing and should be
+overridden with the logic for each algorithm&#8217;s formatting.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>std_rec</strong> (<em>pysam.VariantRecord</em>) &#8211; Standardized record with populated basic data.</li>
+<li><strong>raw_rec</strong> (<em>pysam.VariantRecord</em>) &#8211; Raw record to be standardized.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="svtools.standardize.standardize.VCFStandardizer.standardize_record">
+<code class="descname">standardize_record</code><span class="sig-paren">(</span><em>std_rec</em>, <em>raw_rec</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.standardize.standardize.VCFStandardizer.standardize_record" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a standardized copy of a VCF record.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>record</strong> (<em>pysam.VariantRecord</em>) &#8211; </td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>std_rec</strong></td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">pysam.VariantRecord</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="svtools.standardize.standardize.VCFStandardizer.standardize_vcf">
+<code class="descname">standardize_vcf</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#svtools.standardize.standardize.VCFStandardizer.standardize_vcf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Standardize every record in a VCF.</p>
+<p>Any filtering of records should be implemented in this method.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Yields:</th><td class="field-body"><strong>std_rec</strong> (<em>pysam.VariantRecord</em>) &#8211; Standardized records</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="svtools.standardize.standardize.VCFStandardizer.subclasses">
+<code class="descname">subclasses</code><em class="property"> = {'wham': &lt;class 'svtools.standardize.std_wham.WhamStandardizer'&gt;, 'delly': &lt;class 'svtools.standardize.std_delly.DellyStandardizer'&gt;, 'lumpy': &lt;class 'svtools.standardize.std_lumpy.LumpyStandardizer'&gt;, 'manta': &lt;class 'svtools.standardize.std_manta.MantaStandardizer'&gt;}</em><a class="headerlink" href="#svtools.standardize.standardize.VCFStandardizer.subclasses" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="svtools.standardize.standardize.parse_bnd_pos">
+<code class="descclassname">svtools.standardize.standardize.</code><code class="descname">parse_bnd_pos</code><span class="sig-paren">(</span><em>alt</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.standardize.standardize.parse_bnd_pos" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parses standard VCF BND ALT (e.g. N]1:1000]) into chrom, pos</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>alt</strong> (<em>str</em>) &#8211; VCF-formatted BND ALT</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><ul class="simple">
+<li><strong>chrom</strong> (<em>str</em>)</li>
+<li><strong>pos</strong> (<em>int</em>)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="svtools.standardize.standardize.parse_bnd_strands">
+<code class="descclassname">svtools.standardize.standardize.</code><code class="descname">parse_bnd_strands</code><span class="sig-paren">(</span><em>alt</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.standardize.standardize.parse_bnd_strands" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parses standard VCF BND ALT (e.g. N]1:1000]) for strandedness</p>
+<p>Note about parsing strands from BND ALT:
+t[p[ piece extending to the right of p is joined after t (+-)
+t]p] reverse comp piece extending left of p is joined after t (++)
+]p]t piece extending to the left of p is joined before t (-+)
+[p[t reverse comp piece extending right of p is joined before t (&#8211;)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>alt</strong> (<em>str</em>) &#8211; VCF-formatted BND ALT</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>strands</strong> &#8211; ++,+-,-+,&#8211;</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">str</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-svtools.standardize.std_delly">
+<span id="svtools-standardize-std-delly-module"></span><h2>svtools.standardize.std_delly module<a class="headerlink" href="#module-svtools.standardize.std_delly" title="Permalink to this headline">¶</a></h2>
+<p>std_delly.py</p>
+<p>Standardize a Delly record.</p>
+<p>Copyright © 2017 Matthew Stone &lt;<a class="reference external" href="mailto:mstone5&#37;&#52;&#48;mgh&#46;harvard&#46;edu">mstone5<span>&#64;</span>mgh<span>&#46;</span>harvard<span>&#46;</span>edu</a>&gt;
+Distributed under terms of the MIT license.</p>
+<dl class="class">
+<dt id="svtools.standardize.std_delly.DellyStandardizer">
+<em class="property">class </em><code class="descclassname">svtools.standardize.std_delly.</code><code class="descname">DellyStandardizer</code><span class="sig-paren">(</span><em>raw_vcf</em>, <em>std_vcf</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.standardize.std_delly.DellyStandardizer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#svtools.standardize.standardize.VCFStandardizer" title="svtools.standardize.standardize.VCFStandardizer"><code class="xref py py-class docutils literal"><span class="pre">svtools.standardize.standardize.VCFStandardizer</span></code></a></p>
+<dl class="method">
+<dt id="svtools.standardize.std_delly.DellyStandardizer.standardize_info">
+<code class="descname">standardize_info</code><span class="sig-paren">(</span><em>std_rec</em>, <em>raw_rec</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.standardize.std_delly.DellyStandardizer.standardize_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Standardize Delly record.</p>
+<ol class="arabic simple">
+<li>Rename &#8216;TRA&#8217; to &#8216;BND&#8217;.</li>
+<li>Swap CHROM and CHR2 in translocations.</li>
+<li>Add END.</li>
+<li>Rename &#8216;CT&#8217; to &#8216;STRANDS&#8217; and convert notation.</li>
+<li>Compute SVLEN.</li>
+<li>Add SOURCE.</li>
+<li>Standardize ALT to VCF spec.</li>
+</ol>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-svtools.standardize.std_lumpy">
+<span id="svtools-standardize-std-lumpy-module"></span><h2>svtools.standardize.std_lumpy module<a class="headerlink" href="#module-svtools.standardize.std_lumpy" title="Permalink to this headline">¶</a></h2>
+<p>std_lumpy.py</p>
+<p>Standardize Lumpy records.</p>
+<p># Copyright © 2017 Matthew Stone &lt;<a class="reference external" href="mailto:mstone5&#37;&#52;&#48;mgh&#46;harvard&#46;edu">mstone5<span>&#64;</span>mgh<span>&#46;</span>harvard<span>&#46;</span>edu</a>&gt;
+# Distributed under terms of the MIT license.</p>
+<dl class="class">
+<dt id="svtools.standardize.std_lumpy.LumpyStandardizer">
+<em class="property">class </em><code class="descclassname">svtools.standardize.std_lumpy.</code><code class="descname">LumpyStandardizer</code><span class="sig-paren">(</span><em>raw_vcf</em>, <em>std_vcf</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.standardize.std_lumpy.LumpyStandardizer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#svtools.standardize.standardize.VCFStandardizer" title="svtools.standardize.standardize.VCFStandardizer"><code class="xref py py-class docutils literal"><span class="pre">svtools.standardize.standardize.VCFStandardizer</span></code></a></p>
+<dl class="method">
+<dt id="svtools.standardize.std_lumpy.LumpyStandardizer.standardize_info">
+<code class="descname">standardize_info</code><span class="sig-paren">(</span><em>std_rec</em>, <em>raw_rec</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.standardize.std_lumpy.LumpyStandardizer.standardize_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Standardize Lumpy record.</p>
+<ol class="arabic simple">
+<li>Add CHR2, END</li>
+</ol>
+</dd></dl>
+
+<dl class="method">
+<dt id="svtools.standardize.std_lumpy.LumpyStandardizer.standardize_vcf">
+<code class="descname">standardize_vcf</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#svtools.standardize.std_lumpy.LumpyStandardizer.standardize_vcf" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-svtools.standardize.std_manta">
+<span id="svtools-standardize-std-manta-module"></span><h2>svtools.standardize.std_manta module<a class="headerlink" href="#module-svtools.standardize.std_manta" title="Permalink to this headline">¶</a></h2>
+<p>std_manta.py</p>
+<p>Standardize a Manta record.</p>
+<p>Copyright © 2017 Matthew Stone &lt;<a class="reference external" href="mailto:mstone5&#37;&#52;&#48;mgh&#46;harvard&#46;edu">mstone5<span>&#64;</span>mgh<span>&#46;</span>harvard<span>&#46;</span>edu</a>&gt;
+Distributed under terms of the MIT license.</p>
+<dl class="class">
+<dt id="svtools.standardize.std_manta.MantaStandardizer">
+<em class="property">class </em><code class="descclassname">svtools.standardize.std_manta.</code><code class="descname">MantaStandardizer</code><span class="sig-paren">(</span><em>raw_vcf</em>, <em>std_vcf</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.standardize.std_manta.MantaStandardizer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#svtools.standardize.standardize.VCFStandardizer" title="svtools.standardize.standardize.VCFStandardizer"><code class="xref py py-class docutils literal"><span class="pre">svtools.standardize.standardize.VCFStandardizer</span></code></a></p>
+<dl class="method">
+<dt id="svtools.standardize.std_manta.MantaStandardizer.standardize_alts">
+<code class="descname">standardize_alts</code><span class="sig-paren">(</span><em>std_rec</em>, <em>raw_rec</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.standardize.std_manta.MantaStandardizer.standardize_alts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Standardize ALT.</p>
+<p>When the full ref/alt sequence is specified for deletions or
+insertions, replace with N and &lt;SVTYPE&gt;</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="svtools.standardize.std_manta.MantaStandardizer.standardize_info">
+<code class="descname">standardize_info</code><span class="sig-paren">(</span><em>std_rec</em>, <em>raw_rec</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.standardize.std_manta.MantaStandardizer.standardize_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Standardize Manta record.</p>
+<ol class="arabic simple">
+<li>Replace colons in ID with underscores (otherwise breaks VCF parsing)</li>
+<li>Define CHR2 and END</li>
+<li>Add strandedness</li>
+<li>Add SVLEN</li>
+</ol>
+</dd></dl>
+
+<dl class="method">
+<dt id="svtools.standardize.std_manta.MantaStandardizer.standardize_vcf">
+<code class="descname">standardize_vcf</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#svtools.standardize.std_manta.MantaStandardizer.standardize_vcf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Filter Manta VCF.</p>
+<p>Mated events are not marked with SECONDARY tag; must filter manually.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-svtools.standardize.std_wham">
+<span id="svtools-standardize-std-wham-module"></span><h2>svtools.standardize.std_wham module<a class="headerlink" href="#module-svtools.standardize.std_wham" title="Permalink to this headline">¶</a></h2>
+<p>std_wham.py</p>
+<p>Standardize WHAM record.</p>
+<p>Copyright © 2017 Matthew Stone &lt;<a class="reference external" href="mailto:mstone5&#37;&#52;&#48;mgh&#46;harvard&#46;edu">mstone5<span>&#64;</span>mgh<span>&#46;</span>harvard<span>&#46;</span>edu</a>&gt;
+Distributed under terms of the MIT license.</p>
+<dl class="class">
+<dt id="svtools.standardize.std_wham.WhamStandardizer">
+<em class="property">class </em><code class="descclassname">svtools.standardize.std_wham.</code><code class="descname">WhamStandardizer</code><span class="sig-paren">(</span><em>raw_vcf</em>, <em>std_vcf</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.standardize.std_wham.WhamStandardizer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#svtools.standardize.standardize.VCFStandardizer" title="svtools.standardize.standardize.VCFStandardizer"><code class="xref py py-class docutils literal"><span class="pre">svtools.standardize.standardize.VCFStandardizer</span></code></a></p>
+<dl class="method">
+<dt id="svtools.standardize.std_wham.WhamStandardizer.standardize_info">
+<code class="descname">standardize_info</code><span class="sig-paren">(</span><em>std_rec</em>, <em>raw_rec</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.standardize.std_wham.WhamStandardizer.standardize_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Standardize Wham record.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-svtools.standardize">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-svtools.standardize" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Matthew Stone.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'0.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
