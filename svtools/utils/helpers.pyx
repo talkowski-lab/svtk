@@ -32,6 +32,10 @@ cpdef float reciprocal_overlap(int startA, int endA, int startB, int endB):
 cpdef float overlap_frac(int startA, int endA, int startB, int endB):
     """Calculate fraction of A overlapped by B"""
 
+    # Check for no overlap
+    if startA > endB or startB > endA:
+        return 0
+
     cdef int overlap_start = int_max(startA, startB)
     cdef int overlap_end = int_min(endA, endB)
     
