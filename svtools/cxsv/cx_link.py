@@ -168,7 +168,7 @@ def resolve_cx(cluster):
         cluster_type = 'CANDIDATE'
 
     if cluster_type != 'CANDIDATE':
-        return cluster_type, None
+        return cluster_type, make_unresolved_entry(cluster, cluster_type)
 
     # Assign stranded breakpoints
     if inversions[0].info['STRANDS'] == '++':
@@ -178,7 +178,34 @@ def resolve_cx(cluster):
 
     svtype = classify_complex_inversion(FF, RR, cnvs)
 
-    return svtype, make_bed_entry(FF, RR, cnvs, svtype)
+    if svtype != 'UNK':
+        return svtype, make_bed_entry(FF, RR, cnvs, svtype)
+    else:
+        return svtype, make_unresolved_entry(cluster, svtype)
+
+
+def make_unresolved_entry(cluster, cluster_type):
+    """
+    Parameters
+    ----------
+    cluster : list of pysam.VariantRecord
+    """
+
+    entry = ('{chrom}\t{start}\t{end}\t{ID}\t{svtype}\t{strands}\t'
+             '{{name}}\t{cluster_type}\t{samples}\n')
+    entries = []
+
+    for record in cluster:
+        chrom = record.chrom
+        start, end = record.pos, record.info['END']
+        ID = record.id
+        svtype = record.info['SVTYPE']
+        strands = record.info['STRANDS']
+        samples = ','.join(svu.get_called_samples(record))
+
+        entries.append(entry.format(**locals()))
+
+    return ''.join(entries)
 
 
 def make_bed_entry(FF, RR, cnvs, svtype):
