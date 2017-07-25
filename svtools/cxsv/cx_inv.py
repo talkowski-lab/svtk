@@ -343,7 +343,7 @@ def classify_0_cnv(FF, RR, min_bkpt_cnv_size=300):
         end_dist = RR.info['END'] - FF.info['END']
 
         if start_dist < min_bkpt_cnv_size and end_dist < min_bkpt_cnv_size:
-            return 'SIMPLE'
+            return 'INV'
         elif start_dist >= min_bkpt_cnv_size and end_dist < min_bkpt_cnv_size:
             return 'delINV'
         elif start_dist < min_bkpt_cnv_size and end_dist >= min_bkpt_cnv_size:
@@ -393,7 +393,6 @@ def classify_complex_inversion(FF, RR, cnvs):
         cnvs = filter_multiple_cnvs(FF, RR, cnvs)
 
     if len(cnvs) == 0:
-        #  return 'SIMPLE'
         return classify_0_cnv(FF, RR)
     elif len(cnvs) == 1:
         svtype = classify_1_cnv(FF, RR, cnvs[0])
