@@ -37,7 +37,7 @@ def RdtestParser(bed):
         end = int(data[2])
         name = data[3]
         samples = data[4].split(',')
-        svtype = data[5]
+        svtype = data[5].upper()
 
         yield CNV(chrom, start, end, name, samples, svtype)
 
@@ -75,11 +75,15 @@ def rdtest2vcf(bed, vcf):
             record.samples[sample]['depth'] = 0
 
         # Call any samples with variant as heterozygous
+        called = 0
         for sample in cnv.samples:
-            record.samples[sample]['GT'] = (0, 1)
-            record.samples[sample]['depth'] = 1
+            if sample in vcf.header.samples:
+                called += 1
+                record.samples[sample]['GT'] = (0, 1)
+                record.samples[sample]['depth'] = 1
 
-        vcf.write(record)
+        if called > 0:
+            vcf.write(record)
 
 
 def main(argv):
