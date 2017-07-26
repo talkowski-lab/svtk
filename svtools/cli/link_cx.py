@@ -5,7 +5,7 @@
 # Distributed under terms of the MIT license.
 
 """
-
+Resolve complex SV from inversion/translocation breakpoints and CNV intervals.
 """
 
 import argparse
@@ -16,6 +16,7 @@ from svtools.cxsv import link_cx, resolve_cx
 def main(argv):
     parser = argparse.ArgumentParser(
         description=__doc__,
+        prog='svtools link-cx',
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('vcf', help='Breakpoint VCFs.')
     parser.add_argument('bed', type=argparse.FileType('w'),
