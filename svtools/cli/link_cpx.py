@@ -10,19 +10,19 @@ Resolve complex SV from inversion/translocation breakpoints and CNV intervals.
 
 import argparse
 import sys
-from svtools.cxsv import link_cx, resolve_cx
+from svtools.cxsv import link_cpx, resolve_cpx
 
 
 def main(argv):
     parser = argparse.ArgumentParser(
         description=__doc__,
-        prog='svtools link-cx',
+        prog='svtools link-cpx',
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('vcf', help='Breakpoint VCFs.')
     parser.add_argument('bed', type=argparse.FileType('w'),
-                        help='Resolved cx variants.')
+                        help='Resolved complex variants.')
     parser.add_argument('unresolved', type=argparse.FileType('w'),
-                        help='Unresolved cx breakpoints.')
+                        help='Unresolved complex breakpoints.')
     parser.add_argument('-p', '--prefix', default='CPX_',
                         help='Variant prefix [CPX_]')
 
@@ -35,12 +35,12 @@ def main(argv):
                         'delINVdup dupINVdel DUP5/INS3 DUP3/INS5 COMPLEX_INS')
     resolved_classes = resolved_classes.split()
 
-    clusters = link_cx(args.vcf)
+    clusters = link_cpx(args.vcf)
     for i, cluster in enumerate(clusters):
-        cx_type, entry = resolve_cx(cluster)
+        cpx_type, entry = resolve_cpx(cluster)
         entry = entry.format(name=args.prefix + str(i + 1))
 
-        if cx_type in resolved_classes:
+        if cpx_type in resolved_classes:
             args.bed.write(entry)
         else:
             args.unresolved.write(entry)

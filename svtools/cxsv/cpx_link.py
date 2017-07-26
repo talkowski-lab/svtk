@@ -16,7 +16,7 @@ import pysam
 import pybedtools as pbt
 import natsort
 import svtools.utils as svu
-from .cx_inv import classify_complex_inversion
+from .cpx_inv import classify_complex_inversion
 
 
 def samples_overlap(recA, recB, upper_thresh=0.8, lower_thresh=0.5):
@@ -120,7 +120,7 @@ def vcf2bedtool(vcfpath):
     return pbt.BedTool(_converter()).saveas()
 
 
-def resolve_cx(cluster):
+def resolve_cpx(cluster):
     """
     Resolve complex variant structure from a cluster of breakpoints.
 
@@ -253,7 +253,7 @@ def make_bed_entry(FF, RR, cnvs, svtype):
     return entry
 
 
-def link_cx(vcfpath, bkpt_window=100):
+def link_cpx(vcfpath, bkpt_window=100):
     """
     Parameters
     ----------
