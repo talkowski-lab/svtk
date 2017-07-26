@@ -1,5 +1,11 @@
+#cython: language_level=3
 from pysam.libcalignedsegment cimport AlignedSegment
 from pysam.libcalignmentfile cimport AlignmentFile
+
+cdef inline int int_max(int a, int b): return a if a >= b else b
+cdef inline int int_min(int a, int b): return a if a <= b else b
+cdef inline float float_max(float a, float b): return a if a >= b else b
+cdef inline float float_min(float a, float b): return a if a <= b else b
 
 cpdef bint is_excluded(AlignedSegment read):
     cdef bint exclude = (read.is_unmapped or
@@ -12,52 +18,35 @@ cpdef bint is_excluded(AlignedSegment read):
 cpdef bint is_soft_clipped(AlignedSegment read):
     return (read.cigartuples[0][0] == 4) ^ (read.cigartuples[-1][0] == 4)
 
-def collect_splits(bam):
-    cdef AlignedSegment read
+cpdef float reciprocal_overlap(int startA, int endA, int startB, int endB):
+    """Calculate fraction of reciprocal overlap between two intervals"""
 
-    for read in bam:
-        if is_excluded(read):
-            continue
-        if is_soft_clipped(read):
-            yield read
+    cdef float fracA = overlap_frac(startA, endA, startB, endB)
+    cdef float fracB = overlap_frac(startB, endB, startA, endA)
 
-cpdef int get_clip_direction(AlignedSegment read):
-    """
-    Calculate split direction based on CIGAR ops - (LEFT, RIGHT, MIDDLE)
+    cdef float min_frac = float_min(fracA, fracB)
+    cdef float recip_overlap = float_max(min_frac, 0)
 
-    Parameters
-    ----------
-    read : pysam.AlignedSegment
+    return recip_overlap
 
-    Returns
-    -------
-    direction : str [RIGHT,LEFT,MIDDLE, NO_CLIP]
-        Direction of soft clip
-    """
+cpdef float overlap_frac(int startA, int endA, int startB, int endB):
+    """Calculate fraction of A overlapped by B"""
 
-    cdef int first_op = read.cigartuples[0][0]
-    cdef int last_op = read.cigartuples[-1][0]
+    # Check for no overlap
+    if startA > endB or startB > endA:
+        return 0
 
-    if first_op == 4 and last_op == 4:
-        return 0  # 'MIDDLE'
-    elif first_op == 4:
-        return 1  # 'LEFT'
-    elif last_op == 4:
-        return 2  # 'RIGHT'
+    cdef int overlap_start = int_max(startA, startB)
+    cdef int overlap_end = int_min(endA, endB)
+    
+    cdef int overlap_size = overlap_end - overlap_start
+    cdef int sizeA = endA - startA
+   
+    cdef float frac
+    if sizeA > 0:
+        frac = overlap_size / sizeA
     else:
-        return 3  # 'NO_CLIP'
+        frac = 0
 
-cpdef int get_clip_position(AlignedSegment read, int direction):
-    cdef int pos = read.pos
+    return frac
 
-    cdef int op
-    cdef int length
-
-    cdef int LEFT = 1
-
-    if direction == LEFT:
-        for op, length in read.cigartuples:
-            if op == 0:
-                pos += length
-
-    return pos
