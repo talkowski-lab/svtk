@@ -59,7 +59,7 @@ def samples_overlap(recA, recB, upper_thresh=0.8, lower_thresh=0.5):
     return min_frac >= lower_thresh and max_frac >= upper_thresh
 
 
-def extract_breakpoints(vcfpath, IDs):
+def extract_breakpoints(vcfpath, bkpt_idxs):
     """
     Extract all VCF records in list of IDs
     (Assumes VCF is sorted by variant ID)
@@ -68,8 +68,8 @@ def extract_breakpoints(vcfpath, IDs):
     ----------
     vcfpath : str
         Path to VCF
-    IDs : list of str
-        Variant IDs to extract
+    bkpt_idxs : dict of {str : int}
+        Mapping of variant IDs to array index
 
     Returns
     -------
@@ -77,24 +77,13 @@ def extract_breakpoints(vcfpath, IDs):
     """
 
     vcf = pysam.VariantFile(vcfpath)
-    n_bkpts = len(IDs)
+    n_bkpts = len(bkpt_idxs)
     bkpts = np.empty(n_bkpts, dtype=object)
-    idx = 0
 
     for record in vcf:
-        if record.id in IDs:
+        idx = bkpt_idxs.get(record.id)
+        if idx is not None:
             bkpts[idx] = record
-            idx += 1
-            if idx == n_bkpts:
-                break
-
-    # TODO: fix upstream VCF output so input IDs are sorted
-    #  for record in vcf:
-    #      if record.id == IDs[idx]:
-    #          bkpts[idx] = record
-    #          idx += 1
-    #          if idx == n_bkpts:
-    #              break
 
     return bkpts
 
@@ -290,16 +279,16 @@ def link_cx(vcfpath, bkpt_window=100):
     linked_IDs = np.array(linked_IDs)
 
     # Map variant IDs to indices
-    link_key = {ID: i for i, ID in enumerate(linked_IDs)}
-    keyed_links = np.array([(link_key[a], link_key[b]) for a, b in links])
+    bkpt_idxs = {ID: i for i, ID in enumerate(linked_IDs)}
+    indexed_links = np.array([(bkpt_idxs[a], bkpt_idxs[b]) for a, b in links])
 
     # Extract VariantRecords corresponding to breakpoints
     n_bkpts = len(linked_IDs)
-    bkpts = extract_breakpoints(vcfpath, linked_IDs)
+    bkpts = extract_breakpoints(vcfpath, bkpt_idxs)
 
     # Build sparse graph from links
     G = sps.eye(n_bkpts, dtype=np.uint16, format='lil')
-    for i, j in keyed_links:
+    for i, j in indexed_links:
         if samples_overlap(bkpts[i], bkpts[j]):
             G[i, j] = 1
 
