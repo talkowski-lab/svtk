@@ -18,8 +18,8 @@ SVTools: Utilities for manipulating structural variation
 usage: svtools [-h] <subcommand> [options]
 
 [ Preprocessing ]
-    standardize   Convert SV calls to a standardized format.
-    rdtest2vcf    Convert an RdTest-formatted bed to a standardized VCF.
+    standardize    Convert SV calls to a standardized format.
+    rdtest2vcf     Convert an RdTest-formatted bed to a standardized VCF.
 
 [ Algorithm integration ]
     vcfcluster     Cluster SV calls from a list of VCFs. (Generally PE/SR.)
@@ -32,16 +32,14 @@ usage: svtools [-h] <subcommand> [options]
     bincov         Calculate normalized genome-wide depth of coverage.
     rdtest*        Calculate comparative coverage statistics at CNV sites.
 
-[ Split-read analysis ]
-    sr-count*      Pile up clipped read counts genome-wide.
+[ PE/SR analysis ]
+    collect-pesr   Count clipped reads and extract discordant pairs genomewide.
     sr-test        Calculate enrichment of clipped reads at SV breakpoints.
+    pe-test        Calculate enrichment of discordant pairs at SV breakpoints.
 
 [ Variant analysis ]
-    link-cx        Resolve complex variants from VCF of breakpoints.
+    link-cpx       Resolve complex variants from VCF of breakpoints.
     annotate*
 
 * Not yet implemented
-
-optional arguments:
-  -h, --help  show this help message and exit
 ```

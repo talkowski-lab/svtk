@@ -365,6 +365,7 @@ class SRTest():
 def main(argv):
     parser = argparse.ArgumentParser(
         description=__doc__,
+        prog='svtools sr-test',
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('variants',
                         help='VCF of variant calls. Standardized to include '
