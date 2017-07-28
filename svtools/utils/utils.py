@@ -108,6 +108,7 @@ def get_called_samples(record, include_null=False):
 
 
 # TODO: handle other end of interchromosomal BND
+# TODO: check if record is CPX and make entry per complex interval
 def vcf2bedtool(vcfpath):
     """
     Wrap VCF as a bedtool. Necessary as pybedtools does not support SV in VCF.
