@@ -16,7 +16,8 @@ cpdef bint is_excluded(AlignedSegment read):
     return exclude
 
 cpdef bint is_soft_clipped(AlignedSegment read):
-    return (read.cigartuples[0][0] == 4) ^ (read.cigartuples[-1][0] == 4)
+    return (((read.cigartuples[0][0] == 4) & (read.cigartuples[-1][0] == 0)) |
+            ((read.cigartuples[-1][0] == 4) & (read.cigartuples[0][0] == 0)))
 
 cpdef float reciprocal_overlap(int startA, int endA, int startB, int endB):
     """Calculate fraction of reciprocal overlap between two intervals"""
