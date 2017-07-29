@@ -9,6 +9,7 @@ Annotate a VCF of structural variants with a list of genomic elements.
 """
 
 import argparse
+import pandas as pd
 import pybedtools as pbt
 import svtools.utils as svu
 
@@ -75,21 +76,28 @@ def annotate_gencode_elements(sv, gencode):
     # Check intersection with gene boundaries
     sect = sv.intersect(gencode, wa=True, wb=True)
 
-    for hit in sect.intervals:
-        variant = hit.fields[:N_BED_FIELDS]
-        variant_ID = variant[3]
-        svtype = variant[4]
+    def _annotate():
+        for hit in sect.intervals:
+            variant = hit.fields[:N_BED_FIELDS]
+            variant_ID = variant[3]
+            svtype = variant[4]
 
-        # Gencode data
-        element = hit.fields[N_BED_FIELDS:]
-        gene_ID = element[3]
-        element_type = element[7]
+            # Gencode data
+            element = hit.fields[N_BED_FIELDS:]
+            gene_ID = element[3]
+            element_type = element[7]
 
-        hit_type = intersection_type(variant, element)
-        disrupt_type = disruption_type(hit_type, svtype)
+            hit_type = intersection_type(variant, element)
+            disrupt_type = disruption_type(hit_type, svtype)
 
-        yield (variant_ID, svtype, gene_ID, element_type, hit_type,
-               disrupt_type)
+            yield (variant_ID, svtype, gene_ID, element_type, hit_type,
+                   disrupt_type)
+
+    columns = 'name svtype gene_id element_type hit_type disrupt_type'
+    columns = columns.split()
+    hits = pd.DataFrame.from_records(_annotate(), columns=columns)
+
+    return hits
 
 
 def main():
@@ -105,13 +113,7 @@ def main():
     gencode = pbt.BedTool(args.gencode_annotation)
 
     annotations = annotate_gencode_elements(sv, gencode)
-
-    header = 'name svtype gene_id element_type hit_type disrupt_type'.split()
-    args.fout.write('\t'.join(header) + '\n')
-
-    for hit in annotations:
-        entry = '\t'.join(hit) + '\n'
-        args.fout.write(entry)
+    annotations.to_csv(args.fout, sep='\t', index=False)
 
 
 if __name__ == '__main__':
