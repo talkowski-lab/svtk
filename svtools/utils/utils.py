@@ -109,14 +109,13 @@ def get_called_samples(record, include_null=False):
 
 # TODO: handle other end of interchromosomal BND
 # TODO: check if record is CPX and make entry per complex interval
-def vcf2bedtool(vcfpath):
+def vcf2bedtool(vcf):
     """
     Wrap VCF as a bedtool. Necessary as pybedtools does not support SV in VCF.
 
     Parameters
     ----------
-    vcfpath : str
-        File path to VCF
+    vcf : str or pysam.VariantFile
 
     Returns
     -------
@@ -125,7 +124,8 @@ def vcf2bedtool(vcfpath):
         Included columns: chrom, start, end, name, svtype, strands
     """
 
-    vcf = pysam.VariantFile(vcfpath)
+    if not isinstance(vcf, pysam.VariantFile):
+        vcf = pysam.VariantFile(vcf)
 
     # Convert each record in vcf to bed entry
     def _converter():

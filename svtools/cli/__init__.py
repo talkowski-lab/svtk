@@ -8,3 +8,4 @@ from .pe_test import main as pe_test
 from .rdtest2vcf import main as rdtest2vcf
 from .link_cpx import main as link_cpx
 from .collect_pesr import main as collect_pesr
+from .annotate import main as annotate

@@ -31,8 +31,7 @@ def annotate_nearest_tss(sv, gencode):
 
     nearest_tss = nearest_tss[[3, 4, 9]].copy()
     nearest_tss.columns = 'name svtype gene_id'.split()
-    nearest_tss['element_hit'] = '.'
-    nearest_tss['effect'] = 'nearest_TSS'
+    nearest_tss['effect'] = 'NEAREST_TSS'
 
     return nearest_tss
 

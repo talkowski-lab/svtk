@@ -42,7 +42,7 @@ def classify_dup(disrupt_dict):
         elif 'SPAN' in disrupt_dict['gene']:
             return 'COPY_GAIN'
         else:
-            return 'no_effect'
+            return 'DUP_PARTIAL'
 
     if 'UTR' in elements:
         if 'BOTH-INSIDE' in disrupt_dict['UTR']:
@@ -52,6 +52,8 @@ def classify_dup(disrupt_dict):
         if 'BOTH-INSIDE' in disrupt_dict['gene']:
             return 'INTRONIC'
         else:
+            # Hit gene boundary but not transcript/exon, likely due to
+            # filtering to canonical transcript
             return 'GENE_OTHER'
 
     if 'promoter' in elements:
@@ -76,7 +78,7 @@ def classify_inv(disrupt_dict):
 
         # inversion spanning gene -> no effect
         else:
-            return 'no_effect'
+            return 'INV_SPAN'
 
     if 'UTR' in elements:
         if ('BOTH-INSIDE' in disrupt_dict['UTR'] or
@@ -87,6 +89,8 @@ def classify_inv(disrupt_dict):
         if 'BOTH-INSIDE' in disrupt_dict['gene']:
             return 'INTRONIC'
         else:
+            # Hit gene boundary but not transcript/exon, likely due to
+            # filtering to canonical transcript
             return 'GENE_OTHER'
 
     if 'promoter' in elements:
@@ -152,6 +156,9 @@ def classify_effect(hits):
         return classify_disrupt(element_hit, svtype)
 
     effects['effect'] = effects.apply(_apply_classify, axis=1)
+
+    # only necessary when testing
+    effects = effects.drop('element_hit', axis=1)
 
     return effects
 
