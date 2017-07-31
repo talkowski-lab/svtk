@@ -8,10 +8,7 @@
 Annotate a VCF of structural variants with a list of genomic elements.
 """
 
-import argparse
 import pandas as pd
-import pybedtools as pbt
-import svtools.utils as svu
 
 
 def split_gencode_fields(field_str):
@@ -113,23 +110,3 @@ def annotate_intersection(sv, elements, filetype='gtf'):
     hits = pd.DataFrame.from_records(_annotate(), columns=columns)
 
     return hits
-
-
-def main():
-    parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('vcf', help='Structural variants.')
-    parser.add_argument('gencode_annotation', help='Gencode annotation bed.')
-    parser.add_argument('fout', type=argparse.FileType('w'))
-    args = parser.parse_args()
-
-    sv = svu.vcf2bedtool(args.vcf)
-    gencode = pbt.BedTool(args.gencode_annotation)
-
-    annotations = annotate_intersection(sv, gencode)
-    annotations.to_csv(args.fout, sep='\t', index=False)
-
-
-if __name__ == '__main__':
-    main()

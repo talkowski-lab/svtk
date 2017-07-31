@@ -9,7 +9,7 @@
 
 import pandas as pd
 import pysam
-from .gencode_elements import annotate_intersection
+from .annotate_intersection import annotate_intersection
 from .classify_effect import classify_effect
 from .nearest_tss import annotate_nearest_tss
 import svtools.utils as svu
