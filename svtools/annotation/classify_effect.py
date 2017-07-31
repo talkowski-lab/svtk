@@ -5,15 +5,14 @@
 # Distributed under terms of the MIT license.
 
 """
-
+Classify predicted genic effect of SV.
 """
-
-import argparse
-import pandas as pd
 
 
 def classify_del(disrupt_dict):
-    """All deletion hits are DISRUPTING"""
+    """
+    All deletion hits are DISRUPTING
+    """
     regions = list(disrupt_dict.keys())
     if 'exon' in regions:
         return 'LOF'
@@ -28,6 +27,9 @@ def classify_del(disrupt_dict):
 
 
 def classify_dup(disrupt_dict):
+    """
+    Classify genic effect of a duplication.
+    """
     elements = disrupt_dict.keys()
     if 'exon' in elements:
         # duplication internal to exon
@@ -64,6 +66,12 @@ def classify_dup(disrupt_dict):
 
 
 def classify_inv(disrupt_dict):
+    """
+    Classify genic effect of a inversion.
+
+    Inversions are disruptive if one or both breakpoints falls within a genic
+    element.
+    """
     elements = disrupt_dict.keys()
     if 'exon' in elements:
         # breakpoint disrupts exon -> LoF
@@ -101,9 +109,15 @@ def classify_inv(disrupt_dict):
     return 'no_effect'
 
 
-def classify_ctx(disrupt_dict):
+def classify_bnd(disrupt_dict):
+    """
+    Classify genic effect of a breakend.
+
+    An interchromosomal breakpoint falling within a gene is LOF.
+    """
+
     elements = disrupt_dict.keys()
-    # BND hitting any part of gene is LOF
+
     if 'exon' in elements:
         return 'LOF'
     if 'gene' in elements:
@@ -112,6 +126,7 @@ def classify_ctx(disrupt_dict):
         return 'UTR'
     if 'promoter' in elements:
         return 'promoter'
+
     return 'no_effect'
 
 
@@ -138,12 +153,12 @@ def classify_disrupt(disrupt_dict, svtype):
     if svtype == 'INV':
         return classify_inv(disrupt_dict)
     if svtype == 'BND':
-        return classify_ctx(disrupt_dict)
+        return classify_bnd(disrupt_dict)
 
 
 def classify_effect(hits):
     hits['element_hit'] = hits['element_type'] + '__' + hits['hit_type']
-    effects = hits.groupby('name svtype gene_id'.split())['element_hit']\
+    effects = hits.groupby('name svtype gene_name'.split())['element_hit']\
                   .agg(lambda s: ','.join(sorted(set(s))))\
                   .reset_index()
 
@@ -161,21 +176,3 @@ def classify_effect(hits):
     effects = effects.drop('element_hit', axis=1)
 
     return effects
-
-
-def main():
-    parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('gencode_hits',
-                        help='Overlap with gencode annotations')
-    parser.add_argument('fout', type=argparse.FileType('w'))
-    args = parser.parse_args()
-
-    hits = pd.read_table(args.gencode_hits)
-    effects = classify_effect(hits)
-    effects.to_csv(args.fout, index=False, sep='\t')
-
-
-if __name__ == '__main__':
-    main()
