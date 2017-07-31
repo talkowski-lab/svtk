@@ -9,6 +9,8 @@ Helper functions for svtools.
 """
 
 from collections import deque
+import pysam
+import pybedtools as pbt
 
 
 NULL_GT = [(0, 0), (None, None), (0, ), (None, )]
@@ -105,10 +107,35 @@ def get_called_samples(record, include_null=False):
     return sorted(samples)
 
 
-class Pedigree:
-    def __init__(self, famfile):
-        for line in famfile:
-            data = line.strip().split()
+# TODO: handle other end of interchromosomal BND
+# TODO: check if record is CPX and make entry per complex interval
+def vcf2bedtool(vcf):
+    """
+    Wrap VCF as a bedtool. Necessary as pybedtools does not support SV in VCF.
 
-            fam, ID, father, mother, sex, pheno = data
+    Parameters
+    ----------
+    vcf : str or pysam.VariantFile
 
+    Returns
+    -------
+    bt : pybedtools.BedTool
+        SV converted to Bedtool. Ends of BND records are assigned as pos + 1.
+        Included columns: chrom, start, end, name, svtype, strands
+    """
+
+    if not isinstance(vcf, pysam.VariantFile):
+        vcf = pysam.VariantFile(vcf)
+
+    # Convert each record in vcf to bed entry
+    def _converter():
+        bed = '{0}\t{1}\t{2}\t{3}\t{4}\t{5}\n'
+        for record in vcf:
+            if record.info['SVTYPE'] == 'BND':
+                end = record.pos + 1
+            else:
+                end = record.info['END']
+            yield bed.format(record.chrom, record.pos, end, record.id,
+                             record.info['SVTYPE'], record.info['STRANDS'])
+
+    return pbt.BedTool(_converter()).saveas()

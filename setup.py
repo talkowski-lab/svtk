@@ -8,7 +8,7 @@
 
 """
 
-from setuptools import setup
+from setuptools import setup, find_packages
 from Cython.Build import cythonize
 import pysam
 
@@ -18,7 +18,7 @@ setup(
     description='Tools for manipulating structural variant files',
     author='Matthew Stone',
     author_email='mstone5@mgh.harvard.edu',
-    packages=['svtools'],
+    packages=find_packages(),
     package_data={'svtools': ['data/standard_template.vcf',
                               'data/vcfcluster_template.vcf']},
     scripts=['scripts/svtools'],

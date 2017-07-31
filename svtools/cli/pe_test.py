@@ -117,7 +117,6 @@ class PEBreakpoint(pesr.Breakpoint):
         self.stats = pd.DataFrame([[0, 0, 0]], columns=columns)
 
 
-
 class PETest:
     def __init__(self, variants, discfile,
                  window_in=50, window_out=500, n_background=160):
@@ -172,6 +171,7 @@ class PETest:
 def main(argv):
     parser = argparse.ArgumentParser(
         description=__doc__,
+        prog='svtools pe-test',
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('variants', help='Variants (default=VCF).')
     parser.add_argument('disc', help='Table of discordant pair coordinates.')

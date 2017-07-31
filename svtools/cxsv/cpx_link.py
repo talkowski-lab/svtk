@@ -13,7 +13,6 @@ from collections import deque
 import numpy as np
 import scipy.sparse as sps
 import pysam
-import pybedtools as pbt
 import natsort
 import svtools.utils as svu
 from .cpx_inv import classify_complex_inversion
@@ -86,38 +85,6 @@ def extract_breakpoints(vcfpath, bkpt_idxs):
             bkpts[idx] = record
 
     return bkpts
-
-
-def vcf2bedtool(vcfpath):
-    """
-    Wrap VCF as a bedtool. Necessary as pybedtools does not support SV in VCF.
-
-    Parameters
-    ----------
-    vcfpath : str
-        File path to VCF
-
-    Returns
-    -------
-    bt : pybedtools.BedTool
-        SV converted to Bedtool. Ends of BND records are assigned as pos + 1.
-        Included columns: chrom, start, end, name, svtype, strands
-    """
-
-    vcf = pysam.VariantFile(vcfpath)
-
-    # Convert each record in vcf to bed entry
-    def _converter():
-        bed = '{0}\t{1}\t{2}\t{3}\t{4}\t{5}\n'
-        for record in vcf:
-            if record.info['SVTYPE'] == 'BND':
-                end = record.pos + 1
-            else:
-                end = record.info['END']
-            yield bed.format(record.chrom, record.pos, end, record.id,
-                             record.info['SVTYPE'], record.info['STRANDS'])
-
-    return pbt.BedTool(_converter()).saveas()
 
 
 def resolve_cpx(cluster):
@@ -261,7 +228,7 @@ def link_cpx(vcfpath, bkpt_window=100):
         Path to breakpoint VCF
     """
 
-    bt = vcf2bedtool(vcfpath)
+    bt = svu.vcf2bedtool(vcfpath)
 
     # Identify breakpoints which overlap within specified window
     overlap = bt.window(bt, w=bkpt_window).saveas()
