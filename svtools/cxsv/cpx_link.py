@@ -58,7 +58,7 @@ def samples_overlap(recA, recB, upper_thresh=0.8, lower_thresh=0.5):
     return min_frac >= lower_thresh and max_frac >= upper_thresh
 
 
-def extract_breakpoints(vcfpath, bkpt_idxs):
+def extract_breakpoints(vcf, bkpt_idxs):
     """
     Extract all VCF records in list of IDs
     (Assumes VCF is sorted by variant ID)
@@ -75,7 +75,7 @@ def extract_breakpoints(vcfpath, bkpt_idxs):
     bkpts : list of pysam.VariantRecord
     """
 
-    vcf = pysam.VariantFile(vcfpath)
+    #  vcf = pysam.VariantFile(vcfpath)
     n_bkpts = len(bkpt_idxs)
     bkpts = np.empty(n_bkpts, dtype=object)
 
@@ -133,17 +133,19 @@ class ComplexSV:
         self.make_record()
 
     def resolve(self):
-        self._set_cluster_type()
+        self.set_cluster_type()
 
         if self.cluster_type == 'CANDIDATE_INVERSION':
             self.resolve_inversion()
         elif self.cluster_type == 'CANDIDATE_TRANSLOCATION':
-            pass
+            self.set_unresolved()
         else:
-            self.svtype = 'UNR'
-            self.cpx_type = self.cluster_type
+            self.set_unresolved()
 
-        pass
+    def set_unresolved(self):
+        self.svtype = 'UNR'
+        self.cpx_type = self.cluster_type
+        self.cpx_intervals = []
 
     def resolve_inversion(self):
         if self.inversions[0].info['STRANDS'] == '++':
@@ -152,6 +154,7 @@ class ComplexSV:
             RR, FF = self.inversions
 
         self.cpx_type = classify_complex_inversion(FF, RR, self.cnvs)
+
         if self.cpx_type == 'INV':
             self.svtype = 'INV'
         elif self.cpx_type == 'UNK':
@@ -161,7 +164,14 @@ class ComplexSV:
         else:
             self.svtype = 'CPX'
 
-    def _set_cluster_type(self):
+        # Overall variant start/end
+        self.start = min(FF.pos, RR.pos)
+        self.end = max(FF.info['END'], RR.info['END'])
+
+        self.cpx_intervals = make_inversion_intervals(FF, RR, self.cnvs,
+                                                      self.cpx_type)
+
+    def set_cluster_type(self):
         # Restrict to double-ended inversion events with appropriate
         # strand pairing
         if len(self.inversions) == 0 and len(self.tlocs) == 0:
@@ -186,21 +196,24 @@ class ComplexSV:
             self.cluster_type = 'ERROR_UNCLASSIFIED'
 
     def make_record(self):
-        self.vcf_record = cluster[0].copy()
+        self.vcf_record = self.records[0].copy()
         called_samples = set(svu.get_called_samples(self.vcf_record))
-    
+
         # Take union of called samples
-        for record in cluster[1:]:
+        for record in itertools.islice(self.records, 1, None):
             cs = svu.get_called_samples(record)
             for sample in cs:
                 if sample not in called_samples:
-                    new_record.samples[sample]['GT'] = (0, 1)
+                    self.vcf_record.samples[sample]['GT'] = (0, 1)
                     called_samples.add(sample)
-    
-        new_record.alts = ('<{0}>'.format(svtype), )
-        new_record.info['SVTYPE'] = svtype
-    
-        new_record.info['CPX_TYPE'] = cpx_type
+
+        self.vcf_record.alts = ('<{0}>'.format(self.svtype), )
+        self.vcf_record.info['SVTYPE'] = self.svtype
+
+        self.vcf_record.info['CPX_TYPE'] = self.cpx_type
+
+        if len(self.cpx_intervals) > 0:
+            self.vcf_record.info['CPX_INTERVALS'] = self.cpx_intervals
 
     #  if cluster_type != 'CANDIDATE':
         #  return cluster_type, make_unresolved_entry(cluster, cluster_type)
@@ -213,74 +226,42 @@ class ComplexSV:
         #  return svtype, make_unresolved_entry(cluster, svtype)
 
 
-
-
-def make_vcf_record(cluster, svtype, cpx_type):
-    """
-    """
-
-
-
-
-
-
-def make_bed_entry(FF, RR, cnvs, svtype):
-    start = min(FF.pos, RR.pos)
-    end = max(FF.info['END'], RR.info['END'])
-    chrom = FF.chrom
-
-    FF_samples = svu.get_called_samples(FF)
-    RR_samples = svu.get_called_samples(RR)
-    samples = sorted(set().union(FF_samples, RR_samples))
-
-    FF_name = FF.id
-    RR_name = RR.id
-    if len(cnvs) == 0:
-        CNV_names = '.'
-    else:
-        CNV_names = ','.join([cnv.id for cnv in cnvs])
-
+def make_inversion_intervals(FF, RR, cnvs, cpx_type):
     intervals = []
+    chrom = FF.chrom
     inv_start = RR.pos
     inv_end = FF.info['END']
     intervals = ['INV_{chrom}:{inv_start}-{inv_end}'.format(**locals())]
 
     interval = '{cnv_type}_{chrom}:{cnv_start}-{cnv_end}'
-    if svtype.startswith('del'):
+    if cpx_type.startswith('del'):
         cnv_start = FF.pos
         cnv_end = RR.pos
         cnv_type = 'DEL5'
         intervals.append(interval.format(**locals()))
 
-    if svtype.endswith('del'):
+    if cpx_type.endswith('del'):
         cnv_start = FF.info['END']
         cnv_end = RR.info['END']
         cnv_type = 'DEL3'
         intervals.append(interval.format(**locals()))
 
-    if svtype.startswith('dup'):
+    if cpx_type.startswith('dup'):
         cnv_start = RR.pos
         cnv_end = FF.pos
         cnv_type = 'DUP5'
         intervals.append(interval.format(**locals()))
 
-    if svtype.endswith('dup'):
+    if cpx_type.endswith('dup'):
         cnv_start = RR.info['END']
         cnv_end = FF.info['END']
         cnv_type = 'DUP3'
         intervals.append(interval.format(**locals()))
 
-    intervals = ';'.join(intervals)
-    samples = ','.join(samples)
-
-    entry = ('{chrom}\t{start}\t{end}\t{{name}}\t{svtype}\t'
-             '{intervals}\t{FF_name}\t{RR_name}\t{CNV_names}\t{samples}\n')
-    entry = entry.format(**locals())
-
-    return entry
+    return intervals
 
 
-def link_cpx(vcfpath, bkpt_window=100):
+def link_cpx(vcf, bkpt_window=100):
     """
     Parameters
     ----------
@@ -288,7 +269,7 @@ def link_cpx(vcfpath, bkpt_window=100):
         Path to breakpoint VCF
     """
 
-    bt = svu.vcf2bedtool(vcfpath)
+    bt = svu.vcf2bedtool(vcf.filename)
 
     # Identify breakpoints which overlap within specified window
     overlap = bt.window(bt, w=bkpt_window).saveas()
@@ -311,7 +292,8 @@ def link_cpx(vcfpath, bkpt_window=100):
 
     # Extract VariantRecords corresponding to breakpoints
     n_bkpts = len(linked_IDs)
-    bkpts = extract_breakpoints(vcfpath, bkpt_idxs)
+    vcf.reset()
+    bkpts = extract_breakpoints(vcf, bkpt_idxs)
 
     # Build sparse graph from links
     G = sps.eye(n_bkpts, dtype=np.uint16, format='lil')

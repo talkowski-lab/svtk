@@ -10,16 +10,18 @@ Resolve complex SV from inversion/translocation breakpoints and CNV intervals.
 
 import argparse
 import sys
-from svtools.cxsv import link_cpx, resolve_cpx
+import pysam
+from svtools.cxsv import link_cpx, ComplexSV
 
 
-GENCODE_INFO = [
+CPX_INFO = [
     '##ALT=<ID=CTX,Description="Reciprocal chromosomal translocation">',
     '##ALT=<ID=CPX,Description="Complex SV">',
     '##ALT=<ID=INS,Description="Insertion">',
     '##ALT=<ID=UNR,Description="Unresolved breakend or complex SV">',
     '##INFO=<ID=CPX_TYPE,Number=1,Type=String,Description="Class of complex variant.">',
     '##INFO=<ID=CPX_INTERVALS,Number=.,Type=String,Description="Genomic intervals constituting complex variant.">',
+    '##INFO=<ID=EVENT,Number=1,Type=String,Description="ID of event associated to breakend">'
 ]
 
 
@@ -47,8 +49,7 @@ def main(argv):
         prog='svtools link-cpx',
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('vcf', help='Breakpoint VCFs.')
-    parser.add_argument('--vcf-fout')
-    parser.add_argument('bed', type=argparse.FileType('w'),
+    parser.add_argument('fout', type=argparse.FileType('w'),
                         help='Resolved complex variants.')
     parser.add_argument('unresolved', type=argparse.FileType('w'),
                         help='Unresolved complex breakpoints.')
@@ -60,19 +61,30 @@ def main(argv):
         sys.exit(1)
     args = parser.parse_args(argv)
 
-    resolved_classes = ('INV delINV INVdel delINVdel dupINV INVdup dupINVdup '
-                        'delINVdup dupINVdel DUP5/INS3 DUP3/INS5 COMPLEX_INS')
-    resolved_classes = resolved_classes.split()
+    vcf = pysam.VariantFile(args.vcf)
+    for line in CPX_INFO:
+        vcf.header.add_line(line)
 
-    clusters = link_cpx(args.vcf)
-    for i, cluster in enumerate(clusters):
-        cpx_type, entry = resolve_cpx(cluster)
-        entry = entry.format(name=args.prefix + str(i + 1))
+    resolved_f = pysam.VariantFile(args.fout, 'w', header=vcf.header)
+    unresolved_f = pysam.VariantFile(args.unresolved, 'w', header=vcf.header)
 
-        if cpx_type in resolved_classes:
-            args.bed.write(entry)
+    clusters = link_cpx(vcf)
+
+    resolved_idx = unresolved_idx = 1
+
+    for cluster in clusters:
+        cpx = ComplexSV(cluster)
+
+        if cpx.svtype == 'UNR':
+            for i, record in enumerate(cpx.records):
+                record.info['EVENT'] = 'UNRESOLVED_{0}'.format(unresolved_idx)
+                unresolved_f.write(record)
+            unresolved_idx += 1
+
         else:
-            args.unresolved.write(entry)
+            cpx.vcf_record.id = args.prefix + str(resolved_idx)
+            resolved_f.write(cpx.vcf_record)
+            resolved_idx += 1
 
 
 if __name__ == '__main__':
