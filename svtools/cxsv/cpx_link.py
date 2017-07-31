@@ -87,59 +87,6 @@ def extract_breakpoints(vcfpath, bkpt_idxs):
     return bkpts
 
 
-def resolve_cpx(cluster):
-    """
-    Resolve complex variant structure from a cluster of breakpoints.
-
-    Parameters
-    ----------
-    cluster : list of pysam.VariantRecord
-
-    Returns
-    -------
-    variant : pysam.VariantRecord
-    """
-
-    inversions = [rec for rec in cluster if rec.info['SVTYPE'] == 'INV']
-    tlocs = [rec for rec in cluster if rec.info['SVTYPE'] == 'BND']
-
-    cnvtypes = 'DEL DUP'.split()
-    cnvs = [rec for rec in cluster if rec.info['SVTYPE'] in cnvtypes]
-
-    # Restrict to double-ended inversion events with appropriate strand pairing
-    if len(inversions) == 0:
-        if len(tlocs) > 0:
-            cluster_type = 'INTERCHROMOSOMAL'
-        else:
-            cluster_type = 'ERROR_CNV_ONLY'
-    elif len(inversions) == 1:
-        cluster_type = 'SINGLE_ENDER'
-    elif len(inversions) > 2:
-        cluster_type = 'COMPLEX_3plus'
-    elif inversions[0].info['STRANDS'] == inversions[1].info['STRANDS']:
-        cluster_type = 'MATCHED_STRANDS'
-    elif len(tlocs) > 0:
-        cluster_type = 'MIXED_INV_TLOC'
-    else:
-        cluster_type = 'CANDIDATE'
-
-    if cluster_type != 'CANDIDATE':
-        return cluster_type, make_unresolved_entry(cluster, cluster_type)
-
-    # Assign stranded breakpoints
-    if inversions[0].info['STRANDS'] == '++':
-        FF, RR = inversions
-    else:
-        RR, FF = inversions
-
-    svtype = classify_complex_inversion(FF, RR, cnvs)
-
-    if svtype != 'UNK':
-        return svtype, make_bed_entry(FF, RR, cnvs, svtype)
-    else:
-        return svtype, make_unresolved_entry(cluster, svtype)
-
-
 def make_unresolved_entry(cluster, cluster_type):
     """
     Parameters
@@ -147,7 +94,7 @@ def make_unresolved_entry(cluster, cluster_type):
     cluster : list of pysam.VariantRecord
     """
 
-    entry = ('{chrom}\t{start}\t{end}\t{ID}\t{svtype}\t{strands}\t'
+    entry = ('{chrom}\t{start}\t{end}\t{chr2}\t{ID}\t{svtype}\t{strands}\t'
              '{{name}}\t{cluster_type}\t{samples}\n')
     entries = []
 
@@ -157,11 +104,124 @@ def make_unresolved_entry(cluster, cluster_type):
         ID = record.id
         svtype = record.info['SVTYPE']
         strands = record.info['STRANDS']
+        chr2 = record.info['CHR2']
         samples = ','.join(svu.get_called_samples(record))
 
         entries.append(entry.format(**locals()))
 
     return ''.join(entries)
+
+
+class ComplexSV:
+    def __init__(self, records):
+        """
+        Parameters
+        ----------
+        records : list of pysam.VariantRecord
+            Clustered records to resolve
+        """
+
+        self.records = records
+
+        self.inversions = [r for r in records if r.info['SVTYPE'] == 'INV']
+        self.tlocs = [r for r in records if r.info['SVTYPE'] == 'BND']
+
+        cnvtypes = 'DEL DUP'.split()
+        self.cnvs = [r for r in records if r.info['SVTYPE'] in cnvtypes]
+
+        self.resolve()
+        self.make_record()
+
+    def resolve(self):
+        self._set_cluster_type()
+
+        if self.cluster_type == 'CANDIDATE_INVERSION':
+            self.resolve_inversion()
+        elif self.cluster_type == 'CANDIDATE_TRANSLOCATION':
+            pass
+        else:
+            self.svtype = 'UNR'
+            self.cpx_type = self.cluster_type
+
+        pass
+
+    def resolve_inversion(self):
+        if self.inversions[0].info['STRANDS'] == '++':
+            FF, RR = self.inversions
+        else:
+            RR, FF = self.inversions
+
+        self.cpx_type = classify_complex_inversion(FF, RR, self.cnvs)
+        if self.cpx_type == 'INV':
+            self.svtype = 'INV'
+        elif self.cpx_type == 'UNK':
+            self.svtype = 'UNR'
+        elif 'INS' in self.cpx_type:
+            self.svtype = 'INS'
+        else:
+            self.svtype = 'CPX'
+
+    def _set_cluster_type(self):
+        # Restrict to double-ended inversion events with appropriate
+        # strand pairing
+        if len(self.inversions) == 0 and len(self.tlocs) == 0:
+            self.cluster_type = 'ERROR_CNV_ONLY'
+        elif len(self.inversions) == 1 and len(self.tlocs) == 0:
+            self.cluster_type = 'SINGLE_ENDER_INV'
+        elif len(self.inversions) == 0 and len(self.tlocs) == 1:
+            self.cluster_type = 'SINGLE_ENDER_TLOC'
+        elif len(self.inversions) == 1 and len(self.tlocs) == 1:
+            self.cluster_type = 'MIXED_INV_TLOC'
+        elif len(self.inversions) == 2 and len(self.tlocs) == 0:
+            if (self.inversions[0].info['STRANDS'] ==
+                    self.inversions[1].info['STRANDS']):
+                self.cluster_type = 'MATCHED_STRANDS'
+            else:
+                self.cluster_type = 'CANDIDATE_INVERSION'
+        elif len(self.inversions) == 0 and len(self.tlocs) == 2:
+            self.cluster_type = 'CANDIDATE_TRANSLOCATION'
+        elif len(self.inversions) + len(self.tlocs) >= 3:
+            self.cluster_type = 'COMPLEX_3plus'
+        else:
+            self.cluster_type = 'ERROR_UNCLASSIFIED'
+
+    def make_record(self):
+        self.vcf_record = cluster[0].copy()
+        called_samples = set(svu.get_called_samples(self.vcf_record))
+    
+        # Take union of called samples
+        for record in cluster[1:]:
+            cs = svu.get_called_samples(record)
+            for sample in cs:
+                if sample not in called_samples:
+                    new_record.samples[sample]['GT'] = (0, 1)
+                    called_samples.add(sample)
+    
+        new_record.alts = ('<{0}>'.format(svtype), )
+        new_record.info['SVTYPE'] = svtype
+    
+        new_record.info['CPX_TYPE'] = cpx_type
+
+    #  if cluster_type != 'CANDIDATE':
+        #  return cluster_type, make_unresolved_entry(cluster, cluster_type)
+
+    #  svtype = classify_complex_inversion(FF, RR, cnvs)
+
+    #  if svtype != 'UNK':
+        #  return svtype, make_bed_entry(FF, RR, cnvs, svtype)
+    #  else:
+        #  return svtype, make_unresolved_entry(cluster, svtype)
+
+
+
+
+def make_vcf_record(cluster, svtype, cpx_type):
+    """
+    """
+
+
+
+
 
 
 def make_bed_entry(FF, RR, cnvs, svtype):

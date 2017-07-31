@@ -13,12 +13,41 @@ import sys
 from svtools.cxsv import link_cpx, resolve_cpx
 
 
+GENCODE_INFO = [
+    '##ALT=<ID=CTX,Description="Reciprocal chromosomal translocation">',
+    '##ALT=<ID=CPX,Description="Complex SV">',
+    '##ALT=<ID=INS,Description="Insertion">',
+    '##ALT=<ID=UNR,Description="Unresolved breakend or complex SV">',
+    '##INFO=<ID=CPX_TYPE,Number=1,Type=String,Description="Class of complex variant.">',
+    '##INFO=<ID=CPX_INTERVALS,Number=.,Type=String,Description="Genomic intervals constituting complex variant.">',
+]
+
+
+def resolve_complex_sv(vcf):
+    """
+    Resolve complex SV from CNV intervals and BCA breakpoints.
+
+    Yields all resolved events, simple or complex, in sorted order.
+
+    Parameters
+    ----------
+    vcf : pysam.VariantFile
+
+    Yields
+    ------
+    sv : pysam.VariantRecord
+    """
+
+    #
+
+
 def main(argv):
     parser = argparse.ArgumentParser(
         description=__doc__,
         prog='svtools link-cpx',
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('vcf', help='Breakpoint VCFs.')
+    parser.add_argument('--vcf-fout')
     parser.add_argument('bed', type=argparse.FileType('w'),
                         help='Resolved complex variants.')
     parser.add_argument('unresolved', type=argparse.FileType('w'),
