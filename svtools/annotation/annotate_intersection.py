@@ -67,13 +67,8 @@ def disruption_type(hit_type, svtype):
     return disruptions[svtype][hit_type]
 
 
-def annotate_gencode_elements(sv, gencode):
+def annotate_intersection(sv, elements, filetype='gtf'):
     """
-    Gene disrupting if:
-       1) Breakpoint hits exon
-       2) Inverted segment lies inside gene AND hits exon
-       3) One end of inverted segment lies inside gene AND other does not
-
     Parameters
     ----------
     sv : pbt.BedTool
@@ -86,7 +81,7 @@ def annotate_gencode_elements(sv, gencode):
     N_BED_FIELDS = 6
 
     # Check intersection with gene boundaries
-    sect = sv.intersect(gencode, wa=True, wb=True)
+    sect = sv.intersect(elements, wa=True, wb=True)
 
     def _annotate():
         for hit in sect.intervals:
@@ -94,14 +89,20 @@ def annotate_gencode_elements(sv, gencode):
             variant_ID = variant[3]
             svtype = variant[4]
 
-            # Gencode data
+            # Noncoding data
             element = hit.fields[N_BED_FIELDS:]
 
-            fields = split_gencode_fields(element[-1])
-            gene_name = fields['gene_name']
-            element_type = element[2]
+            # Gencode data
+            if filetype == 'gtf':
+                fields = split_gencode_fields(element[-1])
+                gene_name = fields['gene_name']
+                element_type = element[2]
+            # Noncoding elements
+            else:
+                gene_name = element[3]
+                element_type = 'noncoding'
 
-            hit_type = intersection_type(variant, element, filetype='gtf')
+            hit_type = intersection_type(variant, element, filetype)
             disrupt_type = disruption_type(hit_type, svtype)
 
             yield (variant_ID, svtype, gene_name, element_type, hit_type,
@@ -126,7 +127,7 @@ def main():
     sv = svu.vcf2bedtool(args.vcf)
     gencode = pbt.BedTool(args.gencode_annotation)
 
-    annotations = annotate_gencode_elements(sv, gencode)
+    annotations = annotate_intersection(sv, gencode)
     annotations.to_csv(args.fout, sep='\t', index=False)
 
 

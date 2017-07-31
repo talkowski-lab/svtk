@@ -7,8 +7,12 @@
 """
 Annotate resolved SV with genic effects and noncoding hits.
 
-The following classes of genic effects are annotated if the SV meets the
-defined criteria:
+This tool permits the user to provide a GTF of Gencode gene annotations, a BED
+of noncoding elements, or both. The BED of noncoding elements must contain four
+columns: (chrom, start, end, element_class).
+
+The following classes of genic effects are annotated as new VCF INFO fields if
+the SV meets the defined criteria:
     1) LOF - Loss of function.
         * Deletions are annotated LOF if they overlap any exon.
         * Duplications are annotated LOF if they reside entirely within
@@ -34,6 +38,9 @@ defined criteria:
     6) NEAREST_TSS
         * Intragenic events are annotated with the nearest transcription start
         site.
+
+An SV is annotated with a new NONCODING INFO field containing all classes of
+noncoding elements which the variant overlaps.
 """
 
 import argparse

@@ -9,13 +9,43 @@
 
 import pandas as pd
 import pysam
-from .gencode_elements import annotate_gencode_elements, split_gencode_fields
+from .gencode_elements import annotate_intersection
 from .classify_effect import classify_effect
 from .nearest_tss import annotate_nearest_tss
 import svtools.utils as svu
 
 
 def annotate_gencode(sv, gencode):
+    # Annotate Gencode hits and predicted effects
+    hits = annotate_intersection(sv, gencode, filetype='gtf')
+    effects = classify_effect(hits)
+    effects = effects.loc[effects.effect != 'GENE_OTHER'].copy()
+
+    # Annotate nearest TSS
+    tss = annotate_nearest_tss(sv, gencode)
+
+    # Only include TSS if no genic hit observed
+    tss = tss.loc[~tss.name.isin(effects.name)].copy()
+
+    # Merge annotations
+    effects = pd.concat([effects, tss])
+
+    return effects
+
+
+def annotate_noncoding(sv, noncoding):
+    # Annotate noncoding hits.
+    # For now, any overlap gets annotated
+    noncoding_hits = annotate_intersection(sv, noncoding, filetype='bed')
+    noncoding_hits = noncoding_hits.drop_duplicates()
+    noncoding_hits['effect'] = 'NONCODING'
+    noncoding_cols = 'name svtype gene_name effect'.split()
+    effects = noncoding_hits[noncoding_cols]
+
+    return effects
+
+
+def annotate(sv, gencode, noncoding):
     """
     Gene disrupting if:
        1) Breakpoint hits exon
@@ -38,19 +68,17 @@ def annotate_gencode(sv, gencode):
         Gencode annotations
     """
 
-    # Annotate Gencode hits and predicted effects
-    hits = annotate_gencode_elements(sv, gencode)
-    effects = classify_effect(hits)
-    effects = effects.loc[effects.effect != 'GENE_OTHER'].copy()
+    if gencode is not None:
+        coding_anno = annotate_gencode(sv, gencode)
+    else:
+        coding_anno = None
 
-    # Annotate nearest TSS
-    tss = annotate_nearest_tss(sv, gencode)
+    if noncoding is not None:
+        noncoding_anno = annotate_noncoding(sv, noncoding)
+    else:
+        noncoding_anno = None
 
-    # Only include TSS if no genic hit observed
-    tss = tss.loc[~tss.name.isin(effects.name)].copy()
-
-    # Merge annotations
-    effects = pd.concat([effects, tss])
+    effects = pd.concat([coding_anno, noncoding_anno])
 
     # Aggregate genic effects by variant ID
     effects = effects.pivot_table(index='name',
@@ -72,6 +100,10 @@ GENCODE_INFO = [
     '##INFO=<ID=INTRAGENIC,Number=0,Type=Flag,Description="SV does not overlap coding sequence.">'
 ]
 
+NONCODING_INFO = [
+    '##INFO=<ID=NONCODING,Number=.,Type=String,Description="Classes of noncoding elements disrupted by SV.">',
+]
+
 
 def annotate_vcf(vcf, gencode, noncoding, annotated_vcf):
     """
@@ -88,8 +120,13 @@ def annotate_vcf(vcf, gencode, noncoding, annotated_vcf):
 
     # Add metadata lines for annotations
     header = vcf.header
-    for line in GENCODE_INFO:
-        header.add_line(line)
+
+    if gencode is not None:
+        for line in GENCODE_INFO:
+            header.add_line(line)
+    if noncoding is not None:
+        for line in NONCODING_INFO:
+            header.add_line(line)
 
     # Open output file
     fout = pysam.VariantFile(annotated_vcf, 'w', header=header)
@@ -97,12 +134,16 @@ def annotate_vcf(vcf, gencode, noncoding, annotated_vcf):
     # Annotate genic hits
     sv = svu.vcf2bedtool(vcf.filename)
 
-    effects = annotate_gencode(sv, gencode)
+    effects = annotate(sv, gencode, noncoding)
     effects = effects.to_dict(orient='index')
 
     # Add results to variant records and save
     for record in vcf:
-        anno = effects[record.id]
+        anno = effects.get(record.id)
+        if anno is None:
+            fout.write(record)
+            continue
+
         for info, genelist in anno.items():
             if genelist != 'NA':
                 record.info[info] = genelist
