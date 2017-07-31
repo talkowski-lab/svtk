@@ -86,13 +86,15 @@ GENCODE_INFO = [
 ]
 
 
-def annotate_vcf(vcf, gencode, annotated_vcf):
+def annotate_vcf(vcf, gencode, noncoding, annotated_vcf):
     """
     Parameters
     ----------
     vcf : pysam.VariantFile
     gencode : pbt.BedTool
-        Gencode annotation bed
+        Gencode gene annotations
+    noncoding : pbt.BedTool
+        Noncoding elements
     annotated_vcf : str
         Path to output VCF
     """
