@@ -9,7 +9,7 @@
 
 import pandas as pd
 import pysam
-from .gencode_elements import annotate_gencode_elements
+from .gencode_elements import annotate_gencode_elements, split_gencode_fields
 from .classify_effect import classify_effect
 from .nearest_tss import annotate_nearest_tss
 import svtools.utils as svu
@@ -51,19 +51,6 @@ def annotate_gencode(sv, gencode):
 
     # Merge annotations
     effects = pd.concat([effects, tss])
-
-    # Replace ENSEMBL gene IDs with gene names
-    gene_key = {}
-    with open(gencode.fn) as gencode_f:
-        for line in gencode_f:
-            data = line.strip().split('\t')
-            if data[7] != 'gene':
-                continue
-            fields = data[9].strip(';').split('; ')
-            gene_id = fields[0].split()[1].strip('"')
-            gene_name = fields[4].split()[1].strip('"')
-            gene_key[gene_id] = gene_name
-    effects['gene_name'] = effects['gene_id'].replace(gene_key)
 
     # Aggregate genic effects by variant ID
     effects = effects.pivot_table(index='name',

@@ -49,7 +49,7 @@ def main(argv):
         formatter_class=argparse.RawDescriptionHelpFormatter)
 
     parser.add_argument('vcf', help='Structural variants.')
-    parser.add_argument('--gencode', help='Gencode annotation bed.')
+    parser.add_argument('--gencode', help='Gencode gene annotations (GTF).')
     parser.add_argument('--noncoding', help='Noncoding elements (bed). '
                         'Columns = chr,start,end,element_class,element_name')
     parser.add_argument('annotated_vcf', help='Annotated variants.')

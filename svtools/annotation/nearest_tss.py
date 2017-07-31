@@ -12,6 +12,7 @@ import argparse
 import warnings
 import pybedtools as pbt
 import svtools.utils as svu
+from .gencode_elements import split_gencode_fields
 
 
 def annotate_nearest_tss(sv, gencode):
@@ -19,7 +20,7 @@ def annotate_nearest_tss(sv, gencode):
         feature.end = feature.start + 1
         return feature
 
-    transcripts = gencode.filter(lambda r: r.fields[7] == 'transcript')
+    transcripts = gencode.filter(lambda r: r.fields[2] == 'transcript')
     tss = transcripts.each(_make_tss).saveas()
 
     nearest_tss = sv.sort().closest(tss.sort(), D='b', id=True).saveas()
@@ -29,8 +30,13 @@ def annotate_nearest_tss(sv, gencode):
         warnings.simplefilter('ignore')
         nearest_tss = nearest_tss.to_dataframe()
 
-    nearest_tss = nearest_tss[[3, 4, 9]].copy()
-    nearest_tss.columns = 'name svtype gene_id'.split()
+    def _get_gene_name(field_str):
+        fields = split_gencode_fields(field_str)
+        return fields['gene_name']
+
+    nearest_tss['gene_name'] = nearest_tss[14].apply(_get_gene_name)
+    nearest_tss = nearest_tss[[3, 4, 'gene_name']].copy()
+    nearest_tss.columns = 'name svtype gene_name'.split()
     nearest_tss['effect'] = 'NEAREST_TSS'
 
     return nearest_tss

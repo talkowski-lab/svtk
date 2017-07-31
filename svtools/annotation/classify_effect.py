@@ -143,7 +143,7 @@ def classify_disrupt(disrupt_dict, svtype):
 
 def classify_effect(hits):
     hits['element_hit'] = hits['element_type'] + '__' + hits['hit_type']
-    effects = hits.groupby('name svtype gene_id'.split())['element_hit']\
+    effects = hits.groupby('name svtype gene_name'.split())['element_hit']\
                   .agg(lambda s: ','.join(sorted(set(s))))\
                   .reset_index()
 
