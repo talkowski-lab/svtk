@@ -9,7 +9,7 @@
 """
 
 import warnings
-from .gencode_elements import split_gencode_fields
+from .annotate_intersection import split_gencode_fields
 
 
 def annotate_nearest_tss(sv, gencode):

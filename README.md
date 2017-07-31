@@ -39,7 +39,10 @@ usage: svtools [-h] <subcommand> [options]
 
 [ Variant analysis ]
     link-cpx       Resolve complex variants from VCF of breakpoints.
-    annotate*
+    annotate       Annotate genic effects and ovelrap with noncoding elements.
 
 * Not yet implemented
+
+optional arguments:
+  -h, --help  show this help message and exit
 ```
