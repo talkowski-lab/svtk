@@ -23,7 +23,8 @@ CPX_INFO = [
     '##ALT=<ID=UNR,Description="Unresolved breakend or complex SV">',
     '##INFO=<ID=CPX_TYPE,Number=1,Type=String,Description="Class of complex variant.">',
     '##INFO=<ID=CPX_INTERVALS,Number=.,Type=String,Description="Genomic intervals constituting complex variant.">',
-    '##INFO=<ID=EVENT,Number=1,Type=String,Description="ID of event associated to breakend">'
+    '##INFO=<ID=EVENT,Number=1,Type=String,Description="ID of event associated to breakend">',
+    '##INFO=<ID=UNRESOLVED,Number=0,Type=Flag,Description="Variant is unresolved.">'
 ]
 
 
@@ -117,6 +118,7 @@ def resolve_complex_sv(vcf, variant_prefix='CPX_'):
         if cpx.svtype == 'UNR':
             for i, record in enumerate(cpx.records):
                 record.info['EVENT'] = 'UNRESOLVED_{0}'.format(unresolved_idx)
+                record.info['UNRESOLVED'] = True
                 cpx_records.append(record)
             unresolved_idx += 1
 
@@ -158,7 +160,7 @@ def main(argv):
     unresolved_f = pysam.VariantFile(args.unresolved, 'w', header=vcf.header)
 
     for record in resolve_complex_sv(vcf):
-        if record.info['SVTYPE'] == 'UNR':
+        if record.info['UNRESOLVED']:
             unresolved_f.write(record)
         else:
             resolved_f.write(record)
