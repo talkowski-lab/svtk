@@ -152,11 +152,11 @@ def main(argv):
         sys.exit(1)
     args = parser.parse_args(argv)
 
-    vcf = pysam.VariantFile(args.vcf)
+    vcf = pysam.VariantFile(args.raw)
     for line in CPX_INFO:
         vcf.header.add_line(line)
 
-    resolved_f = pysam.VariantFile(args.fout, 'w', header=vcf.header)
+    resolved_f = pysam.VariantFile(args.resolved, 'w', header=vcf.header)
     unresolved_f = pysam.VariantFile(args.unresolved, 'w', header=vcf.header)
 
     for record in resolve_complex_sv(vcf):
