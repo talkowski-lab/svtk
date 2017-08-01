@@ -142,6 +142,10 @@ class ComplexSV:
         else:
             self.set_unresolved()
 
+    @property
+    def record_ids(self):
+        return [r.id for r in self.records]
+
     def set_unresolved(self):
         self.svtype = 'UNR'
         self.cpx_type = self.cluster_type
@@ -215,47 +219,43 @@ class ComplexSV:
         if len(self.cpx_intervals) > 0:
             self.vcf_record.info['CPX_INTERVALS'] = self.cpx_intervals
 
-    #  if cluster_type != 'CANDIDATE':
-        #  return cluster_type, make_unresolved_entry(cluster, cluster_type)
-
-    #  svtype = classify_complex_inversion(FF, RR, cnvs)
-
-    #  if svtype != 'UNK':
-        #  return svtype, make_bed_entry(FF, RR, cnvs, svtype)
-    #  else:
-        #  return svtype, make_unresolved_entry(cluster, svtype)
-
 
 def make_inversion_intervals(FF, RR, cnvs, cpx_type):
     intervals = []
     chrom = FF.chrom
-    inv_start = RR.pos
-    inv_end = FF.info['END']
-    intervals = ['INV_{chrom}:{inv_start}-{inv_end}'.format(**locals())]
 
-    interval = '{cnv_type}_{chrom}:{cnv_start}-{cnv_end}'
+    interval = '{svtype}_{chrom}:{start}-{end}'
+
+    # First add 5' CNV
     if cpx_type.startswith('del'):
-        cnv_start = FF.pos
-        cnv_end = RR.pos
-        cnv_type = 'DEL5'
-        intervals.append(interval.format(**locals()))
-
-    if cpx_type.endswith('del'):
-        cnv_start = FF.info['END']
-        cnv_end = RR.info['END']
-        cnv_type = 'DEL3'
+        svtype = 'DEL'
+        start = FF.pos
+        end = RR.pos
         intervals.append(interval.format(**locals()))
 
     if cpx_type.startswith('dup'):
-        cnv_start = RR.pos
-        cnv_end = FF.pos
-        cnv_type = 'DUP5'
+        svtype = 'DUP'
+        start = RR.pos
+        end = FF.pos
+        intervals.append(interval.format(**locals()))
+
+    # Then add inversion
+    svtype = 'INV'
+    start = RR.pos
+    end = FF.info['END']
+    intervals.append(interval.format(**locals()))
+
+    # Finally add 3' CNV
+    if cpx_type.endswith('del'):
+        svtype = 'DEL'
+        start = FF.info['END']
+        end = RR.info['END']
         intervals.append(interval.format(**locals()))
 
     if cpx_type.endswith('dup'):
-        cnv_start = RR.info['END']
-        cnv_end = FF.info['END']
-        cnv_type = 'DUP3'
+        svtype = 'DUP'
+        start = RR.info['END']
+        end = FF.info['END']
         intervals.append(interval.format(**locals()))
 
     return intervals
