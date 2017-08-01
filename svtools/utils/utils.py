@@ -108,13 +108,20 @@ def get_called_samples(record, include_null=False):
 
 
 # TODO: check if record is CPX and make entry per complex interval
-def vcf2bedtool(vcf):
+def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
+                include_strands=True):
     """
     Wrap VCF as a bedtool. Necessary as pybedtools does not support SV in VCF.
 
     Parameters
     ----------
     vcf : str or pysam.VariantFile
+    split_bnd : bool, optional
+        Provide two records for each BND, one per breakend
+    include_samples : bool, optional
+        Provide comma-delimited list of called samples
+    include_strands : bool, optional
+        Provide breakpoint strandedness
 
     Returns
     -------
@@ -126,25 +133,40 @@ def vcf2bedtool(vcf):
     if not isinstance(vcf, pysam.VariantFile):
         vcf = pysam.VariantFile(vcf)
 
+    entry = '{chrom}\t{start}\t{end}\t{name}\t{svtype}'
+    if include_strands:
+        entry += '\t{strands}'
+    if include_samples:
+        entry += '\t{samples}'
+    entry += '\n'
+
     # Convert each record in vcf to bed entry
     def _converter():
         bed = '{0}\t{1}\t{2}\t{3}\t{4}\t{5}\n'
         for record in vcf:
+            chrom = record.chrom
+            start = record.pos
+            name = record.id
+            svtype = record.info['SVTYPE']
+
+            if include_strands:
+                strands = record.info['STRANDS']
+            if include_samples:
+                samples = ','.join(get_called_samples(record))
+
             if record.info['SVTYPE'] == 'BND':
                 # First end of breakpoint
                 end = record.pos + 1
-                yield bed.format(record.chrom, record.pos, end, record.id,
-                                 record.info['SVTYPE'], record.info['STRANDS'])
+                yield entry.format(**locals())
 
                 # Second end of breakpoint
+                chrom = record.info['CHR2']
+                start = record.info['END']
                 end = record.info['END'] + 1
-                yield bed.format(record.info['CHR2'], record.info['END'], end,
-                                 record.id, record.info['SVTYPE'],
-                                 record.info['STRANDS'])
+                yield entry.format(**locals())
 
             else:
                 end = record.info['END']
-                yield bed.format(record.chrom, record.pos, end, record.id,
-                                 record.info['SVTYPE'], record.info['STRANDS'])
+                yield entry.format(**locals())
 
     return pbt.BedTool(_converter()).saveas()
