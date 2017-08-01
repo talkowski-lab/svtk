@@ -9,9 +9,9 @@ Classification of reciprocal translocations.
 """
 
 
-def classify_complex_translocation(tloc1, tloc2, mh_buffer=100):
+def classify_simple_translocation(plus, minus, mh_buffer=50):
     """
-    Classify the complex class of an inversion and associated CNVs.
+    Resolve a pair of interchromosomal breakends.
 
     Parameters
     ----------
@@ -28,32 +28,41 @@ def classify_complex_translocation(tloc1, tloc2, mh_buffer=100):
         Complex SV class.
     """
 
-    # Derivative chromosomes are labeled 1 and 2
-    # Reference chromosomes are labeled A and B
-    # A1 = the breakend of ref chrom A on derivative chrom 1
-
-    if tloc1.chrom != tloc2.chrom or tloc1.info['CHR2'] != tloc2.info['CHR2']:
+    # plus refers to breakend whose strand begins with '+'
+    if plus.chrom != minus.chrom or plus.info['CHR2'] != minus.info['CHR2']:
         return 'TLOC_MISMATCH_CHROM'
 
+    # Reference chromosomes are labeled A and B
+    # Breakpoints/Derivative chromosomes are labeled plus and minus, based on
+    # ref chromosome A's strandedness on each breakpoint
+    # plus_A = the breakend of ref chrom A on derivative chrom where A is
+    # forward-stranded
+
     # get positions
-    A1 = tloc1.pos
-    A2 = tloc2.pos
-    B1 = tloc1.info['END']
-    B2 = tloc2.info['END']
-    strand1 = tloc1.info['STRANDS']
-    strand2 = tloc2.info['STRANDS']
+    plus_A = plus.pos
+    minus_A = minus.pos
+    plus_B = plus.info['END']
+    minus_B = minus.info['END']
 
-    if strand1 == '++' and strand2 == '--':
-        if (A2 > A1 - mh_buffer) and (B2 > B1 - mh_buffer):
-            return 'CTX_PQ/QP'
-    elif strand1 == '+-' and strand2 == '-+':
-        if (A2 > A1 - mh_buffer) and (B1 > B2 - mh_buffer):
-            return 'CTX_PP/QQ'
-    elif strand1 == '-+' and strand2 == '+-':
-        if (A1 > A2 - mh_buffer) and (B2 > B1 - mh_buffer):
-            return 'CTX_PP/QQ'
-    elif strand1 == '--' and strand2 == '++':
-        if (A1 > A2 - mh_buffer) and (B1 > B2 - mh_buffer):
-            return 'CTX_PQ/QP'
+    plus_strands = plus.info['STRANDS']
 
-    return 'CTX_INS'
+    # Buffer comparisons
+    def _greater(p1, p2):
+        return p1 > p2 - mh_buffer
+
+    if plus_strands == '+-':
+        if _greater(minus_A, plus_A) and _greater(plus_B, minus_B):
+            return 'CTX_PP/QQ'
+        if _greater(minus_A, plus_A) and _greater(minus_B, plus_B):
+            return 'CTX_INS_B2A'
+        if _greater(plus_A, minus_A) and _greater(plus_B, minus_B):
+            return 'CTX_INS_A2B'
+    else:
+        if _greater(minus_A, plus_A) and _greater(minus_B, plus_B):
+            return 'CTX_PQ/QP'
+        if _greater(minus_A, plus_A) and _greater(plus_B, minus_B):
+            return 'CTX_INV_INS_B2A'
+        if _greater(plus_A, minus_A) and _greater(minus_B, plus_B):
+            return 'CTX_INV_INS_A2B'
+
+    return 'CTX_UNR'

@@ -15,7 +15,7 @@ import scipy.sparse as sps
 import natsort
 import svtools.utils as svu
 from .cpx_inv import classify_complex_inversion
-from .cpx_tloc import classify_complex_translocation
+from .cpx_tloc import classify_simple_translocation
 
 
 def samples_overlap(recA, recB, upper_thresh=0.8, lower_thresh=0.5):
@@ -110,9 +110,10 @@ class ComplexSV:
 
         cnvtypes = 'DEL DUP'.split()
         self.cnvs = [r for r in records if r.info['SVTYPE'] in cnvtypes]
+        self.cpx_intervals = []
 
-        self.resolve()
         self.make_record()
+        self.resolve()
 
     def resolve(self):
         self.set_cluster_type()
@@ -124,6 +125,16 @@ class ComplexSV:
         else:
             self.set_unresolved()
 
+        self.set_record_svtype()
+
+    def set_record_svtype(self):
+        self.vcf_record.alts = ('<{0}>'.format(self.svtype), )
+        self.vcf_record.info['SVTYPE'] = self.svtype
+        self.vcf_record.info['CPX_TYPE'] = self.cpx_type
+
+        if len(self.cpx_intervals) > 0:
+            self.vcf_record.info['CPX_INTERVALS'] = self.cpx_intervals
+
     @property
     def record_ids(self):
         return [r.id for r in self.records]
@@ -131,7 +142,6 @@ class ComplexSV:
     def set_unresolved(self):
         self.svtype = 'UNR'
         self.cpx_type = self.cluster_type
-        self.cpx_intervals = []
 
     def resolve_inversion(self):
         if self.inversions[0].info['STRANDS'] == '++':
@@ -151,26 +161,71 @@ class ComplexSV:
             self.svtype = 'CPX'
 
         # Overall variant start/end
-        self.start = min(FF.pos, RR.pos)
-        self.end = max(FF.info['END'], RR.info['END'])
+        self.vcf_record.pos = min(FF.pos, RR.pos)
+        self.vcf_record.info['END'] = max(FF.info['END'], RR.info['END'])
 
         self.cpx_intervals = make_inversion_intervals(FF, RR, self.cnvs,
                                                       self.cpx_type)
 
     def resolve_translocation(self):
-        tloc1, tloc2 = sorted(self.tlocs, key=lambda t: t.pos)
-        self.cpx_type = classify_complex_translocation(tloc1, tloc2)
+        # Force to ++/-- or +-/-+ ordering
+        plus, minus = sorted(self.tlocs, key=lambda t: t.info['STRANDS'])
 
-        if self.cpx_type == 'CTX_INS':
+        self.cpx_type = classify_simple_translocation(plus, minus)
+
+        if 'INS' in self.cpx_type:
             self.svtype = 'INS'
-        elif self.cpx_type == 'TLOC_MISMATCH_CHROM':
+        elif self.cpx_type in ['TLOC_MISMATCH_CHROM', 'CTX_UNR']:
             self.svtype = 'UNR'
         else:
             self.svtype = 'CTX'
 
-        # tmp assignment
-        self.start, self.end = tloc1.pos, tloc1.info['END']
-        self.cpx_intervals = []
+        if self.svtype == 'CTX':
+            self.vcf_record.chrom = plus.chrom
+            self.vcf_record.pos = plus.pos
+            self.vcf_record.info['CHR2'] = plus.info['CHR2']
+            self.vcf_record.info['END'] = plus.info['END']
+
+        elif self.svtype == 'INS':
+            if 'B2A' in self.cpx_type:
+                sink_chrom, source_chrom = plus.chrom, plus.info['CHR2']
+            else:
+                sink_chrom, source_chrom = plus.info['CHR2'], plus.chrom
+
+            if self.cpx_type == 'CTX_INS_B2A':
+                sink_start = plus.pos
+                sink_end = minus.pos
+                source_start = plus.info['END']
+                source_end = minus.info['END']
+            elif self.cpx_type == 'CTX_INV_INS_B2A':
+                sink_start = plus.pos
+                sink_end = minus.pos
+                source_start = minus.info['END']
+                source_end = plus.info['END']
+            elif self.cpx_type == 'CTX_INS_A2B':
+                sink_start = minus.info['END']
+                sink_end = plus.info['END']
+                source_start = minus.pos
+                source_end = plus.pos
+            elif self.cpx_type == 'CTX_INV_INS_A2B':
+                sink_start = plus.info['END']
+                sink_end = minus.info['END']
+                source_start = minus.pos
+                source_end = plus.pos
+
+            self.vcf_record.chrom = sink_chrom
+            self.vcf_record.info['CHR2'] = sink_chrom
+            self.vcf_record.pos = sink_start
+            self.vcf_record.info['END'] = sink_end
+
+            interval = '{0}_{1}:{2}-{3}'
+            if 'INV' in self.cpx_type:
+                interval_type = 'INV'
+            else:
+                interval_type = 'INS'
+
+            self.cpx_intervals = [interval.format(interval_type, source_chrom,
+                                                  source_start, source_end)]
 
     def set_cluster_type(self):
         # Restrict to double-ended inversion events with appropriate
@@ -212,14 +267,6 @@ class ComplexSV:
                 if sample not in called_samples:
                     self.vcf_record.samples[sample]['GT'] = (0, 1)
                     called_samples.add(sample)
-
-        self.vcf_record.alts = ('<{0}>'.format(self.svtype), )
-        self.vcf_record.info['SVTYPE'] = self.svtype
-
-        self.vcf_record.info['CPX_TYPE'] = self.cpx_type
-
-        if len(self.cpx_intervals) > 0:
-            self.vcf_record.info['CPX_INTERVALS'] = self.cpx_intervals
 
 
 def make_inversion_intervals(FF, RR, cnvs, cpx_type):
