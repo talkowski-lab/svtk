@@ -30,7 +30,7 @@ usage: svtools [-h] <subcommand> [options]
     pe-test        Calculate enrichment of discordant pairs at SV breakpoints.
 
 [ Variant analysis ]
-    link-cpx       Resolve complex variants from VCF of breakpoints.
+    resolve        Resolve complex variants from VCF of breakpoints.
     annotate       Annotate genic effects and ovelrap with noncoding elements.
 
 * Not yet implemented

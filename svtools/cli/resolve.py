@@ -139,11 +139,11 @@ def main(argv):
         description=__doc__,
         prog='svtools link-cpx',
         formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('vcf', help='Breakpoint VCFs.')
-    parser.add_argument('fout', type=argparse.FileType('w'),
-                        help='Resolved complex variants.')
-    parser.add_argument('unresolved', type=argparse.FileType('w'),
-                        help='Unresolved complex breakpoints.')
+    parser.add_argument('raw', help='Filtered breakpoints and CNV intervals.')
+    parser.add_argument('resolved', type=argparse.FileType('w'),
+                        help='Resolved simple and complex variants.')
+    parser.add_argument('-u', '--unresolved', type=argparse.FileType('w'),
+                        help='Unresolved complex breakpoints and CNV.')
     parser.add_argument('-p', '--prefix', default='CPX_',
                         help='Variant prefix [CPX_]')
 
