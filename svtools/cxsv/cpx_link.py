@@ -12,10 +12,10 @@ import itertools
 from collections import deque
 import numpy as np
 import scipy.sparse as sps
-import pysam
 import natsort
 import svtools.utils as svu
 from .cpx_inv import classify_complex_inversion
+from .cpx_tloc import classify_complex_translocation
 
 
 def samples_overlap(recA, recB, upper_thresh=0.8, lower_thresh=0.5):
@@ -87,29 +87,11 @@ def extract_breakpoints(vcf, bkpt_idxs):
     return bkpts
 
 
-def make_unresolved_entry(cluster, cluster_type):
-    """
-    Parameters
-    ----------
-    cluster : list of pysam.VariantRecord
-    """
+def ok_tloc_strands(tloc1, tloc2):
+    strand1, strand2 = sorted([t.info['STRANDS'] for t in (tloc1, tloc2)])
 
-    entry = ('{chrom}\t{start}\t{end}\t{chr2}\t{ID}\t{svtype}\t{strands}\t'
-             '{{name}}\t{cluster_type}\t{samples}\n')
-    entries = []
-
-    for record in cluster:
-        chrom = record.chrom
-        start, end = record.pos, record.info['END']
-        ID = record.id
-        svtype = record.info['SVTYPE']
-        strands = record.info['STRANDS']
-        chr2 = record.info['CHR2']
-        samples = ','.join(svu.get_called_samples(record))
-
-        entries.append(entry.format(**locals()))
-
-    return ''.join(entries)
+    return ((strand1 == '++' and strand2 == '--') or
+            (strand1 == '+-' and strand2 == '-+'))
 
 
 class ComplexSV:
@@ -138,7 +120,7 @@ class ComplexSV:
         if self.cluster_type == 'CANDIDATE_INVERSION':
             self.resolve_inversion()
         elif self.cluster_type == 'CANDIDATE_TRANSLOCATION':
-            self.set_unresolved()
+            self.resolve_translocation()
         else:
             self.set_unresolved()
 
@@ -175,6 +157,21 @@ class ComplexSV:
         self.cpx_intervals = make_inversion_intervals(FF, RR, self.cnvs,
                                                       self.cpx_type)
 
+    def resolve_translocation(self):
+        tloc1, tloc2 = sorted(self.tlocs, key=lambda t: t.pos)
+        self.cpx_type = classify_complex_translocation(tloc1, tloc2)
+
+        if self.cpx_type == 'CTX_INS':
+            self.svtype = 'INS'
+        elif self.cpx_type == 'TLOC_MISMATCH_CHROM':
+            self.svtype = 'UNR'
+        else:
+            self.svtype = 'CTX'
+
+        # tmp assignment
+        self.start, self.end = tloc1.pos, tloc1.info['END']
+        self.cpx_intervals = []
+
     def set_cluster_type(self):
         # Restrict to double-ended inversion events with appropriate
         # strand pairing
@@ -193,7 +190,12 @@ class ComplexSV:
             else:
                 self.cluster_type = 'CANDIDATE_INVERSION'
         elif len(self.inversions) == 0 and len(self.tlocs) == 2:
-            self.cluster_type = 'CANDIDATE_TRANSLOCATION'
+            if len(self.cnvs) > 0:
+                self.cluster_type = 'TLOC_WITH_CNV'
+            elif ok_tloc_strands(*self.tlocs):
+                self.cluster_type = 'CANDIDATE_TRANSLOCATION'
+            else:
+                self.cluster_TYPE = 'STRAND_MISMATCH_TLOC'
         elif len(self.inversions) + len(self.tlocs) >= 3:
             self.cluster_type = 'COMPLEX_3plus'
         else:
