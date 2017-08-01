@@ -12,10 +12,10 @@ import itertools
 from collections import deque
 import numpy as np
 import scipy.sparse as sps
-import pysam
 import natsort
 import svtools.utils as svu
 from .cpx_inv import classify_complex_inversion
+from .cpx_tloc import classify_simple_translocation
 
 
 def samples_overlap(recA, recB, upper_thresh=0.8, lower_thresh=0.5):
@@ -58,7 +58,7 @@ def samples_overlap(recA, recB, upper_thresh=0.8, lower_thresh=0.5):
     return min_frac >= lower_thresh and max_frac >= upper_thresh
 
 
-def extract_breakpoints(vcfpath, bkpt_idxs):
+def extract_breakpoints(vcf, bkpt_idxs):
     """
     Extract all VCF records in list of IDs
     (Assumes VCF is sorted by variant ID)
@@ -75,7 +75,7 @@ def extract_breakpoints(vcfpath, bkpt_idxs):
     bkpts : list of pysam.VariantRecord
     """
 
-    vcf = pysam.VariantFile(vcfpath)
+    #  vcf = pysam.VariantFile(vcfpath)
     n_bkpts = len(bkpt_idxs)
     bkpts = np.empty(n_bkpts, dtype=object)
 
@@ -87,140 +87,230 @@ def extract_breakpoints(vcfpath, bkpt_idxs):
     return bkpts
 
 
-def resolve_cpx(cluster):
-    """
-    Resolve complex variant structure from a cluster of breakpoints.
+def ok_tloc_strands(tloc1, tloc2):
+    strand1, strand2 = sorted([t.info['STRANDS'] for t in (tloc1, tloc2)])
 
-    Parameters
-    ----------
-    cluster : list of pysam.VariantRecord
+    return ((strand1 == '++' and strand2 == '--') or
+            (strand1 == '+-' and strand2 == '-+'))
 
-    Returns
-    -------
-    variant : pysam.VariantRecord
-    """
 
-    inversions = [rec for rec in cluster if rec.info['SVTYPE'] == 'INV']
-    tlocs = [rec for rec in cluster if rec.info['SVTYPE'] == 'BND']
+class ComplexSV:
+    def __init__(self, records):
+        """
+        Parameters
+        ----------
+        records : list of pysam.VariantRecord
+            Clustered records to resolve
+        """
 
-    cnvtypes = 'DEL DUP'.split()
-    cnvs = [rec for rec in cluster if rec.info['SVTYPE'] in cnvtypes]
+        self.records = records
 
-    # Restrict to double-ended inversion events with appropriate strand pairing
-    if len(inversions) == 0:
-        if len(tlocs) > 0:
-            cluster_type = 'INTERCHROMOSOMAL'
+        self.inversions = [r for r in records if r.info['SVTYPE'] == 'INV']
+        self.tlocs = [r for r in records if r.info['SVTYPE'] == 'BND']
+
+        cnvtypes = 'DEL DUP'.split()
+        self.cnvs = [r for r in records if r.info['SVTYPE'] in cnvtypes]
+        self.cpx_intervals = []
+
+        self.make_record()
+        self.resolve()
+
+    def resolve(self):
+        self.set_cluster_type()
+
+        if self.cluster_type == 'CANDIDATE_INVERSION':
+            self.resolve_inversion()
+        elif self.cluster_type == 'CANDIDATE_TRANSLOCATION':
+            self.resolve_translocation()
         else:
-            cluster_type = 'ERROR_CNV_ONLY'
-    elif len(inversions) == 1:
-        cluster_type = 'SINGLE_ENDER'
-    elif len(inversions) > 2:
-        cluster_type = 'COMPLEX_3plus'
-    elif inversions[0].info['STRANDS'] == inversions[1].info['STRANDS']:
-        cluster_type = 'MATCHED_STRANDS'
-    elif len(tlocs) > 0:
-        cluster_type = 'MIXED_INV_TLOC'
-    else:
-        cluster_type = 'CANDIDATE'
+            self.set_unresolved()
 
-    if cluster_type != 'CANDIDATE':
-        return cluster_type, make_unresolved_entry(cluster, cluster_type)
+        self.set_record_svtype()
 
-    # Assign stranded breakpoints
-    if inversions[0].info['STRANDS'] == '++':
-        FF, RR = inversions
-    else:
-        RR, FF = inversions
+    def set_record_svtype(self):
+        self.vcf_record.alts = ('<{0}>'.format(self.svtype), )
+        self.vcf_record.info['SVTYPE'] = self.svtype
+        self.vcf_record.info['CPX_TYPE'] = self.cpx_type
 
-    svtype = classify_complex_inversion(FF, RR, cnvs)
+        if len(self.cpx_intervals) > 0:
+            self.vcf_record.info['CPX_INTERVALS'] = self.cpx_intervals
 
-    if svtype != 'UNK':
-        return svtype, make_bed_entry(FF, RR, cnvs, svtype)
-    else:
-        return svtype, make_unresolved_entry(cluster, svtype)
+    @property
+    def record_ids(self):
+        return [r.id for r in self.records]
+
+    def set_unresolved(self):
+        self.svtype = 'UNR'
+        self.cpx_type = self.cluster_type
+
+    def resolve_inversion(self):
+        if self.inversions[0].info['STRANDS'] == '++':
+            FF, RR = self.inversions
+        else:
+            RR, FF = self.inversions
+
+        self.cpx_type = classify_complex_inversion(FF, RR, self.cnvs)
+
+        if self.cpx_type == 'INV':
+            self.svtype = 'INV'
+        elif self.cpx_type == 'UNK':
+            self.svtype = 'UNR'
+        elif 'INS' in self.cpx_type:
+            self.svtype = 'INS'
+        else:
+            self.svtype = 'CPX'
+
+        # Overall variant start/end
+        self.vcf_record.pos = min(FF.pos, RR.pos)
+        self.vcf_record.info['END'] = max(FF.info['END'], RR.info['END'])
+
+        self.cpx_intervals = make_inversion_intervals(FF, RR, self.cnvs,
+                                                      self.cpx_type)
+
+    def resolve_translocation(self):
+        # Force to ++/-- or +-/-+ ordering
+        plus, minus = sorted(self.tlocs, key=lambda t: t.info['STRANDS'])
+
+        self.cpx_type = classify_simple_translocation(plus, minus)
+
+        if 'INS' in self.cpx_type:
+            self.svtype = 'INS'
+        elif self.cpx_type in ['TLOC_MISMATCH_CHROM', 'CTX_UNR']:
+            self.svtype = 'UNR'
+        else:
+            self.svtype = 'CTX'
+
+        if self.svtype == 'CTX':
+            self.vcf_record.chrom = plus.chrom
+            self.vcf_record.pos = plus.pos
+            self.vcf_record.info['CHR2'] = plus.info['CHR2']
+            self.vcf_record.info['END'] = plus.info['END']
+
+        elif self.svtype == 'INS':
+            if 'B2A' in self.cpx_type:
+                sink_chrom, source_chrom = plus.chrom, plus.info['CHR2']
+            else:
+                sink_chrom, source_chrom = plus.info['CHR2'], plus.chrom
+
+            if self.cpx_type == 'CTX_INS_B2A':
+                sink_start = plus.pos
+                sink_end = minus.pos
+                source_start = plus.info['END']
+                source_end = minus.info['END']
+            elif self.cpx_type == 'CTX_INV_INS_B2A':
+                sink_start = plus.pos
+                sink_end = minus.pos
+                source_start = minus.info['END']
+                source_end = plus.info['END']
+            elif self.cpx_type == 'CTX_INS_A2B':
+                sink_start = minus.info['END']
+                sink_end = plus.info['END']
+                source_start = minus.pos
+                source_end = plus.pos
+            elif self.cpx_type == 'CTX_INV_INS_A2B':
+                sink_start = plus.info['END']
+                sink_end = minus.info['END']
+                source_start = minus.pos
+                source_end = plus.pos
+
+            self.vcf_record.chrom = sink_chrom
+            self.vcf_record.info['CHR2'] = sink_chrom
+            self.vcf_record.pos = sink_start
+            self.vcf_record.info['END'] = sink_end
+
+            interval = '{0}_{1}:{2}-{3}'
+            if 'INV' in self.cpx_type:
+                interval_type = 'INV'
+            else:
+                interval_type = 'INS'
+
+            self.cpx_intervals = [interval.format(interval_type, source_chrom,
+                                                  source_start, source_end)]
+
+    def set_cluster_type(self):
+        # Restrict to double-ended inversion events with appropriate
+        # strand pairing
+        if len(self.inversions) == 0 and len(self.tlocs) == 0:
+            self.cluster_type = 'ERROR_CNV_ONLY'
+        elif len(self.inversions) == 1 and len(self.tlocs) == 0:
+            self.cluster_type = 'SINGLE_ENDER_INV'
+        elif len(self.inversions) == 0 and len(self.tlocs) == 1:
+            self.cluster_type = 'SINGLE_ENDER_TLOC'
+        elif len(self.inversions) == 1 and len(self.tlocs) == 1:
+            self.cluster_type = 'MIXED_INV_TLOC'
+        elif len(self.inversions) == 2 and len(self.tlocs) == 0:
+            if (self.inversions[0].info['STRANDS'] ==
+                    self.inversions[1].info['STRANDS']):
+                self.cluster_type = 'MATCHED_STRANDS'
+            else:
+                self.cluster_type = 'CANDIDATE_INVERSION'
+        elif len(self.inversions) == 0 and len(self.tlocs) == 2:
+            if len(self.cnvs) > 0:
+                self.cluster_type = 'TLOC_WITH_CNV'
+            elif ok_tloc_strands(*self.tlocs):
+                self.cluster_type = 'CANDIDATE_TRANSLOCATION'
+            else:
+                self.cluster_TYPE = 'STRAND_MISMATCH_TLOC'
+        elif len(self.inversions) + len(self.tlocs) >= 3:
+            self.cluster_type = 'COMPLEX_3plus'
+        else:
+            self.cluster_type = 'ERROR_UNCLASSIFIED'
+
+    def make_record(self):
+        self.vcf_record = self.records[0].copy()
+        called_samples = set(svu.get_called_samples(self.vcf_record))
+
+        # Take union of called samples
+        for record in itertools.islice(self.records, 1, None):
+            cs = svu.get_called_samples(record)
+            for sample in cs:
+                if sample not in called_samples:
+                    self.vcf_record.samples[sample]['GT'] = (0, 1)
+                    called_samples.add(sample)
 
 
-def make_unresolved_entry(cluster, cluster_type):
-    """
-    Parameters
-    ----------
-    cluster : list of pysam.VariantRecord
-    """
-
-    entry = ('{chrom}\t{start}\t{end}\t{ID}\t{svtype}\t{strands}\t'
-             '{{name}}\t{cluster_type}\t{samples}\n')
-    entries = []
-
-    for record in cluster:
-        chrom = record.chrom
-        start, end = record.pos, record.info['END']
-        ID = record.id
-        svtype = record.info['SVTYPE']
-        strands = record.info['STRANDS']
-        samples = ','.join(svu.get_called_samples(record))
-
-        entries.append(entry.format(**locals()))
-
-    return ''.join(entries)
-
-
-def make_bed_entry(FF, RR, cnvs, svtype):
-    start = min(FF.pos, RR.pos)
-    end = max(FF.info['END'], RR.info['END'])
+def make_inversion_intervals(FF, RR, cnvs, cpx_type):
+    intervals = []
     chrom = FF.chrom
 
-    FF_samples = svu.get_called_samples(FF)
-    RR_samples = svu.get_called_samples(RR)
-    samples = sorted(set().union(FF_samples, RR_samples))
+    interval = '{svtype}_{chrom}:{start}-{end}'
 
-    FF_name = FF.id
-    RR_name = RR.id
-    if len(cnvs) == 0:
-        CNV_names = '.'
-    else:
-        CNV_names = ','.join([cnv.id for cnv in cnvs])
-
-    intervals = []
-    inv_start = RR.pos
-    inv_end = FF.info['END']
-    intervals = ['INV_{chrom}:{inv_start}-{inv_end}'.format(**locals())]
-
-    interval = '{cnv_type}_{chrom}:{cnv_start}-{cnv_end}'
-    if svtype.startswith('del'):
-        cnv_start = FF.pos
-        cnv_end = RR.pos
-        cnv_type = 'DEL5'
+    # First add 5' CNV
+    if cpx_type.startswith('del'):
+        svtype = 'DEL'
+        start = FF.pos
+        end = RR.pos
         intervals.append(interval.format(**locals()))
 
-    if svtype.endswith('del'):
-        cnv_start = FF.info['END']
-        cnv_end = RR.info['END']
-        cnv_type = 'DEL3'
+    if cpx_type.startswith('dup'):
+        svtype = 'DUP'
+        start = RR.pos
+        end = FF.pos
         intervals.append(interval.format(**locals()))
 
-    if svtype.startswith('dup'):
-        cnv_start = RR.pos
-        cnv_end = FF.pos
-        cnv_type = 'DUP5'
+    # Then add inversion
+    svtype = 'INV'
+    start = RR.pos
+    end = FF.info['END']
+    intervals.append(interval.format(**locals()))
+
+    # Finally add 3' CNV
+    if cpx_type.endswith('del'):
+        svtype = 'DEL'
+        start = FF.info['END']
+        end = RR.info['END']
         intervals.append(interval.format(**locals()))
 
-    if svtype.endswith('dup'):
-        cnv_start = RR.info['END']
-        cnv_end = FF.info['END']
-        cnv_type = 'DUP3'
+    if cpx_type.endswith('dup'):
+        svtype = 'DUP'
+        start = RR.info['END']
+        end = FF.info['END']
         intervals.append(interval.format(**locals()))
 
-    intervals = ';'.join(intervals)
-    samples = ','.join(samples)
-
-    entry = ('{chrom}\t{start}\t{end}\t{{name}}\t{svtype}\t'
-             '{intervals}\t{FF_name}\t{RR_name}\t{CNV_names}\t{samples}\n')
-    entry = entry.format(**locals())
-
-    return entry
+    return intervals
 
 
-def link_cpx(vcfpath, bkpt_window=100):
+def link_cpx(vcf, bkpt_window=100):
     """
     Parameters
     ----------
@@ -228,13 +318,13 @@ def link_cpx(vcfpath, bkpt_window=100):
         Path to breakpoint VCF
     """
 
-    bt = svu.vcf2bedtool(vcfpath)
+    bt = svu.vcf2bedtool(vcf.filename)
 
     # Identify breakpoints which overlap within specified window
     overlap = bt.window(bt, w=bkpt_window).saveas()
 
     # Exclude self-hits
-    overlap = overlap.filter(lambda b: b.fields[3] != b.fields[9]).saveas()
+    #  overlap = overlap.filter(lambda b: b.fields[3] != b.fields[9]).saveas()
 
     # Restrict to overlaps involving a BCA breakpoint
     cnvtypes = 'DEL DUP'.split()
@@ -251,7 +341,8 @@ def link_cpx(vcfpath, bkpt_window=100):
 
     # Extract VariantRecords corresponding to breakpoints
     n_bkpts = len(linked_IDs)
-    bkpts = extract_breakpoints(vcfpath, bkpt_idxs)
+    vcf.reset()
+    bkpts = extract_breakpoints(vcf, bkpt_idxs)
 
     # Build sparse graph from links
     G = sps.eye(n_bkpts, dtype=np.uint16, format='lil')
@@ -265,7 +356,12 @@ def link_cpx(vcfpath, bkpt_window=100):
     for i, c_label in enumerate(comp_list):
         clusters[c_label].append(bkpts[i])
 
-    # Remove clusters of one variant - leftover from shared sample filtering
-    clusters = [c for c in clusters if len(c) > 1]
+    # Remove clusters of only CNV - leftover from shared sample filtering
+    def _ok_cluster(cluster):
+        ok = any([record.info['SVTYPE'] not in cnvtypes for record in cluster])
+        return ok
+
+    clusters = [c for c in clusters if _ok_cluster(c)]
+    #  clusters = [c for c in clusters if len(c) > 1]
 
     return clusters

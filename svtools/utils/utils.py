@@ -107,7 +107,6 @@ def get_called_samples(record, include_null=False):
     return sorted(samples)
 
 
-# TODO: handle other end of interchromosomal BND
 # TODO: check if record is CPX and make entry per complex interval
 def vcf2bedtool(vcf):
     """
@@ -132,10 +131,20 @@ def vcf2bedtool(vcf):
         bed = '{0}\t{1}\t{2}\t{3}\t{4}\t{5}\n'
         for record in vcf:
             if record.info['SVTYPE'] == 'BND':
+                # First end of breakpoint
                 end = record.pos + 1
+                yield bed.format(record.chrom, record.pos, end, record.id,
+                                 record.info['SVTYPE'], record.info['STRANDS'])
+
+                # Second end of breakpoint
+                end = record.info['END'] + 1
+                yield bed.format(record.info['CHR2'], record.info['END'], end,
+                                 record.id, record.info['SVTYPE'],
+                                 record.info['STRANDS'])
+
             else:
                 end = record.info['END']
-            yield bed.format(record.chrom, record.pos, end, record.id,
-                             record.info['SVTYPE'], record.info['STRANDS'])
+                yield bed.format(record.chrom, record.pos, end, record.id,
+                                 record.info['SVTYPE'], record.info['STRANDS'])
 
     return pbt.BedTool(_converter()).saveas()
