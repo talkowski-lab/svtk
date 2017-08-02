@@ -67,10 +67,10 @@ class MantaStandardizer(VCFStandardizer):
                 std_rec.chrom = chrom
         else:
             chr2 = raw_rec.chrom
-            end = raw_rec.info['END']
+            end = raw_rec.stop
 
         std_rec.info['CHR2'] = chr2
-        std_rec.info['END'] = end
+        std_rec.stop = end
 
         # Strand parsing
         if svtype == 'INV':
@@ -94,7 +94,7 @@ class MantaStandardizer(VCFStandardizer):
         if svtype == 'BND' and std_rec.chrom != std_rec.info['CHR2']:
             std_rec.info['SVLEN'] = -1
         else:
-            std_rec.info['SVLEN'] = std_rec.info['END'] - std_rec.pos
+            std_rec.info['SVLEN'] = std_rec.stop - std_rec.pos
 
         std_rec.info['SOURCES'] = ['manta']
 

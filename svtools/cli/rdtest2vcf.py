@@ -61,7 +61,7 @@ def rdtest2vcf(bed, vcf):
         # Add required INFO fields
         record.info['SVTYPE'] = cnv.svtype
         record.info['CHR2'] = cnv.chrom
-        record.info['END'] = cnv.end
+        record.stop = cnv.end
         record.info['SVLEN'] = cnv.end - cnv.start
         record.info['SOURCES'] = ['depth']
         if cnv.svtype == 'DEL':

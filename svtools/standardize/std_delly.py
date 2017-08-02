@@ -45,7 +45,7 @@ class DellyStandardizer(VCFStandardizer):
             strands = '+-'
         std_rec.info['STRANDS'] = strands
 
-        pos, end = raw_rec.pos, raw_rec.info['END']
+        pos, end = raw_rec.pos, raw_rec.stop
 
         # Swap CHR2/CHROM if necessary and update ALT
         if svtype == 'BND':
@@ -61,12 +61,12 @@ class DellyStandardizer(VCFStandardizer):
             chr2 = raw_rec.chrom
 
         # Add CHR2 and END
-        std_rec.info['END'] = end
+        std_rec.stop = end
         std_rec.info['CHR2'] = chr2
 
         # Add SVLEN
         if std_rec.chrom == std_rec.info['CHR2']:
-            std_rec.info['SVLEN'] = std_rec.info['END'] - std_rec.pos
+            std_rec.info['SVLEN'] = std_rec.stop - std_rec.pos
         else:
             std_rec.info['SVLEN'] = -1
 

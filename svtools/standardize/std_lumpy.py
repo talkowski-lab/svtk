@@ -54,10 +54,10 @@ class LumpyStandardizer(VCFStandardizer):
         if std_rec.info['SVTYPE'] == 'BND':
             chr2, end = parse_bnd_pos(std_rec.alts[0])
         else:
-            chr2, end = raw_rec.chrom, raw_rec.info['END']
+            chr2, end = raw_rec.chrom, raw_rec.stop
 
         std_rec.info['CHR2'] = chr2
-        std_rec.info['END'] = end
+        std_rec.stop = end
 
         # Add SVLEN
         if std_rec.chrom == std_rec.info['CHR2']:

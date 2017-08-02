@@ -108,7 +108,7 @@ class SVRecord(GSNode):
         chrA = record.chrom
         posA = record.pos
         chrB = record.info['CHR2']
-        posB = record.info['END']
+        posB = record.stop
         name = record.id
 
         super().__init__(chrA, posA, chrB, posB, name)
@@ -245,7 +245,7 @@ class SVRecordCluster:
         # Merge coordinates
         POS, END, CIPOS, CIEND = self.merge_pos()
         new_record.pos = POS
-        new_record.info['END'] = END
+        new_record.stop = END
         new_record.info['CIPOS'] = CIPOS
         new_record.info['CIEND'] = CIEND
 
