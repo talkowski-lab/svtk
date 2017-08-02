@@ -116,6 +116,12 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
     Parameters
     ----------
     vcf : str or pysam.VariantFile
+    split_bnd : bool, optional
+        Provide two records for each BND, one per breakend
+    include_samples : bool, optional
+        Provide comma-delimited list of called samples
+    include_strands : bool, optional
+        Provide breakpoint strandedness
 
     Returns
     -------

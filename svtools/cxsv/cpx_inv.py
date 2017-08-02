@@ -90,9 +90,9 @@ def breakpoints_match(FF, RR, svtype, mh_buffer=50):
 
     if svtype in 'delINV INVdel delINVdel'.split():
         return order == 'SIMPLE/DEL'
-    elif svtype in 'dupINV dupINVdel'.split():
+    elif svtype in 'dupINV dupINVdel DUP5/INS3'.split():
         return order == 'DUP5/INS3'
-    elif svtype in 'INVdup delINVdup'.split():
+    elif svtype in 'INVdup delINVdup DUP3/INS5'.split():
         return order == 'DUP3/INS5'
     else:
         return order == 'dupINVdup'
@@ -142,13 +142,13 @@ def classify_2_cnv(FF, RR, cnvs, min_frac=0.5):
                   'INV' +
                   cnv3.info['SVTYPE'].lower())
     elif frac5 >= min_frac and frac3 < min_frac:
-        svtype = classify_1_cnv(FF, RR, cnv5)
+        return classify_1_cnv(FF, RR, cnv5)
     elif frac5 < min_frac and frac3 >= min_frac:
-        svtype = classify_1_cnv(FF, RR, cnv3)
+        return classify_1_cnv(FF, RR, cnv3)
     else:
         svtype = 'CNV_2_FAIL'
 
-    return svtype
+    return svtype, cnvs
 
 
 def classify_1_cnv(FF, RR, cnv, min_frac=0.5,
@@ -200,7 +200,7 @@ def classify_1_cnv(FF, RR, cnv, min_frac=0.5,
     # during preprocessing or clustering
     if total_frac > 0.9 and frac5 > 0.95 and frac3 > 0.95:
         svtype = cnv_type + 'INV' + cnv_type  # + '_merged'
-        return svtype
+        return svtype, [cnv]
 
     # Otherwise, check whether it's 5' or 3'
     frac5 = svu.reciprocal_overlap(cnv.pos, cnv.stop, *interval5)
@@ -228,9 +228,9 @@ def classify_1_cnv(FF, RR, cnv, min_frac=0.5,
 
     # Couldn't match the CNV
     else:
-        return 'CNV_1_unclassified'
+        return classify_0_cnv(FF, RR)
 
-    return svtype
+    return svtype, [cnv]
 
 
 def filter_multiple_cnvs(FF, RR, cnvs, min_frac=0.5):
@@ -298,7 +298,7 @@ def filter_multiple_cnvs(FF, RR, cnvs, min_frac=0.5):
             cnvlist = cnvlists[overlap]
             # Overwrite values in first VariantRecord
             # (can't add list of IDs yet)
-            merged_cnv = cnvlist[0]
+            merged_cnv = cnvlist[0].copy()
 
             # get coordinates
             start = int(np.median([c.pos for c in cnvlist]))
@@ -343,13 +343,13 @@ def classify_0_cnv(FF, RR, min_bkpt_cnv_size=300):
         end_dist = RR.stop - FF.stop
 
         if start_dist < min_bkpt_cnv_size and end_dist < min_bkpt_cnv_size:
-            return 'INV'
+            svtype = 'INV'
         elif start_dist >= min_bkpt_cnv_size and end_dist < min_bkpt_cnv_size:
-            return 'delINV'
+            svtype = 'delINV'
         elif start_dist < min_bkpt_cnv_size and end_dist >= min_bkpt_cnv_size:
-            return 'INVdel'
+            svtype = 'INVdel'
         else:
-            return 'delINVdel'
+            svtype = 'delINVdel'
 
     # Check for flanking dups
     elif order == 'dupINVdup':
@@ -357,17 +357,19 @@ def classify_0_cnv(FF, RR, min_bkpt_cnv_size=300):
         end_dist = FF.stop - RR.stop
 
         if start_dist >= min_bkpt_cnv_size and end_dist >= min_bkpt_cnv_size:
-            return 'dupINVdup'
+            svtype = 'dupINVdup'
         elif start_dist >= min_bkpt_cnv_size:
-            return 'DUP5/INS3'
+            svtype = 'DUP5/INS3'
         elif end_dist >= min_bkpt_cnv_size:
-            return 'DUP3/INS5'
+            svtype = 'DUP3/INS5'
         else:
-            return 'UNK'
+            svtype = 'UNK'
 
     # DUP5/INS3, DUP3/INS5, and UNK don't require add'l check
     else:
-        return order
+        svtype = order
+
+    return svtype, []
 
 
 def classify_complex_inversion(FF, RR, cnvs):
@@ -387,21 +389,29 @@ def classify_complex_inversion(FF, RR, cnvs):
     -------
     svtype : str
         Complex SV class.
+    cnvs : list of pysam.VariantRecord
+        CNVs represented in resolved variant structure
     """
+
+    raw_cnvs = cnvs
 
     if len(cnvs) > 2:
         cnvs = filter_multiple_cnvs(FF, RR, cnvs)
 
+    # Get original CNV records after merging and filtering
+    filtered_ids = [s for r in cnvs for s in r.id.split('__')]
+    pass_raw_cnvs = [cnv for cnv in raw_cnvs if cnv.id in filtered_ids]
+
     if len(cnvs) == 0:
         return classify_0_cnv(FF, RR)
     elif len(cnvs) == 1:
-        svtype = classify_1_cnv(FF, RR, cnvs[0])
+        svtype, pass_raw_cnvs = classify_1_cnv(FF, RR, cnvs[0])
     elif len(cnvs) == 2:
-        svtype = classify_2_cnv(FF, RR, cnvs)
+        svtype, pass_raw_cnvs = classify_2_cnv(FF, RR, cnvs)
     else:
-        return 'MULT_CNVS'
+        return 'MULT_CNVS', pass_raw_cnvs
 
     if breakpoints_match(FF, RR, svtype, mh_buffer=50):
-        return svtype
+        return svtype, pass_raw_cnvs
     else:
-        return 'COMPLEX_INS'
+        return 'COMPLEX_INS', pass_raw_cnvs

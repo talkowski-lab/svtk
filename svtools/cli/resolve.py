@@ -10,6 +10,7 @@ Resolve complex SV from inversion/translocation breakpoints and CNV intervals.
 
 import argparse
 import sys
+import subprocess
 from collections import deque
 import pysam
 import svtools.utils as svu
@@ -116,6 +117,7 @@ def resolve_complex_sv(vcf, variant_prefix='CPX_'):
         if cpx.svtype == 'UNR':
             for i, record in enumerate(cpx.records):
                 record.info['EVENT'] = 'UNRESOLVED_{0}'.format(unresolved_idx)
+                record.info['CPX_TYPE'] = cpx.cpx_type
                 record.info['UNRESOLVED'] = True
                 cpx_records.append(record)
             unresolved_idx += 1
@@ -129,6 +131,10 @@ def resolve_complex_sv(vcf, variant_prefix='CPX_'):
     vcf.reset()
 
     for record in _merge_records(vcf, cpx_records, cpx_record_ids):
+        record.info.pop('STRANDS')
+        record.info.pop('CIPOS')
+        record.info.pop('CIEND')
+        record.info.pop('RMSSTD')
         yield record
 
 
@@ -154,7 +160,11 @@ def main(argv):
     for line in CPX_INFO:
         vcf.header.add_line(line)
 
-    resolved_f = pysam.VariantFile(args.resolved, 'w', header=vcf.header)
+    resolved_pipe = subprocess.Popen(['vcf-sort', '-c'],
+                                     stdin=subprocess.PIPE,
+                                     stdout=args.resolved)
+
+    resolved_f = pysam.VariantFile(resolved_pipe.stdin, 'w', header=vcf.header)
     unresolved_f = pysam.VariantFile(args.unresolved, 'w', header=vcf.header)
 
     for record in resolve_complex_sv(vcf):
@@ -165,6 +175,8 @@ def main(argv):
 
     resolved_f.close()
     unresolved_f.close()
+
+    stdout, stderr = resolved_pipe.communicate()
 
 
 if __name__ == '__main__':

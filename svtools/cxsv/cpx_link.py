@@ -110,10 +110,10 @@ class ComplexSV:
 
         cnvtypes = 'DEL DUP'.split()
         self.cnvs = [r for r in records if r.info['SVTYPE'] in cnvtypes]
-        self.cpx_intervals = []
 
         self.make_record()
         self.resolve()
+        self.clean_record()
 
     def resolve(self):
         self.set_cluster_type()
@@ -125,15 +125,12 @@ class ComplexSV:
         else:
             self.set_unresolved()
 
-        self.set_record_svtype()
-
-    def set_record_svtype(self):
-        self.vcf_record.alts = ('<{0}>'.format(self.svtype), )
-        self.vcf_record.info['SVTYPE'] = self.svtype
-        self.vcf_record.info['CPX_TYPE'] = self.cpx_type
-
-        if len(self.cpx_intervals) > 0:
-            self.vcf_record.info['CPX_INTERVALS'] = self.cpx_intervals
+    def clean_record(self):
+        """
+        Merge and clean metadata
+        """
+        sources = set([s for r in self.records for s in r.info['SOURCES']])
+        self.vcf_record.info['SOURCES'] = tuple(sorted(sources))
 
     @property
     def record_ids(self):
@@ -149,23 +146,54 @@ class ComplexSV:
         else:
             RR, FF = self.inversions
 
-        self.cpx_type = classify_complex_inversion(FF, RR, self.cnvs)
+        self.cpx_type, cnvs = classify_complex_inversion(FF, RR, self.cnvs)
+        self.records = [FF, RR] + cnvs
 
         if self.cpx_type == 'INV':
             self.svtype = 'INV'
         elif self.cpx_type == 'UNK':
+            self.svtype = 'UNR'
+        elif self.cpx_type == 'COMPLEX_INS':
             self.svtype = 'UNR'
         elif 'INS' in self.cpx_type:
             self.svtype = 'INS'
         else:
             self.svtype = 'CPX'
 
-        # Overall variant start/end
-        self.vcf_record.pos = min(FF.pos, RR.pos)
-        self.vcf_record.stop = max(FF.stop, RR.stop)
+        # Setting alts removes END, so do it up front
+        self.vcf_record.alts = ('<{0}>'.format(self.svtype), )
+        self.vcf_record.info['SVTYPE'] = self.svtype
+        self.vcf_record.info['CPX_TYPE'] = self.cpx_type
 
-        self.cpx_intervals = make_inversion_intervals(FF, RR, self.cnvs,
-                                                      self.cpx_type)
+        # Overall variant start/end
+        if self.svtype in ['INV', 'CPX', 'UNR']:
+            self.vcf_record.pos = min(FF.pos, RR.pos)
+            self.vcf_record.stop = max(FF.stop, RR.stop)
+
+            cpx_intervals = make_inversion_intervals(FF, RR, self.cnvs,
+                                                     self.cpx_type)
+            self.vcf_record.info['CPX_INTERVALS'] = cpx_intervals
+
+        elif self.svtype == 'INS':
+            #   C B   A D
+            # -->|<----|-->
+            if self.cpx_type == 'DUP5/INS3':
+                source_start, source_end = RR.pos, FF.pos
+                sink_start, sink_end = FF.stop, RR.stop
+
+            #   A D   C B
+            # -->|<----|-->
+            elif self.cpx_type == 'DUP3/INS5':
+                source_start, source_end = RR.stop, FF.stop
+                sink_start, sink_end = FF.pos, RR.pos
+
+            self.vcf_record.pos = sink_start
+            self.vcf_record.stop = sink_end
+
+            interval = 'INV_{0}:{1}-{2}'
+            cpx_intervals = [interval.format(self.vcf_record.chrom,
+                                             source_start, source_end)]
+            self.vcf_record.info['CPX_INTERVALS'] = cpx_intervals
 
     def resolve_translocation(self):
         # Force to ++/-- or +-/-+ ordering
@@ -179,6 +207,11 @@ class ComplexSV:
             self.svtype = 'UNR'
         else:
             self.svtype = 'CTX'
+
+        # Setting alts removes END, so do it up front
+        self.vcf_record.alts = ('<{0}>'.format(self.svtype), )
+        self.vcf_record.info['SVTYPE'] = self.svtype
+        self.vcf_record.info['CPX_TYPE'] = self.cpx_type
 
         if self.svtype == 'CTX':
             self.vcf_record.chrom = plus.chrom
@@ -224,8 +257,9 @@ class ComplexSV:
             else:
                 interval_type = 'INS'
 
-            self.cpx_intervals = [interval.format(interval_type, source_chrom,
-                                                  source_start, source_end)]
+            cpx_intervals = [interval.format(interval_type, source_chrom,
+                                             source_start, source_end)]
+            self.vcf_record.info['CPX_INTERVALS'] = cpx_intervals
 
     def set_cluster_type(self):
         # Restrict to double-ended inversion events with appropriate
@@ -341,7 +375,6 @@ def link_cpx(vcf, bkpt_window=100):
 
     # Extract VariantRecords corresponding to breakpoints
     n_bkpts = len(linked_IDs)
-    vcf.reset()
     bkpts = extract_breakpoints(vcf, bkpt_idxs)
 
     # Build sparse graph from links
