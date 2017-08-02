@@ -116,6 +116,7 @@ def resolve_complex_sv(vcf, variant_prefix='CPX_'):
         if cpx.svtype == 'UNR':
             for i, record in enumerate(cpx.records):
                 record.info['EVENT'] = 'UNRESOLVED_{0}'.format(unresolved_idx)
+                record.info['CPX_TYPE'] = cpx.cpx_type
                 record.info['UNRESOLVED'] = True
                 cpx_records.append(record)
             unresolved_idx += 1
