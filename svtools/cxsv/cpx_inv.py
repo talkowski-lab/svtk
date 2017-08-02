@@ -90,9 +90,9 @@ def breakpoints_match(FF, RR, svtype, mh_buffer=50):
 
     if svtype in 'delINV INVdel delINVdel'.split():
         return order == 'SIMPLE/DEL'
-    elif svtype in 'dupINV dupINVdel'.split():
+    elif svtype in 'dupINV dupINVdel DUP5/INS3'.split():
         return order == 'DUP5/INS3'
-    elif svtype in 'INVdup delINVdup'.split():
+    elif svtype in 'INVdup delINVdup DUP3/INS5'.split():
         return order == 'DUP3/INS5'
     else:
         return order == 'dupINVdup'
@@ -228,7 +228,7 @@ def classify_1_cnv(FF, RR, cnv, min_frac=0.5,
 
     # Couldn't match the CNV
     else:
-        return 'CNV_1_unclassified'
+        return classify_0_cnv(FF, RR)
 
     return svtype
 

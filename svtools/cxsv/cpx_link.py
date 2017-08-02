@@ -359,14 +359,13 @@ def link_cpx(vcf, bkpt_window=100):
     links = [(b[3], b[9]) for b in overlap.intervals]
     linked_IDs = natsort.natsorted(set(itertools.chain.from_iterable(links)))
     linked_IDs = np.array(linked_IDs)
-
+    
     # Map variant IDs to indices
     bkpt_idxs = {ID: i for i, ID in enumerate(linked_IDs)}
     indexed_links = np.array([(bkpt_idxs[a], bkpt_idxs[b]) for a, b in links])
 
     # Extract VariantRecords corresponding to breakpoints
     n_bkpts = len(linked_IDs)
-    vcf.reset()
     bkpts = extract_breakpoints(vcf, bkpt_idxs)
 
     # Build sparse graph from links
