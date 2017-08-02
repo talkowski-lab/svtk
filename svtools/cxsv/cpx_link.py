@@ -113,6 +113,7 @@ class ComplexSV:
 
         self.make_record()
         self.resolve()
+        self.clean_record()
 
     def resolve(self):
         self.set_cluster_type()
@@ -123,6 +124,13 @@ class ComplexSV:
             self.resolve_translocation()
         else:
             self.set_unresolved()
+
+    def clean_record(self):
+        """
+        Merge and clean metadata
+        """
+        sources = set([s for r in self.records for s in r.info['SOURCES']])
+        self.vcf_record.info['SOURCES'] = tuple(sorted(sources))
 
     @property
     def record_ids(self):
