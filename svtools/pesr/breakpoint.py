@@ -51,7 +51,7 @@ class Breakpoint:
         chrA = record.chrom
         posA = record.pos
         chrB = record.info['CHR2']
-        posB = record.info['END']
+        posB = record.stop
 
         name = record.id
         strands = record.info['STRANDS']

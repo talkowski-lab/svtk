@@ -28,7 +28,7 @@ class MeltStandardizer(VCFStandardizer):
         std_rec.info['SVTYPE'] = 'INS'
 
         # Add END
-        std_rec.info['END'] = raw_rec.pos + 1
+        std_rec.stop = raw_rec.pos + 1
 
         # Add STRANDS
         std_rec.info['STRANDS'] = '+-'

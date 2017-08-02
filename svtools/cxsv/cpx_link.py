@@ -162,7 +162,7 @@ class ComplexSV:
 
         # Overall variant start/end
         self.vcf_record.pos = min(FF.pos, RR.pos)
-        self.vcf_record.info['END'] = max(FF.info['END'], RR.info['END'])
+        self.vcf_record.stop = max(FF.stop, RR.stop)
 
         self.cpx_intervals = make_inversion_intervals(FF, RR, self.cnvs,
                                                       self.cpx_type)
@@ -184,7 +184,7 @@ class ComplexSV:
             self.vcf_record.chrom = plus.chrom
             self.vcf_record.pos = plus.pos
             self.vcf_record.info['CHR2'] = plus.info['CHR2']
-            self.vcf_record.info['END'] = plus.info['END']
+            self.vcf_record.stop = plus.stop
 
         elif self.svtype == 'INS':
             if 'B2A' in self.cpx_type:
@@ -195,28 +195,28 @@ class ComplexSV:
             if self.cpx_type == 'CTX_INS_B2A':
                 sink_start = plus.pos
                 sink_end = minus.pos
-                source_start = plus.info['END']
-                source_end = minus.info['END']
+                source_start = plus.stop
+                source_end = minus.stop
             elif self.cpx_type == 'CTX_INV_INS_B2A':
                 sink_start = plus.pos
                 sink_end = minus.pos
-                source_start = minus.info['END']
-                source_end = plus.info['END']
+                source_start = minus.stop
+                source_end = plus.stop
             elif self.cpx_type == 'CTX_INS_A2B':
-                sink_start = minus.info['END']
-                sink_end = plus.info['END']
+                sink_start = minus.stop
+                sink_end = plus.stop
                 source_start = minus.pos
                 source_end = plus.pos
             elif self.cpx_type == 'CTX_INV_INS_A2B':
-                sink_start = plus.info['END']
-                sink_end = minus.info['END']
+                sink_start = plus.stop
+                sink_end = minus.stop
                 source_start = minus.pos
                 source_end = plus.pos
 
             self.vcf_record.chrom = sink_chrom
             self.vcf_record.info['CHR2'] = sink_chrom
             self.vcf_record.pos = sink_start
-            self.vcf_record.info['END'] = sink_end
+            self.vcf_record.stop = sink_end
 
             interval = '{0}_{1}:{2}-{3}'
             if 'INV' in self.cpx_type:
@@ -291,20 +291,20 @@ def make_inversion_intervals(FF, RR, cnvs, cpx_type):
     # Then add inversion
     svtype = 'INV'
     start = RR.pos
-    end = FF.info['END']
+    end = FF.stop
     intervals.append(interval.format(**locals()))
 
     # Finally add 3' CNV
     if cpx_type.endswith('del'):
         svtype = 'DEL'
-        start = FF.info['END']
-        end = RR.info['END']
+        start = FF.stop
+        end = RR.stop
         intervals.append(interval.format(**locals()))
 
     if cpx_type.endswith('dup'):
         svtype = 'DUP'
-        start = RR.info['END']
-        end = FF.info['END']
+        start = RR.stop
+        end = FF.stop
         intervals.append(interval.format(**locals()))
 
     return intervals

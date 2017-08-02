@@ -155,12 +155,12 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
 
                 # Second end of breakpoint
                 chrom = record.info['CHR2']
-                start = record.info['END']
-                end = record.info['END'] + 1
+                start = record.stop
+                end = record.stop + 1
                 yield entry.format(**locals())
 
             else:
-                end = record.info['END']
+                end = record.stop
                 yield entry.format(**locals())
 
     return pbt.BedTool(_converter()).saveas()

@@ -33,25 +33,23 @@ def _merge_records(vcf, cpx_records, cpx_record_ids):
     r1, r2 : iter of pysam.VariantRecord
     """
 
-    SENTINEL = 'SENTINEL'
-
     def _next_record():
         try:
             return next(vcf)
         except StopIteration:
-            return SENTINEL
+            return None
 
     def _next_cpx():
         try:
             return cpx_records.popleft()
         except IndexError:
-            return SENTINEL
+            return None
 
     # Initialize merge
     curr_record = _next_record()
     curr_cpx = _next_cpx()
 
-    while curr_record != SENTINEL and curr_cpx != SENTINEL:
+    while curr_record is not None and curr_cpx is not None:
         # Remove VCF records that were included in complex event
         if curr_record.id in cpx_record_ids:
             curr_record = _next_record()
@@ -74,11 +72,11 @@ def _merge_records(vcf, cpx_records, cpx_record_ids):
             curr_cpx = _next_cpx()
 
     # After one iterator is exhausted, return rest of other iterator
-    if curr_record == SENTINEL:
+    if curr_record is None:
         for cpx in cpx_records:
             yield cpx
 
-    elif curr_cpx == SENTINEL:
+    elif curr_cpx is None:
         for record in vcf:
             if record.id not in cpx_record_ids:
                 yield record
