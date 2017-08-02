@@ -130,6 +130,10 @@ def resolve_complex_sv(vcf, variant_prefix='CPX_'):
     vcf.reset()
 
     for record in _merge_records(vcf, cpx_records, cpx_record_ids):
+        record.info.pop('STRANDS')
+        record.info.pop('CIPOS')
+        record.info.pop('CIEND')
+        record.info.pop('RMSSTD')
         yield record
 
 
