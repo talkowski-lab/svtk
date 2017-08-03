@@ -1,6 +1,7 @@
 # SVTools
 
-Utilities for manipulating structural variation calls.
+Utilities for consolidating, filtering, resolving, and annotating structural
+variants.
 
 ## Installation
 
