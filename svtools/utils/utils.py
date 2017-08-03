@@ -160,10 +160,11 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
                 yield entry.format(**locals())
 
                 # Second end of breakpoint
-                chrom = record.info['CHR2']
-                start = record.stop
-                end = record.stop + 1
-                yield entry.format(**locals())
+                if split_bnd:
+                    chrom = record.info['CHR2']
+                    start = record.stop
+                    end = record.stop + 1
+                    yield entry.format(**locals())
 
             elif record.info['SVTYPE'] == 'INS' and split_cpx:
                 # Only yield insertion sinks for now
