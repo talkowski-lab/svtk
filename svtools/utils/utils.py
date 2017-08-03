@@ -109,7 +109,7 @@ def get_called_samples(record, include_null=False):
 
 # TODO: check if record is CPX and make entry per complex interval
 def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
-                include_strands=True):
+                include_strands=True, split_cpx=False):
     """
     Wrap VCF as a bedtool. Necessary as pybedtools does not support SV in VCF.
 
@@ -142,7 +142,6 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
 
     # Convert each record in vcf to bed entry
     def _converter():
-        bed = '{0}\t{1}\t{2}\t{3}\t{4}\t{5}\n'
         for record in vcf:
             chrom = record.chrom
             start = record.pos
@@ -150,7 +149,8 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
             svtype = record.info['SVTYPE']
 
             if include_strands:
-                strands = record.info['STRANDS']
+                strands = record.info.get('STRANDS')
+                strands = '.' if strands is None else strands
             if include_samples:
                 samples = ','.join(get_called_samples(record))
 
@@ -164,6 +164,27 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
                 start = record.stop
                 end = record.stop + 1
                 yield entry.format(**locals())
+
+            elif record.info['SVTYPE'] == 'INS' and split_cpx:
+                # Only yield insertion sinks for now
+                # Treat them as deletions
+                # TODO: rename CPX_INTERVALS to SOURCE for insertions
+                svtype = 'DEL'
+                end = record.stop
+
+                # We permit start > end in insertions in cases of
+                # microdup/microhomology
+                # Reorder start/end so bedtools doesn't break
+                start, end = sorted([start, end])
+                yield entry.format(**locals())
+
+            elif 'CPX_INTERVALS' in record.info and split_cpx:
+                # If complex, all constituent intervals are in CPX_INTERVALS
+                for interval in record.info['CPX_INTERVALS']:
+                    svtype, region = interval.split('_')
+                    chrom, coords = region.split(':')
+                    start, end = coords.split('-')
+                    yield entry.format(**locals())
 
             else:
                 end = record.stop
