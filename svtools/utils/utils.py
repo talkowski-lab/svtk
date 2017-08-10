@@ -166,7 +166,7 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
                     end = record.stop + 1
                     yield entry.format(**locals())
 
-            elif record.info['SVTYPE'] == 'INS' and split_cpx:
+            elif record.info['SVTYPE'] == 'INS':
                 # Only yield insertion sinks for now
                 # Treat them as deletions
                 # TODO: rename CPX_INTERVALS to SOURCE for insertions
@@ -177,6 +177,10 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
                 # microdup/microhomology
                 # Reorder start/end so bedtools doesn't break
                 start, end = sorted([start, end])
+                yield entry.format(**locals())
+
+            elif record.info['SVTYPE'] == 'CTX':
+                end = record.pos + 1
                 yield entry.format(**locals())
 
             elif 'CPX_INTERVALS' in record.info and split_cpx:
