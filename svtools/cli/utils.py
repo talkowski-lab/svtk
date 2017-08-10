@@ -32,9 +32,13 @@ def vcf2bed(argv):
     args = parser.parse_args(argv)
 
     vcf = pysam.VariantFile(args.vcf)
+
     bt = svu.vcf2bedtool(vcf,
                          split_bnd=args.split_bnd,
                          include_samples=args.include_samples,
                          include_strands=args.include_strands)
 
-    bt.saveas(args.bed)
+    if args.bed in 'stdout -'.split():
+        sys.stdout.write(str(bt))
+    else:
+        bt.saveas(args.bed)

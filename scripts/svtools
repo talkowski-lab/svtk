@@ -48,8 +48,12 @@ def main():
         usage=argparse.SUPPRESS,
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('subcommand', help=argparse.SUPPRESS)
-    args = parser.parse_args(sys.argv[1:2])
 
+    if len(sys.argv) < 2:
+        parser.print_help()
+        sys.exit(1)
+
+    args = parser.parse_args(sys.argv[1:2])
     command = args.subcommand.replace('-', '_')
 
     if not hasattr(cli, command):

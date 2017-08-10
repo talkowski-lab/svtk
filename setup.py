@@ -30,5 +30,8 @@ setup(
         'pysam>=0.11.2.2',
         'pybedtools',
         'cython',
+        'natsort',
+        'boto3',
+        'pandas',
     ]
 )

@@ -254,8 +254,10 @@ class SVRecordCluster:
             strands = new_record.info['STRANDS']
             alt = make_bnd_alt(base_record.chrB, END, strands)
             new_record.alts = (alt, )
+            new_record.stop = END
         else:
             new_record.alts = base_record.record.alts
+            new_record.stop = END
 
         # SVLEN for intra-chromosomal is -1
         if base_record.is_tloc:
