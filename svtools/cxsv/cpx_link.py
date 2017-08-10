@@ -284,7 +284,7 @@ class ComplexSV:
             elif ok_tloc_strands(*self.tlocs):
                 self.cluster_type = 'CANDIDATE_TRANSLOCATION'
             else:
-                self.cluster_TYPE = 'STRAND_MISMATCH_TLOC'
+                self.cluster_type = 'STRAND_MISMATCH_TLOC'
         elif len(self.inversions) + len(self.tlocs) >= 3:
             self.cluster_type = 'COMPLEX_3plus'
         else:
