@@ -97,6 +97,9 @@ def main(argv):
     parser.add_argument('-t', '--svtypes', default='DEL,DUP,INV,BND',
                         help='Comma delimited list of svtypes to cluster '
                         '[DEL,DUP,INV,BND]')
+    parser.add_argument('--preserve-ids', action='store_true', default=False,
+                        help='Include list of IDs of constituent records in '
+                        'each cluster.')
     #  parser.add_argument('--cluster-bed', type=argparse.FileType('w'),
     #                      help='Bed of constituent calls in each cluster')
 
@@ -110,26 +113,21 @@ def main(argv):
     filepaths = [line.strip() for line in args.filelist.readlines()]
     vcfs = parse_filepaths(filepaths)
 
-    #  if args.svtypes is not None:
-    #      svtypes = args.svtypes.split(',')
-    #      permitted_types = 'del dup inv tloc'.split()
-    #      for svtype in svtypes:
-    #          if svtype not in permitted_types:
-    #              raise Exception('Unpermitted svtype: {0}'.format(svtype))
-    #  else:
     svtypes = args.svtypes.split(',')
 
     svc = VCFCluster(vcfs, dist=args.dist, blacklist=args.blacklist,
-                     frac=args.frac, svtypes=svtypes, region=args.region)
+                     frac=args.frac, svtypes=svtypes, region=args.region,
+                     preserve_ids=args.preserve_ids)
 
     # Open new file
     if args.fout in '- stdout'.split():
         fout = sys.stdout
     else:
         fout = open(args.fout, 'w')
+
     fout = VariantFile(fout, mode='w', header=svc.header)
 
-    for i, (record, cluster) in enumerate(svc.cluster()):
+    for i, record in enumerate(svc.cluster()):
         # Name record
         if args.prefix:
             name = [args.prefix]

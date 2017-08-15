@@ -41,7 +41,9 @@ def main(argv):
     parser.add_argument('vcf', help='Raw VCF.')
     parser.add_argument('fout', help='Standardized VCF.')
     parser.add_argument('source', help='Source algorithm. '
-                        '[delly,lumpy,manta,wham]')
+                        '[delly,lumpy,manta,wham,melt]')
+    parser.add_argument('-p', '--prefix', help='If provided, variant names '
+                        'will be overwritten with this prefix.')
     parser.add_argument('--include-reference-sites', action='store_true',
                         default=False, help='Include records where all '
                         'samples are called 0/0 or ./.')
@@ -74,8 +76,13 @@ def main(argv):
     fout = VariantFile(args.fout, mode='w', header=header)
 
     standardizer = VCFStandardizer.create(args.source, vcf, fout)
+    idx = 1
     for record in standardizer.standardize_vcf():
         if any_called(record) or args.include_reference_sites:
+            if args.prefix is not None:
+                record.id = '{0}_{1}'.format(args.prefix, idx)
+                idx += 1
+
             fout.write(record)
 
     #  for std_rec in standardize_vcf(vcf, fout):
