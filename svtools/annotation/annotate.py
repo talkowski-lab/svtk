@@ -132,7 +132,7 @@ def annotate_vcf(vcf, gencode, noncoding, annotated_vcf):
     fout = pysam.VariantFile(annotated_vcf, 'w', header=header)
 
     # Annotate genic hits
-    sv = svu.vcf2bedtool(vcf.filename)
+    sv = svu.vcf2bedtool(vcf.filename, split_bnd=True, split_cpx=True)
 
     effects = annotate(sv, gencode, noncoding)
     effects = effects.to_dict(orient='index')
