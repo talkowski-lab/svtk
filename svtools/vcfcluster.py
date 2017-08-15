@@ -25,7 +25,7 @@ from svtools.genomeslink import GenomeSLINK
 class VCFCluster(GenomeSLINK):
     def __init__(self, vcfs,
                  dist=500, frac=0.0,
-                 match_strands=True, preserve_ids=False,
+                 match_strands=True,
                  region=None, blacklist=None, svtypes=None):
         """
         Clustering of VCF records.
@@ -51,8 +51,6 @@ class VCFCluster(GenomeSLINK):
             Minimum reciprocal overlap for two records to be linked.
         match_strands : bool, optional
             Two records must share strandedness in order to be linked.
-        preserve_ids : bool, optional
-            Keep list of constituent record IDs for each cluster.
         region : str, optional
             Genomic region to fetch for clustering. If None, all regions
             present will be clustered.
@@ -90,7 +88,6 @@ class VCFCluster(GenomeSLINK):
         self.frac = frac
         self.match_strands = match_strands
         self.svtypes = svtypes
-        self.preserve_ids = preserve_ids
 
         # Build VCF header for new record construction
         self.samples = sorted(samples)
@@ -136,9 +133,7 @@ class VCFCluster(GenomeSLINK):
             record = self.header.new_record()
             record = cluster.merge_record_data(record)
             record = cluster.merge_record_formats(record, self.sources)
-            if self.preserve_ids:
-                record.info['MEMBERS'] = [r.record.id for r in records]
-            yield record
+            yield record, cluster
 
     def make_vcf_header(self):
         """

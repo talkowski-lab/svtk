@@ -9,24 +9,6 @@ Classification of reciprocal translocations.
 """
 
 
-def classify_insertion(plus, minus, mh_buffer=50):
-    plus_A = plus.pos
-    minus_A = minus.pos
-    plus_B = plus.stop
-    minus_B = minus.stop
-
-    # Buffer comparisons
-    def _greater(p1, p2):
-        return p1 > p2 - mh_buffer
-
-    if _greater(minus_A, plus_A) and _greater(minus_B, plus_B):
-        return 'INS_B2A'
-    elif _greater(plus_A, minus_A) and _greater(plus_B, minus_B):
-        return 'INS_A2B'
-    else:
-        return 'INS_UNCLASSIFIED'
-
-
 def classify_simple_translocation(plus, minus, mh_buffer=50):
     """
     Resolve a pair of interchromosomal breakends.

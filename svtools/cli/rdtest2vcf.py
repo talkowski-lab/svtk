@@ -19,10 +19,9 @@ INFO fields, with specified constraints:
 
 import argparse
 import sys
-import os
 import pkg_resources
 from collections import namedtuple
-import pysam
+from pysam import VariantFile
 
 
 def RdtestParser(bed):
@@ -97,9 +96,7 @@ def main(argv):
                         '(chrom, start, end, name, samples, svtype)')
     parser.add_argument('samples', help='List of all samples present in '
                         'variant callset.')
-    parser.add_argument('fout', help='Standardized VCF. Will be compressed '
-                        'with bgzip and tabix indexed if filename ends with '
-                        '.gz')
+    parser.add_argument('fout', help='Standardized VCF.')
 
     # Print help if no arguments specified
     if len(argv) == 0:
@@ -110,7 +107,7 @@ def main(argv):
     # Get template header
     template = pkg_resources.resource_filename('svtools',
                                                'data/standard_template.vcf')
-    template = pysam.VariantFile(template)
+    template = VariantFile(template)
     header = template.header
 
     # Get list of samples
@@ -128,24 +125,9 @@ def main(argv):
     header.add_line(meta)
     header.add_line('##source=depth')
 
-    if args.fout.endswith('.vcf.gz'):
-        fname = os.path.splitext(args.fout)[0]
-    elif args.fout.endswith('.vcf'):
-        fname = args.fout
-    else:
-        msg = 'Invalid VCF filename; must end with .vcf or .vcf.gz: {0}'
-        msg = msg.format(args.fout)
-        raise ValueError(msg)
-
-    fout = pysam.VariantFile(fname, mode='w', header=header)
+    fout = VariantFile(args.fout, mode='w', header=header)
 
     rdtest2vcf(args.bed, fout)
-
-    # TODO: do this with subprocess so we don't have to write to disk twice
-    if args.fout.endswith('.gz'):
-        pysam.tabix_compress(fname, args.fout)
-        pysam.tabix_index(args.fout, preset='vcf')
-        os.remove(fname)
 
 if __name__ == '__main__':
     main(sys.argv[1:])

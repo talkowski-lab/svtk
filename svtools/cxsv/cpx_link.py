@@ -15,7 +15,7 @@ import scipy.sparse as sps
 import natsort
 import svtools.utils as svu
 from .cpx_inv import classify_complex_inversion
-from .cpx_tloc import classify_simple_translocation, classify_insertion
+from .cpx_tloc import classify_simple_translocation
 
 
 def samples_overlap(recA, recB, upper_thresh=0.8, lower_thresh=0.5):
@@ -94,12 +94,6 @@ def ok_tloc_strands(tloc1, tloc2):
             (strand1 == '+-' and strand2 == '-+'))
 
 
-def ok_ins_strands(bnd1, bnd2):
-    strand1, strand2 = sorted([t.info['STRANDS'] for t in (bnd1, bnd2)])
-
-    return (strand1 == '+-') and (strand2 == '-+')
-
-
 class ComplexSV:
     def __init__(self, records):
         """
@@ -112,9 +106,7 @@ class ComplexSV:
         self.records = records
 
         self.inversions = [r for r in records if r.info['SVTYPE'] == 'INV']
-        self.tlocs = [r for r in records if r.chrom != r.info['CHR2']]
-        self.breakends = [r for r in records if (r.chrom == r.info['CHR2']) and
-                                                (r.info['SVTYPE'] == 'BND')]
+        self.tlocs = [r for r in records if r.info['SVTYPE'] == 'BND']
 
         cnvtypes = 'DEL DUP'.split()
         self.cnvs = [r for r in records if r.info['SVTYPE'] in cnvtypes]
@@ -130,8 +122,6 @@ class ComplexSV:
             self.resolve_inversion()
         elif self.cluster_type == 'CANDIDATE_TRANSLOCATION':
             self.resolve_translocation()
-        elif self.cluster_type == 'CANDIDATE_INSERTION':
-            self.resolve_insertion()
         else:
             self.set_unresolved()
 
@@ -208,7 +198,7 @@ class ComplexSV:
     def resolve_translocation(self):
         # Force to ++/-- or +-/-+ ordering
         plus, minus = sorted(self.tlocs, key=lambda t: t.info['STRANDS'])
-        
+
         self.cpx_type = classify_simple_translocation(plus, minus)
 
         if 'INS' in self.cpx_type:
@@ -271,88 +261,31 @@ class ComplexSV:
                                              source_start, source_end)]
             self.vcf_record.info['CPX_INTERVALS'] = cpx_intervals
 
-    def resolve_insertion(self):
-        plus, minus = sorted(self.breakends, key=lambda t: t.info['STRANDS'])
-        self.cpx_type = classify_insertion(plus, minus)
-
-        if 'INS' == 'INS_UNCLASSIFIED':
-            self.svtype = 'UNR'
-        else:
-            self.svtype = 'INS'
-
-        # Setting alts removes END, so do it up front
-        self.vcf_record.alts = ('<{0}>'.format(self.svtype), )
-        self.vcf_record.info['SVTYPE'] = self.svtype
-        self.vcf_record.info['CPX_TYPE'] = self.cpx_type
-
-        sink_chrom = plus.chrom
-        source_chrom = plus.chrom
-
-        if self.cpx_type == 'INS_B2A':
-            sink_start = plus.pos
-            sink_end = minus.pos
-            source_start = plus.stop
-            source_end = minus.stop
-        elif self.cpx_type == 'INS_A2B':
-            sink_start = minus.stop
-            sink_end = plus.stop
-            source_start = minus.pos
-            source_end = plus.pos
-
-        self.vcf_record.chrom = sink_chrom
-        self.vcf_record.info['CHR2'] = sink_chrom
-        self.vcf_record.pos = sink_start
-        self.vcf_record.stop = sink_end
-
-        interval = 'INS_{0}:{1}-{2}'
-        cpx_intervals = [interval.format(source_chrom,
-                                         source_start, source_end)]
-        self.vcf_record.info['CPX_INTERVALS'] = cpx_intervals
-
     def set_cluster_type(self):
         # Restrict to double-ended inversion events with appropriate
         # strand pairing
-        #  n_invs = len(self.inversions)
-        #  n_tlocs = len(self.tlocs)
-        #  n_bnds = len(self.breakends)
-
-        class_counts = [len(records) for records in 
-                        [self.inversions, self.tlocs, self.breakends]]
-
-        paired = np.array([count == 2 for count in class_counts])
-        absent = np.array([count == 0 for count in class_counts])
-
-        # If one class is paired and rest are absent 
-        if all(paired ^ absent) and len(np.where(paired)[0]) == 1:
-            idx = np.where(paired)[0][0]
-            if idx == 0:
-                if (self.inversions[0].info['STRANDS'] ==
-                        self.inversions[1].info['STRANDS']):
-                    self.cluster_type = 'MATCHED_STRANDS'
-                else:
-                    self.cluster_type = 'CANDIDATE_INVERSION'
-            elif idx == 1:
-                if len(self.cnvs) > 0:
-                    self.cluster_type = 'TLOC_WITH_CNV'
-                elif ok_tloc_strands(*self.tlocs):
-                    self.cluster_type = 'CANDIDATE_TRANSLOCATION'
-                else:
-                    self.cluster_type = 'STRAND_MISMATCH_TLOC'
-            elif idx == 2:
-                if len(self.cnvs) > 0:
-                    self.cluster_type = 'INS_WITH_CNV'
-                elif ok_ins_strands(*self.breakends):
-                    self.cluster_type = 'CANDIDATE_INSERTION'
-                else:
-                    self.cluster_type = 'STRAND_MISMATCH_INS'
-
-        elif sum(class_counts) == 0:
+        if len(self.inversions) == 0 and len(self.tlocs) == 0:
             self.cluster_type = 'ERROR_CNV_ONLY'
-        elif sum(class_counts) == 1:
-            self.cluster_type = 'SINGLE_ENDER'
-        elif sum(class_counts) == 2:
-            self.cluster_type = 'MIXED_BREAKENDS'
-        elif sum(class_counts) >= 3:
+        elif len(self.inversions) == 1 and len(self.tlocs) == 0:
+            self.cluster_type = 'SINGLE_ENDER_INV'
+        elif len(self.inversions) == 0 and len(self.tlocs) == 1:
+            self.cluster_type = 'SINGLE_ENDER_TLOC'
+        elif len(self.inversions) == 1 and len(self.tlocs) == 1:
+            self.cluster_type = 'MIXED_INV_TLOC'
+        elif len(self.inversions) == 2 and len(self.tlocs) == 0:
+            if (self.inversions[0].info['STRANDS'] ==
+                    self.inversions[1].info['STRANDS']):
+                self.cluster_type = 'MATCHED_STRANDS'
+            else:
+                self.cluster_type = 'CANDIDATE_INVERSION'
+        elif len(self.inversions) == 0 and len(self.tlocs) == 2:
+            if len(self.cnvs) > 0:
+                self.cluster_type = 'TLOC_WITH_CNV'
+            elif ok_tloc_strands(*self.tlocs):
+                self.cluster_type = 'CANDIDATE_TRANSLOCATION'
+            else:
+                self.cluster_type = 'STRAND_MISMATCH_TLOC'
+        elif len(self.inversions) + len(self.tlocs) >= 3:
             self.cluster_type = 'COMPLEX_3plus'
         else:
             self.cluster_type = 'ERROR_UNCLASSIFIED'
