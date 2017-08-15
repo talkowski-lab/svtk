@@ -201,9 +201,9 @@ class ComplexSV:
             self.vcf_record.stop = sink_end
 
             interval = 'INV_{0}:{1}-{2}'
-            cpx_intervals = [interval.format(self.vcf_record.chrom,
-                                             source_start, source_end)]
-            self.vcf_record.info['CPX_INTERVALS'] = cpx_intervals
+            source = interval.format(self.vcf_record.chrom,
+                                     source_start, source_end)
+            self.vcf_record.info['SOURCE'] = source
 
     def resolve_translocation(self):
         # Force to ++/-- or +-/-+ ordering
@@ -267,16 +267,17 @@ class ComplexSV:
             else:
                 interval_type = 'INS'
 
-            cpx_intervals = [interval.format(interval_type, source_chrom,
-                                             source_start, source_end)]
-            self.vcf_record.info['CPX_INTERVALS'] = cpx_intervals
+            source = interval.format(interval_type, source_chrom,
+                                     source_start, source_end)
+            self.vcf_record.info['SOURCE'] = source
 
     def resolve_insertion(self):
         plus, minus = sorted(self.breakends, key=lambda t: t.info['STRANDS'])
         self.cpx_type = classify_insertion(plus, minus)
 
-        if 'INS' == 'INS_UNCLASSIFIED':
+        if self.cpx_type == 'INS_UNCLASSIFIED':
             self.svtype = 'UNR'
+            return
         else:
             self.svtype = 'INS'
 
@@ -305,9 +306,8 @@ class ComplexSV:
         self.vcf_record.stop = sink_end
 
         interval = 'INS_{0}:{1}-{2}'
-        cpx_intervals = [interval.format(source_chrom,
-                                         source_start, source_end)]
-        self.vcf_record.info['CPX_INTERVALS'] = cpx_intervals
+        source = interval.format(source_chrom, source_start, source_end)
+        self.vcf_record.info['SOURCE'] = source
 
     def set_cluster_type(self):
         # Restrict to double-ended inversion events with appropriate
