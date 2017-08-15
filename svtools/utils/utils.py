@@ -109,7 +109,7 @@ def get_called_samples(record, include_null=False):
 
 # TODO: check if record is CPX and make entry per complex interval
 def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
-                include_strands=True, split_cpx=False):
+                include_strands=True, split_cpx=False, include_infos=None):
     """
     Wrap VCF as a bedtool. Necessary as pybedtools does not support SV in VCF.
 
@@ -122,6 +122,9 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
         Provide comma-delimited list of called samples
     include_strands : bool, optional
         Provide breakpoint strandedness
+    include_infos : list of str, optional
+        INFO fields to add as columns in output. If "ALL" is present in the
+        list, all INFO fields will be reported.
 
     Returns
     -------
@@ -138,7 +141,19 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
         entry += '\t{strands}'
     if include_samples:
         entry += '\t{samples}'
+    if include_infos:
+        if 'ALL' in include_infos:
+            include_infos = vcf.header.info.keys()
+        entry += '\t{infos}'
     entry += '\n'
+
+    def _format_info(info):
+        if info is None:
+            return 'NA'
+        elif isinstance(info, tuple) or isinstance(info, list):
+            return ','.join([str(x) for x in info])
+        else:
+            return str(info)
 
     # Convert each record in vcf to bed entry
     def _converter():
@@ -153,6 +168,10 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
                 strands = '.' if strands is None else strands
             if include_samples:
                 samples = ','.join(get_called_samples(record))
+            if include_infos:
+                infos = [record.info.get(key) for key in include_infos]
+                infos = [_format_info(v) for v in infos]
+                infos = '\t'.join(infos)
 
             if record.info['SVTYPE'] == 'BND':
                 # First end of breakpoint
