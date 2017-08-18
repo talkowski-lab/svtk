@@ -59,7 +59,9 @@ def vcf2bed(argv):
                          split_bnd=args.split_bnd,
                          include_samples=args.include_samples,
                          include_strands=False,
-                         include_infos=args.info)
+                         include_infos=args.info,
+                         annotate_ins=False,
+                         report_alt=True)
 
     if args.bed in 'stdout -'.split():
         if args.header:

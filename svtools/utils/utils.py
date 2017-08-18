@@ -109,7 +109,8 @@ def get_called_samples(record, include_null=False):
 
 # TODO: check if record is CPX and make entry per complex interval
 def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
-                include_strands=True, split_cpx=False, include_infos=None):
+                include_strands=True, split_cpx=False, include_infos=None,
+                annotate_ins=True, report_alt=False):
     """
     Wrap VCF as a bedtool. Necessary as pybedtools does not support SV in VCF.
 
@@ -125,6 +126,10 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
     include_infos : list of str, optional
         INFO fields to add as columns in output. If "ALL" is present in the
         list, all INFO fields will be reported.
+    annotate_ins : bool, optional
+        Rename SVTYPE of insertion records to DEL to annotate sink.
+    report_alt : bool, optional
+        Report record's ALT as SVTYPE in bed
 
     Returns
     -------
@@ -161,7 +166,10 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
             chrom = record.chrom
             start = record.pos
             name = record.id
-            svtype = record.info['SVTYPE']
+            if report_alt:
+                svtype = record.alts[0].strip('<>')
+            else:
+                svtype = record.info['SVTYPE']
 
             if include_strands:
                 strands = record.info.get('STRANDS')
@@ -189,7 +197,8 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
                 # Only yield insertion sinks for now
                 # Treat them as deletions
                 # TODO: rename CPX_INTERVALS to SOURCE for insertions
-                svtype = 'DEL'
+                if annotate_ins:
+                    svtype = 'DEL'
                 end = record.stop
 
                 # We permit start > end in insertions in cases of
