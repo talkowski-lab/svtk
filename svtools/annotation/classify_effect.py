@@ -18,8 +18,10 @@ def classify_del(disrupt_dict):
         return 'LOF'
     if 'UTR' in regions:
         return 'UTR'
-    if 'gene' in regions:
+    if 'transcript' in regions:
         return 'INTRONIC'
+    if 'gene' in regions:
+        return 'GENE_OTHER'
     if 'promoter' in regions:
         return 'promoter'
 
@@ -50,13 +52,14 @@ def classify_dup(disrupt_dict):
         if 'BOTH-INSIDE' in disrupt_dict['UTR']:
             return 'UTR'
 
-    if 'gene' in elements:
-        if 'BOTH-INSIDE' in disrupt_dict['gene']:
+    if 'transcript' in elements:
+        if 'BOTH-INSIDE' in disrupt_dict['transcript']:
             return 'INTRONIC'
-        else:
-            # Hit gene boundary but not transcript/exon, likely due to
-            # filtering to canonical transcript
-            return 'GENE_OTHER'
+
+    if 'gene' in elements:
+        # Hit gene boundary but not transcript/exon, likely due to
+        # filtering to canonical transcript
+        return 'GENE_OTHER'
 
     if 'promoter' in elements:
         if 'BOTH-INSIDE' in disrupt_dict['promoter']:
@@ -93,13 +96,14 @@ def classify_inv(disrupt_dict):
                 'ONE-INSIDE' in disrupt_dict['UTR']):
             return 'UTR'
 
-    if 'gene' in elements:
-        if 'BOTH-INSIDE' in disrupt_dict['gene']:
+    if 'transcript' in elements:
+        if 'BOTH-INSIDE' in disrupt_dict['transcript']:
             return 'INTRONIC'
-        else:
-            # Hit gene boundary but not transcript/exon, likely due to
-            # filtering to canonical transcript
-            return 'GENE_OTHER'
+
+    if 'gene' in elements:
+        # Hit gene boundary but not transcript/exon, likely due to
+        # filtering to canonical transcript
+        return 'GENE_OTHER'
 
     if 'promoter' in elements:
         if ('BOTH-INSIDE' in disrupt_dict['promoter'] or
@@ -120,8 +124,10 @@ def classify_bnd(disrupt_dict):
 
     if 'exon' in elements:
         return 'LOF'
-    if 'gene' in elements:
+    if 'transcript' in elements:
         return 'LOF'
+    if 'gene' in elements:
+        return 'GENE_OTHER'
     if 'UTR' in elements:
         return 'UTR'
     if 'promoter' in elements:
