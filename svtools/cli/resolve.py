@@ -84,7 +84,7 @@ def _merge_records(vcf, cpx_records, cpx_record_ids):
                 yield record
 
 
-def resolve_complex_sv(vcf, variant_prefix='CPX_'):
+def resolve_complex_sv(vcf, cytobands, variant_prefix='CPX_'):
     """
     Resolve complex SV from CNV intervals and BCA breakpoints.
 
@@ -93,8 +93,10 @@ def resolve_complex_sv(vcf, variant_prefix='CPX_'):
     Parameters
     ----------
     vcf : pysam.VariantFile
+    cytobands : pysam.TabixFile
     variant_prefix : str
         Prefix to assign to resolved variants
+
 
     Yields
     ------
@@ -112,7 +114,7 @@ def resolve_complex_sv(vcf, variant_prefix='CPX_'):
     cpx_record_ids = set()
 
     for cluster in clusters:
-        cpx = ComplexSV(cluster)
+        cpx = ComplexSV(cluster, cytobands)
         cpx_record_ids = cpx_record_ids.union(cpx.record_ids)
 
         if cpx.svtype == 'UNR':
@@ -132,7 +134,9 @@ def resolve_complex_sv(vcf, variant_prefix='CPX_'):
     vcf.reset()
 
     for record in _merge_records(vcf, cpx_records, cpx_record_ids):
-        record.info.pop('STRANDS')
+        if 'CPX_TYPE' in record.info.keys():
+            if record.info['CPX_TYPE'] != 'SINGLE_ENDER':
+                record.info.pop('STRANDS')
         record.info.pop('CIPOS')
         record.info.pop('CIEND')
         record.info.pop('RMSSTD')
@@ -145,6 +149,8 @@ def main(argv):
         prog='svtools link-cpx',
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('raw', help='Filtered breakpoints and CNV intervals.')
+    parser.add_argument('cytobands', help='Cytoband file. Required to '
+                        'correctly classify interchromosomal events.')
     parser.add_argument('resolved', type=argparse.FileType('w'),
                         help='Resolved simple and complex variants.')
     parser.add_argument('-u', '--unresolved', type=argparse.FileType('w'),
@@ -168,7 +174,9 @@ def main(argv):
     resolved_f = pysam.VariantFile(resolved_pipe.stdin, 'w', header=vcf.header)
     unresolved_f = pysam.VariantFile(args.unresolved, 'w', header=vcf.header)
 
-    for record in resolve_complex_sv(vcf):
+    cytobands = pysam.TabixFile(args.cytobands)
+
+    for record in resolve_complex_sv(vcf, cytobands, args.prefix):
         if record.info['UNRESOLVED']:
             unresolved_f.write(record)
         else:

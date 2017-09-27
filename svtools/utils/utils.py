@@ -110,7 +110,7 @@ def get_called_samples(record, include_null=False):
 # TODO: check if record is CPX and make entry per complex interval
 def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
                 include_strands=True, split_cpx=False, include_infos=None,
-                annotate_ins=True, report_alt=False):
+                annotate_ins=True, report_alt=False, svtypes=None):
     """
     Wrap VCF as a bedtool. Necessary as pybedtools does not support SV in VCF.
 
@@ -130,6 +130,8 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
         Rename SVTYPE of insertion records to DEL to annotate sink.
     report_alt : bool, optional
         Report record's ALT as SVTYPE in bed
+    svtypes : list of str, optional
+        Whitelist of SV types to restrict generated bed to
 
     Returns
     -------
@@ -163,6 +165,9 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
     # Convert each record in vcf to bed entry
     def _converter():
         for record in vcf:
+            if svtypes is not None and record.info['SVTYPE'] not in svtypes:
+                continue
+
             chrom = record.chrom
             start = record.pos
             name = record.id
@@ -224,3 +229,35 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
                 yield entry.format(**locals())
 
     return pbt.BedTool(_converter()).saveas()
+
+
+def set_null(record, sample):
+    """Remove sample call from a VariantRecord"""
+    dat = record.samples[sample].items()
+
+    # Set genotype to no-call
+    record.samples[sample]['GT'] = (0, 0)
+
+    for fmt, value in dat:
+        if fmt == 'GT':
+            continue
+
+        # Get type and count of FORMAT
+        n = record.format[fmt].number
+        dtype = record.format[fmt].type
+
+        # Set null value based on FORMAT type
+        if dtype in 'Integer Float'.split():
+            null_val = 0
+        elif dtype in 'String Character'.split():
+            null_val = ''
+        else:
+            raise ValueError('Invalid VCF FORMAT type: {0}'.format(dtype))
+
+        # Set the appropriate count of values
+        if n == 1:
+            record.samples[sample][fmt] = null_val
+        elif n == '.':
+            record.samples[sample][fmt] = (null_val, )
+        else:
+            record.samples[sample][fmt] = tuple(null_val for i in range(n))

@@ -100,16 +100,30 @@ def ok_ins_strands(bnd1, bnd2):
     return (strand1 == '+-') and (strand2 == '-+')
 
 
+def get_arms(record, cytobands):
+    regionA = '{0}:{1}-{1}'.format(record.chrom, record.pos)
+    regionB = '{0}:{1}-{1}'.format(record.info['CHR2'], record.stop)
+
+    def _get_arm(region):
+        arm = next(cytobands.fetch(region))
+        return arm.split()[3][0]
+
+    return _get_arm(regionA), _get_arm(regionB)
+
+
 class ComplexSV:
-    def __init__(self, records):
+    def __init__(self, records, cytobands):
         """
         Parameters
         ----------
         records : list of pysam.VariantRecord
             Clustered records to resolve
+        cytobands : pysam.TabixFile
+            Cytoband bed file (to classify interchromosomal)
         """
 
         self.records = records
+        self.cytobands = cytobands
 
         self.inversions = [r for r in records if r.info['SVTYPE'] == 'INV']
         self.tlocs = [r for r in records if r.chrom != r.info['CHR2']]
@@ -208,6 +222,7 @@ class ComplexSV:
     def resolve_translocation(self):
         # Force to ++/-- or +-/-+ ordering
         plus, minus = sorted(self.tlocs, key=lambda t: t.info['STRANDS'])
+        armA, armB = get_arms(plus, self.cytobands)
         
         self.cpx_type = classify_simple_translocation(plus, minus)
 
@@ -215,8 +230,20 @@ class ComplexSV:
             self.svtype = 'INS'
         elif self.cpx_type in ['TLOC_MISMATCH_CHROM', 'CTX_UNR']:
             self.svtype = 'UNR'
+        elif self.cpx_type == 'CTX_PP/QQ':
+            if armA == armB:
+                self.svtype = 'CTX'
+            else:
+                self.svtype = 'UNR'
+                self.cpx_type += '_MISMATCH'
+        elif self.cpx_type == 'CTX_PQ/QP':
+            if armA != armB:
+                self.svtype = 'CTX'
+            else:
+                self.svtype = 'UNR'
+                self.cpx_type += '_MISMATCH'
         else:
-            self.svtype = 'CTX'
+            raise Exception('Invalid cpx type: ' + self.cpx_type)
 
         # Setting alts removes END, so do it up front
         self.vcf_record.alts = ('<{0}>'.format(self.svtype), )
@@ -411,7 +438,7 @@ def make_inversion_intervals(FF, RR, cnvs, cpx_type):
     return intervals
 
 
-def link_cpx(vcf, bkpt_window=100):
+def link_cpx(vcf, bkpt_window=300):
     """
     Parameters
     ----------

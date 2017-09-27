@@ -19,7 +19,7 @@ import sys
 from collections import defaultdict, Counter
 import pandas as pd
 from pysam import VariantFile
-from svtools.utils import NULL_GT
+import svtools.utils as svu
 
 
 def count_svtypes(vcf):
@@ -44,12 +44,7 @@ def count_svtypes(vcf):
         count_dict[sample] = defaultdict(int)
 
     for record in vcf:
-        for sample in samples:
-            # Only count called variants
-            gt = record.samples[sample]['GT']
-            if gt in NULL_GT:
-                continue
-
+        for sample in svu.get_called_samples(record):
             # Count the SVTYPE if it's present, otherwise increment NO_SVTYPE
             if 'SVTYPE' in record.info.keys():
                 count_dict[sample][record.info['SVTYPE']] += 1

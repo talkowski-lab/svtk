@@ -43,7 +43,10 @@ def vcf2bed(argv):
         sys.exit(1)
     args = parser.parse_args(argv)
 
-    vcf = pysam.VariantFile(args.vcf)
+    if args.vcf in '- stdin'.split():
+        vcf = pysam.VariantFile(sys.stdin)
+    else:
+        vcf = pysam.VariantFile(args.vcf)
 
     header = '#chrom start end name svtype'.split()
     if args.include_samples:

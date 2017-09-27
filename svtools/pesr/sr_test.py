@@ -71,7 +71,11 @@ class SRTest(PESRTest):
     def load_counts(self, chrom, pos, strand):
         """Load pandas DataFrame from tabixfile"""
 
-        lines = self.countfile.fetch(region='{0}:{1}-{1}'.format(chrom, pos))
+        if pos > 0:
+            region = '{0}:{1}-{1}'.format(chrom, pos)
+            lines = self.countfile.fetch(region)
+        else:
+            lines = []
         counts = io.StringIO('\n'.join([l for l in lines]))
 
         cols = 'chrom pos clip count sample'.split()
