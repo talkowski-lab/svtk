@@ -182,7 +182,15 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
             if include_samples:
                 samples = ','.join(get_called_samples(record))
             if include_infos:
-                infos = [record.info.get(key) for key in include_infos]
+                infos = deque()
+                for key in include_infos:
+                    # Can't access END through info
+                    if key == 'END':
+                        infos.append(record.stop)
+                    else:
+                        infos.append(record.info.get(key))
+
+                # reformat for tabular output
                 infos = [_format_info(v) for v in infos]
                 infos = '\t'.join(infos)
 
