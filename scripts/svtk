@@ -5,9 +5,9 @@
 # Distributed under terms of the MIT license.
 
 """
-SVTools: Utilities for manipulating structural variation
+SVTK: A toolkit for manipulating structural variation
 
-usage: svtools [-h] <subcommand> [options]
+usage: svtk [-h] <subcommand> [options]
 
 [ Preprocessing ]
     standardize    Convert SV calls to a standardized format.
@@ -39,7 +39,7 @@ usage: svtools [-h] <subcommand> [options]
 
 import argparse
 import sys
-import svtools.cli as cli
+import svtk.cli as cli
 
 
 def main():
