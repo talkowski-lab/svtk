@@ -18,8 +18,8 @@ import heapq
 import re
 import pkg_resources
 from pysam import VariantFile
-from svtools.svfile import SVFile, SVRecordCluster
-from svtools.genomeslink import GenomeSLINK
+from svtk.svfile import SVFile, SVRecordCluster
+from svtk.genomeslink import GenomeSLINK
 
 
 class VCFCluster(GenomeSLINK):
@@ -155,7 +155,7 @@ class VCFCluster(GenomeSLINK):
 
         # Read stock template
         template = pkg_resources.resource_filename(
-                        'svtools', 'data/vcfcluster_template.vcf')
+                        'svtk', 'data/vcfcluster_template.vcf')
 
         # Make header
         template = VariantFile(template)

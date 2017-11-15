@@ -17,7 +17,7 @@ INFO fields, with specified constraints:
 """
 
 
-from svtools.utils import make_bnd_alt, NULL_GT
+from svtk.utils import make_bnd_alt, NULL_GT
 
 
 class VCFStandardizer:

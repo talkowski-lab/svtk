@@ -90,7 +90,7 @@ def rdtest2vcf(bed, vcf):
 def main(argv):
     parser = argparse.ArgumentParser(
         description=__doc__,
-        prog='svtools standardize',
+        prog='svtk standardize',
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('bed', type=argparse.FileType('r'),
                         help='RdTest-formatted bed file. '
@@ -108,7 +108,7 @@ def main(argv):
     args = parser.parse_args(argv)
 
     # Get template header
-    template = pkg_resources.resource_filename('svtools',
+    template = pkg_resources.resource_filename('svtk',
                                                'data/standard_template.vcf')
     template = pysam.VariantFile(template)
     header = template.header

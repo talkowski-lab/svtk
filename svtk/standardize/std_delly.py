@@ -9,7 +9,7 @@ Standardize a Delly record.
 """
 
 from .standardize import VCFStandardizer
-from svtools.utils import is_smaller_chrom
+from svtk.utils import is_smaller_chrom
 
 
 @VCFStandardizer.register('delly')

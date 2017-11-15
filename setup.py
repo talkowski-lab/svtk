@@ -13,16 +13,16 @@ from Cython.Build import cythonize
 import pysam
 
 setup(
-    name='svtools',
+    name='svtk',
     version='0.1',
-    description='Tools for manipulating structural variant files',
+    description='Structural variation toolkit',
     author='Matthew Stone',
     author_email='mstone5@mgh.harvard.edu',
     packages=find_packages(),
-    package_data={'svtools': ['data/standard_template.vcf',
+    package_data={'svtk': ['data/standard_template.vcf',
                               'data/vcfcluster_template.vcf']},
-    scripts=['scripts/svtools'],
-    ext_modules=cythonize('svtools/utils/helpers.pyx'),
+    scripts=['scripts/svtk'],
+    ext_modules=cythonize('svtk/utils/helpers.pyx'),
     include_dirs=pysam.get_include(),
     install_requires=[
         'numpy',

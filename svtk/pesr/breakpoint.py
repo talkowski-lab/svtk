@@ -9,7 +9,7 @@ Wrapper for breakpoints stored in VCF records
 """
 
 import numpy as np
-import svtools.utils as svu
+import svtk.utils as svu
 
 
 class Breakpoint:

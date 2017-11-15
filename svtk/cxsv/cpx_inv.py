@@ -10,7 +10,7 @@ Classification of complex inversion events.
 
 from collections import defaultdict
 import numpy as np
-import svtools.utils as svu
+import svtk.utils as svu
 
 
 def breakpoint_ordering(FF, RR, mh_buffer=50):

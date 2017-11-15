@@ -11,13 +11,13 @@ Calculate enrichment of clipped reads or discordant pairs at SV breakpoints.
 import argparse
 import sys
 import pysam
-from svtools.pesr import SRTestRunner, PETestRunner
+from svtk.pesr import SRTestRunner, PETestRunner
 
 
 def sr_test(argv):
     parser = argparse.ArgumentParser(
         description="Calculate enrichment of clipped reads at SV breakpoints.",
-        prog='svtools sr-test',
+        prog='svtk sr-test',
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('vcf',
                         help='VCF of variant calls. Standardized to include '
@@ -74,7 +74,7 @@ def sr_test(argv):
 def pe_test(argv):
     parser = argparse.ArgumentParser(
         description="Calculate enrichment of discordant pairs at SV breakpoints.",
-        prog='svtools pe-test',
+        prog='svtk pe-test',
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('vcf', help='Variants.')
     parser.add_argument('disc', help='Table of discordant pair coordinates.')

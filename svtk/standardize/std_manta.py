@@ -10,7 +10,7 @@ Standardize a Manta record.
 
 
 from collections import deque
-from svtools.utils import is_smaller_chrom
+from svtk.utils import is_smaller_chrom
 from .standardize import VCFStandardizer, parse_bnd_pos, parse_bnd_strands
 
 

@@ -5,7 +5,7 @@
 """
 utils.py
 
-Helper functions for svtools.
+Helper functions for svtk.
 """
 
 from collections import deque

@@ -21,7 +21,7 @@ import sys
 from collections import deque
 from pysam import VariantFile, TabixFile
 
-from svtools.vcfcluster import VCFCluster
+from svtk.vcfcluster import VCFCluster
 
 
 def flatten_pos(records, name, fout):
@@ -68,7 +68,7 @@ def parse_filepaths(filepaths):
 def main(argv):
     parser = argparse.ArgumentParser(
         description=__doc__,
-        prog='svtools vcfcluster',
+        prog='svtk vcfcluster',
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('filelist', type=argparse.FileType('r'),
                         help='List of paths to standardized VCFS')

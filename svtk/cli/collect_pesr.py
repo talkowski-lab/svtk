@@ -29,7 +29,7 @@ from collections import defaultdict, deque
 import numpy as np
 import pysam
 from natsort import natsorted
-import svtools.utils as svu
+import svtk.utils as svu
 
 
 class PESRCollection:
@@ -247,7 +247,7 @@ def get_split_position(read):
 def main(argv):
     parser = argparse.ArgumentParser(
         description=__doc__,
-        prog='svtools collect-pesr',
+        prog='svtk collect-pesr',
         formatter_class=argparse.RawDescriptionHelpFormatter)
 
     parser.add_argument('bam', help='Local or S3 path to bam')

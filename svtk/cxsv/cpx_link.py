@@ -13,7 +13,7 @@ from collections import deque
 import numpy as np
 import scipy.sparse as sps
 import natsort
-import svtools.utils as svu
+import svtk.utils as svu
 from .cpx_inv import classify_complex_inversion
 from .cpx_tloc import classify_simple_translocation, classify_insertion
 

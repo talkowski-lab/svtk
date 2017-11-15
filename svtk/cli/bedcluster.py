@@ -146,7 +146,7 @@ def collapse_sample_calls(cluster):
 def main(argv):
     parser = argparse.ArgumentParser(
         description=__doc__,
-        prog='svtools bedcluster',
+        prog='svtk bedcluster',
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('bed', help='SV calls to cluster. Columns: #chr, '
                         'start, end, name, sample, svtype')

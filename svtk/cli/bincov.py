@@ -145,7 +145,7 @@ def main(argv):
     # Add arguments
     parser = argparse.ArgumentParser(
         description=__doc__,
-        prog='svtools bincov')
+        prog='svtk bincov')
     parser.add_argument('bam', type=str,
                         help='Input bam')
     parser.add_argument('chr', help='Contig to evaluate')

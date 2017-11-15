@@ -20,7 +20,7 @@ INFO fields, with specified constraints:
 import argparse
 import sys
 import pkg_resources
-from svtools.standardize import VCFStandardizer
+from svtk.standardize import VCFStandardizer
 from pysam import VariantFile
 
 
@@ -36,7 +36,7 @@ def any_called(record):
 def main(argv):
     parser = argparse.ArgumentParser(
         description=__doc__,
-        prog='svtools standardize',
+        prog='svtk standardize',
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('vcf', help='Raw VCF.')
     parser.add_argument('fout', help='Standardized VCF.')
@@ -56,7 +56,7 @@ def main(argv):
         sys.exit(1)
     args = parser.parse_args(argv)
 
-    template = pkg_resources.resource_filename('svtools',
+    template = pkg_resources.resource_filename('svtk',
                                                'data/standard_template.vcf')
     template = VariantFile(template)
     vcf = VariantFile(args.vcf)

@@ -47,7 +47,7 @@ import argparse
 import sys
 import pysam
 import pybedtools as pbt
-import svtools.annotation as anno
+import svtk.annotation as anno
 
 
 def main(argv):

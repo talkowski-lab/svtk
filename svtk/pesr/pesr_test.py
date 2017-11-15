@@ -11,7 +11,7 @@
 import numpy as np
 import scipy.stats as ss
 import pandas as pd
-import svtools.utils as svu
+import svtk.utils as svu
 
 
 class PESRTest:

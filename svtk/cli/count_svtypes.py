@@ -19,7 +19,7 @@ import sys
 from collections import defaultdict, Counter
 import pandas as pd
 from pysam import VariantFile
-import svtools.utils as svu
+import svtk.utils as svu
 
 
 def count_svtypes(vcf):
@@ -67,7 +67,7 @@ def count_svtypes(vcf):
 def main(argv):
     parser = argparse.ArgumentParser(
         description=__doc__,
-        prog='svtools count-svtypes',
+        prog='svtk count-svtypes',
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('vcf')
     parser.add_argument('--no-header', action='store_true', default=False,

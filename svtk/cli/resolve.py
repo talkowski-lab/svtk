@@ -14,8 +14,8 @@ import subprocess
 from collections import deque
 import itertools
 import pysam
-import svtools.utils as svu
-from svtools.cxsv import link_cpx, ComplexSV
+import svtk.utils as svu
+from svtk.cxsv import link_cpx, ComplexSV
 
 
 CPX_INFO = [
@@ -147,7 +147,7 @@ def resolve_complex_sv(vcf, cytobands, variant_prefix='CPX_'):
 def main(argv):
     parser = argparse.ArgumentParser(
         description=__doc__,
-        prog='svtools link-cpx',
+        prog='svtk link-cpx',
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('raw', help='Filtered breakpoints and CNV intervals.')
     parser.add_argument('cytobands', help='Cytoband file. Required to '
