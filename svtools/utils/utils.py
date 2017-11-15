@@ -11,7 +11,6 @@ Helper functions for svtools.
 from collections import deque
 import pysam
 import pybedtools as pbt
-import svtools.utils as svu
 
 
 NULL_GT = [(0, 0), (None, None), (0, ), (None, )]
@@ -295,8 +294,8 @@ def samples_overlap(samplesA, samplesB, upper_thresh=0.8, lower_thresh=0.5):
     """
 
     if isinstance(samplesA, pysam.VariantRecord):
-        samplesA = svu.get_called_samples(samplesA)
-        samplesB = svu.get_called_samples(samplesB)
+        samplesA = get_called_samples(samplesA)
+        samplesB = get_called_samples(samplesB)
 
     # Get lists of called samples for each record
     samplesA = set(samplesA)
