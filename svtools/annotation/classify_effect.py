@@ -158,7 +158,7 @@ def classify_disrupt(disrupt_dict, svtype):
         return classify_dup(disrupt_dict)
     if svtype == 'INV':
         return classify_inv(disrupt_dict)
-    if svtype == 'BND':
+    if svtype == 'BND' or svtype == 'CTX':
         return classify_bnd(disrupt_dict)
 
 

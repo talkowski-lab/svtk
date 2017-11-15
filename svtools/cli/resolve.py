@@ -12,6 +12,7 @@ import argparse
 import sys
 import subprocess
 from collections import deque
+import itertools
 import pysam
 import svtools.utils as svu
 from svtools.cxsv import link_cpx, ComplexSV
@@ -75,11 +76,11 @@ def _merge_records(vcf, cpx_records, cpx_record_ids):
 
     # After one iterator is exhausted, return rest of other iterator
     if curr_record is None:
-        for cpx in cpx_records:
+        for cpx in itertools.chain([curr_cpx], cpx_records):
             yield cpx
 
     elif curr_cpx is None:
-        for record in vcf:
+        for record in itertools.chain([curr_record], vcf):
             if record.id not in cpx_record_ids:
                 yield record
 
@@ -135,7 +136,7 @@ def resolve_complex_sv(vcf, cytobands, variant_prefix='CPX_'):
 
     for record in _merge_records(vcf, cpx_records, cpx_record_ids):
         if 'CPX_TYPE' in record.info.keys():
-            if record.info['CPX_TYPE'] != 'SINGLE_ENDER':
+            if 'UNRESOLVED' not in record.info.keys():
                 record.info.pop('STRANDS')
         record.info.pop('CIPOS')
         record.info.pop('CIEND')

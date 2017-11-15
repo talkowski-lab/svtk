@@ -133,7 +133,7 @@ class PETestRunner(PESRTestRunner):
             counts = self.petest.null_score(null_val=np.nan)
         else:
             called, background = self.choose_background(record)
-            counts = self.test_record(record)
+            counts = self.petest.test_record(record, called, background)
 
         counts = counts.rename(columns={'called': 'called_median',
                                         'background': 'bg_median'})

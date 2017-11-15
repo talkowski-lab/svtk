@@ -28,7 +28,12 @@ def annotate_nearest_tss(sv, gencode):
     nearest_tss : pd.DataFrame
         Columns = (name, svtype, gene_name, effect)
     """
+
     def _make_tss(feature):
+        strand = feature.fields[6]
+        if strand == '-':
+            feature.start = feature.end
+
         feature.end = feature.start + 1
         return feature
 

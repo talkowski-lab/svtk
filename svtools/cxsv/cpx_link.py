@@ -194,6 +194,9 @@ class ComplexSV:
             self.vcf_record.pos = min(FF.pos, RR.pos)
             self.vcf_record.stop = max(FF.stop, RR.stop)
 
+            self.vcf_record.info['SVLEN'] = abs(self.vcf_record.stop -
+                                                self.vcf_record.pos)
+
             cpx_intervals = make_inversion_intervals(FF, RR, self.cnvs,
                                                      self.cpx_type)
             self.vcf_record.info['CPX_INTERVALS'] = cpx_intervals
@@ -214,6 +217,9 @@ class ComplexSV:
             self.vcf_record.pos = sink_start
             self.vcf_record.stop = sink_end
 
+            # As in MELT, use length of inserted sequence as SVLEN
+            self.vcf_record.info['SVLEN'] = abs(source_end - source_start)
+
             interval = 'INV_{0}:{1}-{2}'
             source = interval.format(self.vcf_record.chrom,
                                      source_start, source_end)
@@ -231,13 +237,20 @@ class ComplexSV:
         elif self.cpx_type in ['TLOC_MISMATCH_CHROM', 'CTX_UNR']:
             self.svtype = 'UNR'
         elif self.cpx_type == 'CTX_PP/QQ':
-            if armA == armB:
+            # Don't report sites where posA/posB are identical at each bkpt
+            if plus.pos == minus.pos and plus.stop == minus.stop:
+                self.svtype = 'UNR'
+                self.cpx_type += '_DUPLICATE_COORDS'
+            elif armA == armB:
                 self.svtype = 'CTX'
             else:
                 self.svtype = 'UNR'
                 self.cpx_type += '_MISMATCH'
         elif self.cpx_type == 'CTX_PQ/QP':
-            if armA != armB:
+            if plus.pos == minus.pos and plus.stop == minus.stop:
+                self.svtype = 'UNR'
+                self.cpx_type += '_DUPLICATE_COORDS'
+            elif armA != armB:
                 self.svtype = 'CTX'
             else:
                 self.svtype = 'UNR'
@@ -255,6 +268,7 @@ class ComplexSV:
             self.vcf_record.pos = plus.pos
             self.vcf_record.info['CHR2'] = plus.info['CHR2']
             self.vcf_record.stop = plus.stop
+            self.vcf_record.info['SVLEN'] = -1
 
         elif self.svtype == 'INS':
             if 'B2A' in self.cpx_type:
@@ -284,9 +298,11 @@ class ComplexSV:
                 source_end = plus.pos
 
             self.vcf_record.chrom = sink_chrom
-            self.vcf_record.info['CHR2'] = sink_chrom
             self.vcf_record.pos = sink_start
             self.vcf_record.stop = sink_end
+
+            self.vcf_record.info['CHR2'] = source_chrom
+            self.vcf_record.info['SVLEN'] = abs(source_end - source_start)
 
             interval = '{0}_{1}:{2}-{3}'
             if 'INV' in self.cpx_type:
@@ -328,9 +344,11 @@ class ComplexSV:
             source_end = plus.pos
 
         self.vcf_record.chrom = sink_chrom
-        self.vcf_record.info['CHR2'] = sink_chrom
         self.vcf_record.pos = sink_start
         self.vcf_record.stop = sink_end
+
+        self.vcf_record.info['CHR2'] = source_chrom
+        self.vcf_record.info['SVLEN'] = abs(source_end - source_start)
 
         interval = 'INS_{0}:{1}-{2}'
         source = interval.format(source_chrom, source_start, source_end)
@@ -438,7 +456,7 @@ def make_inversion_intervals(FF, RR, cnvs, cpx_type):
     return intervals
 
 
-def link_cpx(vcf, bkpt_window=300):
+def link_cpx(vcf, bkpt_window=300, cpx_dist=20000):
     """
     Parameters
     ----------
@@ -471,10 +489,17 @@ def link_cpx(vcf, bkpt_window=300):
     n_bkpts = len(linked_IDs)
     bkpts = extract_breakpoints(vcf, bkpt_idxs)
 
+    # Exclude wildly disparate overlaps
+    def close_enough(r1, r2):
+        distA = np.abs(r1.pos - r2.pos)
+        distB = np.abs(r1.stop - r2.stop)
+        return distA < cpx_dist or distB < cpx_dist
+
     # Build sparse graph from links
     G = sps.eye(n_bkpts, dtype=np.uint16, format='lil')
     for i, j in indexed_links:
-        if samples_overlap(bkpts[i], bkpts[j]):
+        if (samples_overlap(bkpts[i], bkpts[j]) and
+                close_enough(bkpts[i], bkpts[j])):
             G[i, j] = 1
 
     # Generate lists of clustered breakpoints

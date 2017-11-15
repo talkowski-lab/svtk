@@ -11,6 +11,7 @@ Helper functions for svtools.
 from collections import deque
 import pysam
 import pybedtools as pbt
+import svtools.utils as svu
 
 
 NULL_GT = [(0, 0), (None, None), (0, ), (None, )]
@@ -224,6 +225,13 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
                 end = record.pos + 1
                 yield entry.format(**locals())
 
+                # Second end of breakpoint
+                if split_bnd:
+                    chrom = record.info['CHR2']
+                    start = record.stop
+                    end = record.stop + 1
+                    yield entry.format(**locals())
+
             elif 'CPX_INTERVALS' in record.info and split_cpx:
                 # If complex, all constituent intervals are in CPX_INTERVALS
                 for interval in record.info['CPX_INTERVALS']:
@@ -269,3 +277,36 @@ def set_null(record, sample):
             record.samples[sample][fmt] = (null_val, )
         else:
             record.samples[sample][fmt] = tuple(null_val for i in range(n))
+
+
+def samples_overlap(samplesA, samplesB, upper_thresh=0.8, lower_thresh=0.5):
+    """
+    Test if two sets of samples are sufficiently similar.
+
+    The two sets are tested to determine which fraction of their respective
+    samples appears in the other set. The set with greater overlap must have at
+    least 80% of its samples appear in the other set, while the set with lesser
+    overlap must have at least 50% of its samples appear in the other set.
+
+    Arguments
+    ---------
+    samplesA : list of str OR pysam.VariantRecord
+    samplesB : list of str OR pysam.VariantRecord
+    """
+
+    if isinstance(samplesA, pysam.VariantRecord):
+        samplesA = svu.get_called_samples(samplesA)
+        samplesB = svu.get_called_samples(samplesB)
+
+    # Get lists of called samples for each record
+    samplesA = set(samplesA)
+    samplesB = set(samplesB)
+
+    # Compute fraction of each record's samples which are shared
+    shared = samplesA & samplesB
+    fracA = len(shared) / len(samplesA)
+    fracB = len(shared) / len(samplesB)
+
+    min_frac, max_frac = sorted([fracA, fracB])
+
+    return min_frac >= lower_thresh and max_frac >= upper_thresh

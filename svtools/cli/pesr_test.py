@@ -51,7 +51,7 @@ def sr_test(argv):
     args = parser.parse_args(argv)
 
     vcf = pysam.VariantFile(args.vcf)
-    countfile = pysam.TabixFile(args.counts)
+    countfile = pysam.TabixFile(args.countfile)
 
     if args.fout in '- stdout'.split():
         fout = sys.stdout
@@ -98,15 +98,16 @@ def pe_test(argv):
         sys.exit(1)
     args = parser.parse_args(argv)
 
-    if args.variants in '- stdin'.split():
+    if args.vcf in '- stdin'.split():
         vcf = pysam.VariantFile(sys.stdin)
     else:
-        vcf = pysam.VariantFile(args.variants)
+        vcf = pysam.VariantFile(args.vcf)
 
     if args.fout in '- stdout'.split():
         fout = sys.stdout
     else:
-        fout = open(args.fout, 'w')
+        fout = args.fout
+
     header = 'name log_pval called_median bg_median'.split()
     args.fout.write('\t'.join(header) + '\n')
 
@@ -119,4 +120,5 @@ def pe_test(argv):
 
     runner = PETestRunner(vcf, discfile, fout, args.background,
                           args.window_in, args.window_out, whitelist)
+
     runner.run()

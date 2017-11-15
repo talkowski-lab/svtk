@@ -27,7 +27,7 @@ def classify_insertion(plus, minus, mh_buffer=50):
         return 'INS_UNCLASSIFIED'
 
 
-def classify_simple_translocation(plus, minus, mh_buffer=50):
+def classify_simple_translocation(plus, minus, mh_buffer=10):
     """
     Resolve a pair of interchromosomal breakends.
 

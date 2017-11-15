@@ -59,6 +59,9 @@ class PESRTest:
 
         # Calculate enrichment
         result = counts.groupby('status')['count'].median()
+
+        # Fill 0 if called in all samples
+        result = result.reindex(['called', 'background']).fillna(0)
         pval = ss.poisson.cdf(result.background, result.called)
         result['log_pval'] = np.abs(np.log10(pval))
 
