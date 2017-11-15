@@ -1,4 +1,4 @@
-# SVTools
+# SVTK
 
 Utilities for consolidating, filtering, resolving, and annotating structural
 variants.
@@ -6,17 +6,17 @@ variants.
 ## Installation
 
 ```
-$ git clone https://github.com/talkowski-lab/svtools.git
-$ cd svtools
+$ git clone https://github.com/talkowski-lab/svtk.git
+$ cd svtk
 $ pip install -e .
 ```
 
 ## Available commands
 
 ```
-SVTools: Utilities for manipulating structural variation
+SVTK: A toolkit for manipulating structural variation
 
-usage: svtools [-h] <subcommand> [options]
+usage: svtk [-h] <subcommand> [options]
 
 [ Preprocessing ]
     standardize    Convert SV calls to a standardized format.
