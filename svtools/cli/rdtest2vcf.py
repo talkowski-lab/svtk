@@ -74,7 +74,7 @@ def rdtest2vcf(bed, vcf):
         for sample in vcf.header.samples:
             record.samples[sample]['GT'] = (0, 0)
             record.samples[sample]['depth'] = 0
-
+        
         # Call any samples with variant as heterozygous
         called = 0
         for sample in cnv.samples:
@@ -140,6 +140,7 @@ def main(argv):
     fout = pysam.VariantFile(fname, mode='w', header=header)
 
     rdtest2vcf(args.bed, fout)
+    fout.close()
 
     # TODO: do this with subprocess so we don't have to write to disk twice
     if args.fout.endswith('.gz'):

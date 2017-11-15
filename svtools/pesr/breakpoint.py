@@ -41,7 +41,7 @@ class Breakpoint:
         self.split_counts = None
 
     @classmethod
-    def from_vcf(cls, record):
+    def from_vcf(cls, record, whitelist=None):
         """
         Parameters
         ----------
@@ -57,6 +57,8 @@ class Breakpoint:
         strands = record.info['STRANDS']
 
         samples = svu.get_called_samples(record)
+        if whitelist is not None:
+            samples = [s for s in samples if s in whitelist]
 
         return cls(chrA, posA, chrB, posB, name, samples, strands)
 

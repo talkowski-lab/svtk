@@ -123,7 +123,7 @@ class VCFCluster(GenomeSLINK):
                 continue
             yield node
 
-    def cluster(self):
+    def cluster(self, merge=True):
         """
         Yields
         ------
@@ -133,12 +133,16 @@ class VCFCluster(GenomeSLINK):
                                    match_strands=self.match_strands)
         for records in clusters:
             cluster = SVRecordCluster(records)
-            record = self.header.new_record()
-            record = cluster.merge_record_data(record)
-            record = cluster.merge_record_formats(record, self.sources)
-            if self.preserve_ids:
-                record.info['MEMBERS'] = [r.record.id for r in records]
-            yield record
+
+            if merge:
+                record = self.header.new_record()
+                record = cluster.merge_record_data(record)
+                record = cluster.merge_record_formats(record, self.sources)
+                if self.preserve_ids:
+                    record.info['MEMBERS'] = [r.record.id for r in records]
+                yield record
+            else:
+                yield cluster
 
     def make_vcf_header(self):
         """
