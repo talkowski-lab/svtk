@@ -112,12 +112,16 @@ class MantaStandardizer(VCFStandardizer):
         std_rec = super().standardize_alts(std_rec, raw_rec)
 
         # Set reference to null
+        stop = std_rec.stop
         std_rec.ref = 'N'
+        std_rec.stop = stop
 
         # Replace ALT sequence with svtype tag
         svtype = std_rec.info['SVTYPE']
         simple_alt = '<{0}>'.format(svtype)
         if svtype != 'BND':
+            stop = std_rec.stop
             std_rec.alts = (simple_alt, )
+            std_rec.stop = stop
 
         return std_rec

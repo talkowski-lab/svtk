@@ -157,7 +157,9 @@ class VCFStandardizer:
         if std_rec.info['SVTYPE'] == 'BND':
             alt = make_bnd_alt(std_rec.info['CHR2'], std_rec.stop,
                                std_rec.info['STRANDS'])
+            stop = std_rec.stop
             std_rec.alts = (alt, )
+            std_rec.stop = stop
 
         return std_rec
 
