@@ -57,6 +57,10 @@ def main(argv):
                         'removed.')
     parser.add_argument('--min-size', type=int, default=50,
                         help='Minimum SV size to report [50].')
+    parser.add_argument('--keep-unstranded', action='store_true',
+                        default=False,
+                        help='By default, unstranded breakpoints are removed. '
+                        'Use this flag to retain them.')
 
     # Print help if no arguments specified
     if len(argv) == 0:
@@ -107,6 +111,10 @@ def main(argv):
 
         # Apply size filter (but keep breakends (SVLEN=-1))
         if 0 < record.info['SVLEN'] < args.min_size:
+            continue
+
+        # Remove unstranded breakpoints
+        if record.info['STRANDS'] == '.' and not args.keep_unstranded:
             continue
 
         # Only report sites with called samples unless requested otherwise

@@ -51,7 +51,7 @@ class MantaStandardizer(VCFStandardizer):
         """
 
         # Colons in the ID can break parsing
-        std_rec.id = '_'.join(std_rec.id.split(':'))
+        std_rec.id = std_rec.id.replace(':', '_')
 
         svtype = raw_rec.info['SVTYPE']
         std_rec.info['SVTYPE'] = svtype
@@ -111,17 +111,13 @@ class MantaStandardizer(VCFStandardizer):
         # Format BND ALT
         std_rec = super().standardize_alts(std_rec, raw_rec)
 
-        # Set reference to null
-        stop = std_rec.stop
-        std_rec.ref = 'N'
-        std_rec.stop = stop
-
         # Replace ALT sequence with svtype tag
         svtype = std_rec.info['SVTYPE']
         simple_alt = '<{0}>'.format(svtype)
         if svtype != 'BND':
-            stop = std_rec.stop
             std_rec.alts = (simple_alt, )
-            std_rec.stop = stop
+
+        # Set reference to null (after ensuring ALT allele is symbolic)
+        std_rec.ref = 'N'
 
         return std_rec

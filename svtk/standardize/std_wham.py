@@ -19,11 +19,15 @@ class WhamStandardizer(VCFStandardizer):
         Standardize Wham record.
         """
 
-        # colons in the ID break PyVCF parsing
-        std_rec.id = '_'.join(std_rec.id.split(':'))
+        # Add placeholder ID if no ID is present
+        if std_rec.id is None:
+            std_rec.id = 'SV'
+        else:
+            # colons in the ID break VCF parsing
+            std_rec.id = std_rec.id.replace(':', '_')
 
-        # commas conflict with VCF format field with num='.'
-        std_rec.id = ';'.join(std_rec.id.split(','))
+            # commas conflict with VCF format field with num='.'
+            std_rec.id = std_rec.id.replace(',', ';')
 
         # SV types already standard
         std_rec.info['SVTYPE'] = raw_rec.info['SVTYPE']
@@ -45,5 +49,23 @@ class WhamStandardizer(VCFStandardizer):
         std_rec.info['SVLEN'] = abs(raw_rec.info['SVLEN'][0])
 
         std_rec.info['SOURCES'] = ['wham']
+
+        return std_rec
+
+    def standardize_format(self, std_rec, raw_rec):
+        """
+        Parse called samples from TAGS field
+        """
+
+        source = std_rec.info['SOURCES'][0]
+
+        # Any sample in TAGS field is considered to be called
+        for sample in raw_rec.samples:
+            if sample in raw_rec.info['TAGS']:
+                std_rec.samples[sample]['GT'] = (0, 1)
+                std_rec.samples[sample][source] = 1
+            else:
+                std_rec.samples[sample]['GT'] = (0, 0)
+                std_rec.samples[sample][source] = 0
 
         return std_rec
