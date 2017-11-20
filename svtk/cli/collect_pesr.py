@@ -33,10 +33,12 @@ import svtk.utils as svu
 
 
 class PESRCollection:
-    def __init__(self, bam, splitfile, discfile, max_split_dist=300):
+    def __init__(self, bam, splitfile, discfile, sample=None,
+                 max_split_dist=300):
         self.bam = bam
         self.splitfile = splitfile
         self.discfile = discfile
+        self.sample = sample
 
         # SR evidence
         self.right_split_counts = defaultdict(int)
@@ -49,10 +51,6 @@ class PESRCollection:
         self.disc_pairs = deque()
         self.observed_disc_names = {}
         self.curr_disc_pos = -1
-
-        # Format strings
-        self.split_fmt = ''
-        self.disc_fmt = '%s\t%d\t%s\t%s\t%d\t%s\n'
 
     def collect_pesr(self):
         """
@@ -126,9 +124,10 @@ class PESRCollection:
         strandB = '-' if read.mate_is_reverse else '+'
 
         self.discfile.write(
-            (self.disc_fmt % (
+            ('%s\t%d\t%s\t%s\t%d\t%s\n' % (
                 read.reference_name, read.reference_start, strandA,
-                read.next_reference_name, read.next_reference_start, strandB)
+                read.next_reference_name, read.next_reference_start, strandB,
+                self.sample)
              ).encode('utf-8'))
 
     def flush_disc_pairs(self):
@@ -190,13 +189,14 @@ class PESRCollection:
             df = getattr(self, '%s_split_counts' % clip)
 
             for pos, count in df.items():
-                entries.append((self.curr_chrom, pos, clip, count))
+                entries.append((self.curr_chrom, pos, clip, count,
+                                self.sample))
 
         # Sort in chunks as we go
         entries = sorted(entries, key=lambda s: s[1])
 
         # Flush to disk
-        fmt = '%s\t%d\t%s\t%d\n'
+        fmt = '%s\t%d\t%s\t%d\t%s\n'
         for entry in entries:
             self.splitfile.write((fmt % entry).encode('utf-8'))
 
@@ -263,6 +263,8 @@ def main(argv):
                         help='Tabix-formatted region to parse')
     parser.add_argument('-z', '--bgzip', default=False, action='store_true',
                         help='bgzip and tabix index output')
+    parser.add_argument('--id', help='ID to append to each line of output '
+                        'files.')
 
     # Print help if no arguments specified
     if len(argv) == 0:
@@ -283,7 +285,7 @@ def main(argv):
     # Collect data and save
     with svu.BgzipFile(args.splitfile, args.bgzip) as splitfile:
         with svu.BgzipFile(args.discfile, args.bgzip) as discfile:
-            PESRCollection(bam, splitfile, discfile).collect_pesr()
+            PESRCollection(bam, splitfile, discfile, args.id).collect_pesr()
 
 
 if __name__ == '__main__':
