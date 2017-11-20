@@ -60,7 +60,8 @@ class PESRTest:
 
         # Fill 0 if called in all samples
         result = result.reindex([True, False]).fillna(0)
-        pval = ss.poisson.cdf(result[False], result[True])
+        result.index = ['called', 'background']
+        pval = ss.poisson.cdf(result.background, result.called)
         result['log_pval'] = np.abs(np.log10(pval))
 
         return result
