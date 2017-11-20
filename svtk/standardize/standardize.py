@@ -90,6 +90,7 @@ class VCFStandardizer:
                 if chr2 not in self.std_vcf.header.contigs:
                     continue
 
+            # Skip SECONDARY events to avoid double counting
             if 'SECONDARY' in record.info.keys():
                 continue
 
@@ -117,6 +118,10 @@ class VCFStandardizer:
 
             # Exclude sites with no called samples unless requested otherwise
             if not any_called(std_rec) and not self.include_reference_sites:
+                continue
+
+            # Filter unstranded breakpoints
+            if std_rec.info['STRANDS'] not in '++ +- -+ --'.split():
                 continue
 
             # Assign new variant IDs
