@@ -51,7 +51,7 @@ def sr_test(argv):
     args = parser.parse_args(argv)
 
     vcf = pysam.VariantFile(args.vcf)
-    countfile = pysam.TabixFile(args.countfile)
+    countfile = pysam.TabixFile(args.countfile, parser=pysam.asTuple())
 
     if args.fout in '- stdout'.split():
         fout = sys.stdout
