@@ -126,7 +126,7 @@ class LumpyStandardizer(VCFStandardizer):
         Parse called samples from TAGS field
         """
 
-        source = std_rec.info['SOURCES'][0]
+        source = std_rec.info['ALGORITHMS'][0]
 
         # Any sample in TAGS field is considered to be called
         for sample in raw_rec.samples:
