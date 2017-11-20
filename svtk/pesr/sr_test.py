@@ -76,12 +76,14 @@ class SRTest(PESRTest):
             lines = self.countfile.fetch(region)
         else:
             lines = []
-        counts = io.StringIO('\n'.join([l for l in lines]))
+        #  counts = io.StringIO('\n'.join([l for l in lines]))
+        counts = [l for l in lines]
 
         cols = 'chrom pos clip count sample'.split()
-        dtypes = dict(chrom=str, pos=int, clip=str, count=int, sample=str)
+        #  dtypes = dict(chrom=str, pos=int, clip=str, count=int, sample=str)
 
-        counts = pd.read_table(counts, names=cols, dtype=dtypes)
+        counts = pd.DataFrame.from_records(counts, columns=cols)
+        counts['count'] = counts['count'].astype(int)
 
         # Restrict to splits in orientation of interest
         clip = 'right' if strand == '+' else 'left'
