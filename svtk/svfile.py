@@ -27,7 +27,7 @@ class SVFile(object):
         self.samples = list(self.reader.header.samples)
 
         # Confirm all standard INFO fields are present
-        required_info = 'SVTYPE CHR2 END STRANDS SVLEN SOURCES'.split()
+        required_info = 'SVTYPE CHR2 END STRANDS SVLEN ALGORITHMS'.split()
         for info in required_info:
             if info not in self.reader.header.info.keys():
                 msg = "Required INFO field {0} not found in file {1}"
@@ -103,7 +103,7 @@ class SVRecord(GSNode):
         """
 
         self.record = record
-        self.sources = record.info['SOURCES']
+        self.sources = record.info['ALGORITHMS']
 
         chrA = record.chrom
         posA = record.pos
@@ -195,7 +195,7 @@ class SVRecordCluster:
         """
         Return list of source algorithms in clustered records.
 
-        By default, searches for both a SOURCE and a SOURCES INFO field
+        By default, searches for an ALGORITHMS INFO field
 
         Returns
         -------
@@ -203,7 +203,7 @@ class SVRecordCluster:
         """
         call_sources = set()
         for record in self.records:
-            sources = record.record.info.get('SOURCES')
+            sources = record.record.info.get('ALGORITHMS')
             if sources:
                 call_sources = call_sources.union(sources)
 
@@ -281,7 +281,7 @@ class SVRecordCluster:
         new_record.info['RMSSTD'] = self.rmsstd
 
         # List of aggregate sources
-        new_record.info['SOURCES'] = self.sources()
+        new_record.info['ALGORITHMS'] = self.sources()
 
         return new_record
 
@@ -294,7 +294,7 @@ class SVRecordCluster:
         2) For each provided source, set a corresponding FORMAT field to 1
            for samples called by the source. If the FORMAT field is available
            in the record being merged, use per-sample data. If the FORMAT field
-           is not available, use the record's SOURCE or SOURCES to determine
+           is not available, use the record's ALGORITHMS to determine
            support for all samples called in that record.
 
         Parameters
@@ -306,7 +306,7 @@ class SVRecordCluster:
         call_sources : bool, optional
             If True, each record is already annotated with FORMAT data
             indicating the supporting source algorithms for each sample.
-            If False, use each record's SOURCE key to derive a supporting
+            If False, use each record's ALGORITHMS key to derive a supporting
             algorithm for all samples called in the record.
 
         Returns
@@ -350,9 +350,9 @@ class SVRecordCluster:
                         # call it in the new record
                         call = call or src_call
                         new_record.samples[sample][source] = call
-                # Otherwise add the record's SOURCE
+                # Otherwise add the record's ALGORITHMS
                 else:
-                    for source in record.record.info['SOURCES']:
+                    for source in record.record.info['ALGORITHMS']:
                         new_record.samples[sample][source] = 1
 
         return new_record

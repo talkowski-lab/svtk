@@ -48,7 +48,25 @@ class WhamStandardizer(VCFStandardizer):
         # SVLEN is a list and can be negative
         std_rec.info['SVLEN'] = abs(raw_rec.info['SVLEN'][0])
 
-        std_rec.info['SOURCES'] = ['wham']
+        std_rec.info['ALGORITHMS'] = ['wham']
+
+        return std_rec
+
+    def standardize_format(self, std_rec, raw_rec):
+        """
+        Parse called samples from TAGS field
+        """
+    
+        source = std_rec.info['ALGORITHMS'][0]
+
+        # Any sample in TAGS field is considered to be called
+        for sample in raw_rec.samples:
+            if sample in raw_rec.info['TAGS']:
+                std_rec.samples[sample]['GT'] = (0, 1)
+                std_rec.samples[sample][source] = 1
+            else:
+                std_rec.samples[sample]['GT'] = (0, 0)
+                std_rec.samples[sample][source] = 0
 
         return std_rec
 

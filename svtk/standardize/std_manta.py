@@ -24,7 +24,7 @@ class MantaStandardizer(VCFStandardizer):
         """
 
         mate_IDs = deque()
-        for record in self.raw_vcf:
+        for record in self.filter_vcf():
             # Filter unmarked SECONDARY on same chromosome
             # TODO: Check if necessary to filter diff chromosomes
             if 'MATEID' in record.info:
@@ -96,7 +96,7 @@ class MantaStandardizer(VCFStandardizer):
         else:
             std_rec.info['SVLEN'] = std_rec.stop - std_rec.pos
 
-        std_rec.info['SOURCES'] = ['manta']
+        std_rec.info['ALGORITHMS'] = ['manta']
 
         return std_rec
 

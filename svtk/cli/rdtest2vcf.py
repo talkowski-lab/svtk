@@ -14,7 +14,7 @@ INFO fields, with specified constraints:
   END:     SV end position
   STRANDS: Breakpoint strandedness [DEL:+-,DUP:-+]
   SVLEN:   SV length
-  SOURCE:  Tagged with "depth"
+  ALGORITHMS:  Tagged with "depth"
 """
 
 import argparse
@@ -64,7 +64,7 @@ def rdtest2vcf(bed, vcf):
         record.info['CHR2'] = cnv.chrom
         record.stop = cnv.end
         record.info['SVLEN'] = cnv.end - cnv.start
-        record.info['SOURCES'] = ['depth']
+        record.info['ALGORITHMS'] = ['depth']
         if cnv.svtype == 'DEL':
             record.info['STRANDS'] = '+-'
         elif cnv.svtype == 'DUP':
@@ -74,7 +74,7 @@ def rdtest2vcf(bed, vcf):
         for sample in vcf.header.samples:
             record.samples[sample]['GT'] = (0, 0)
             record.samples[sample]['depth'] = 0
-        
+
         # Call any samples with variant as heterozygous
         called = 0
         for sample in cnv.samples:
@@ -90,7 +90,7 @@ def rdtest2vcf(bed, vcf):
 def main(argv):
     parser = argparse.ArgumentParser(
         description=__doc__,
-        prog='svtk standardize',
+        prog='svtk rdtest2vcf',
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('bed', type=argparse.FileType('r'),
                         help='RdTest-formatted bed file. '
@@ -100,6 +100,10 @@ def main(argv):
     parser.add_argument('fout', help='Standardized VCF. Will be compressed '
                         'with bgzip and tabix indexed if filename ends with '
                         '.gz')
+    parser.add_argument('--contigs', type=argparse.FileType('r'),
+                        help='Reference fasta index (.fai). If provided, '
+                        'contigs in index will be used in VCF header. '
+                        'Otherwise all GRCh37 contigs will be used in header.')
 
     # Print help if no arguments specified
     if len(argv) == 0:
@@ -107,11 +111,22 @@ def main(argv):
         sys.exit(1)
     args = parser.parse_args(argv)
 
-    # Get template header
-    template = pkg_resources.resource_filename('svtk',
-                                               'data/standard_template.vcf')
-    template = pysam.VariantFile(template)
-    header = template.header
+    # Add contigs to header if provided
+    if args.contigs:
+        template = pkg_resources.resource_filename(
+                'svtk', 'data/no_contigs_template.vcf')
+        template = pysam.VariantFile(template)
+        header = template.header
+        contig_line = '##contig=<ID={contig},length={length}>'
+        for line in args.contigs:
+            contig, length = line.split()[:2]
+            header.add_line(contig_line.format(**locals()))
+    # Use GRCh37 by default
+    else:
+        template = pkg_resources.resource_filename(
+                'svtk', 'data/GRCh37_template.vcf')
+        template = pysam.VariantFile(template)
+        header = template.header
 
     # Get list of samples
     with open(args.samples) as slist:

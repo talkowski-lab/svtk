@@ -23,7 +23,7 @@ class DellyStandardizer(VCFStandardizer):
         3) Add END.
         4) Rename 'CT' to 'STRANDS' and convert notation.
         5) Compute SVLEN.
-        6) Add SOURCE.
+        6) Add ALGORITHMS.
         7) Standardize ALT to VCF spec.
         """
 
@@ -70,6 +70,6 @@ class DellyStandardizer(VCFStandardizer):
         else:
             std_rec.info['SVLEN'] = -1
 
-        std_rec.info['SOURCES'] = ['delly']
+        std_rec.info['ALGORITHMS'] = ['delly']
 
         return std_rec

@@ -21,7 +21,7 @@ class MeltStandardizer(VCFStandardizer):
         2) Add END (POS + 1)
         3) Add CHR2 (CHROM)
         4) Add STRANDS (+-; treat as deletion since no start/end bkpt info)
-        5) Add SOURCE.
+        5) Add ALGORITHMS.
         """
 
         # Rename SVTYPE subclasses to INS
@@ -39,7 +39,7 @@ class MeltStandardizer(VCFStandardizer):
         # Add SVLEN
         std_rec.info['SVLEN'] = raw_rec.info['SVLEN']
 
-        # Add SOURCES
-        std_rec.info['SOURCES'] = ['melt']
+        # Add ALGORITHMS
+        std_rec.info['ALGORITHMS'] = ['melt']
 
         return std_rec

@@ -20,10 +20,20 @@ INFO fields, with specified constraints:
 from svtk.utils import make_bnd_alt, NULL_GT
 
 
+def any_called(record):
+    null_GTs = [(0, 0), (None, None), (0, ), (None, )]
+
+    def _is_called(sample):
+        return record.samples[sample]['GT'] not in null_GTs
+
+    return any([_is_called(sample) for sample in record.samples])
+
+
 class VCFStandardizer:
     subclasses = {}
 
-    def __init__(self, raw_vcf, std_vcf):
+    def __init__(self, raw_vcf, std_vcf, prefix=None, min_size=50,
+                 include_reference_sites=False, call_null_sites=False):
         """
         Standardize a VCF.
 
@@ -33,9 +43,21 @@ class VCFStandardizer:
             Input VCF.
         std_vcf : pysam.VariantFile
             Standardized VCF.
+        prefix : str, optional
+            ID prefix to assign to standardized records
+        min_size : int, optional
+            Minimum SV size to report
+        include_reference_sites : bool, optional
+            Keep sites where no sample has a variant call (i.e. all 0/0 or ./.)
+        call_null_sites : bool, optional
+            Convert null genotypes (./.) to variant calls (0/1)
         """
         self.raw_vcf = raw_vcf
         self.std_vcf = std_vcf
+        self.prefix = prefix
+        self.min_size = min_size
+        self.include_reference_sites = include_reference_sites
+        self.call_null_sites = call_null_sites
 
     @classmethod
     def register(cls, source):
@@ -51,6 +73,28 @@ class VCFStandardizer:
             raise ValueError(msg)
         return cls.subclasses[source](*args)
 
+    def filter_vcf(self):
+        """
+        Filter records.
+
+        Records are excluded if:
+        1) They exist on contigs excluded from new file
+        2) They are tagged as SECONDARY
+        """
+        for record in self.raw_vcf:
+            if record.chrom not in self.std_vcf.header.contigs:
+                continue
+            # Filter on chr2 if a breakend
+            if '[' in record.alts[0] or ']' in record.alts[0]:
+                chr2, end = parse_bnd_pos(record.alts[0])
+                if chr2 not in self.std_vcf.header.contigs:
+                    continue
+
+            if 'SECONDARY' in record.info.keys():
+                continue
+
+            yield record
+
     def standardize_vcf(self):
         """
         Standardize every record in a VCF.
@@ -62,9 +106,25 @@ class VCFStandardizer:
         std_rec : pysam.VariantRecord
             Standardized records
         """
-        for record in self.raw_vcf:
+        idx = 1
+        for record in self.filter_vcf():
             std_rec = self.std_vcf.new_record()
-            yield self.standardize_record(std_rec, record)
+            std_rec = self.standardize_record(std_rec, record)
+
+            # Apply size filter (but keep breakends (SVLEN=-1))
+            if 0 < std_rec.info['SVLEN'] < self.min_size:
+                continue
+
+            # Exclude sites with no called samples unless requested otherwise
+            if not any_called(std_rec) and not self.include_reference_sites:
+                continue
+
+            # Assign new variant IDs
+            if self.prefix is not None:
+                std_rec.id = '{0}_{1}'.format(self.prefix, idx)
+                idx += 1
+
+            yield std_rec
 
     def standardize_record(self, std_rec, raw_rec):
         """
@@ -120,7 +180,7 @@ class VCFStandardizer:
         std_rec.info['CHR2'] = raw_rec.chrom
         std_rec.stop = raw_rec.pos + 1
         std_rec.info['SVLEN'] = 0
-        std_rec.info['SOURCES'] = ['source']
+        std_rec.info['ALGORITHMS'] = ['source']
 
         return std_rec
 
@@ -131,11 +191,16 @@ class VCFStandardizer:
         By default, copy GT and tag source FORMAT appropriately.
         """
 
-        source = std_rec.info['SOURCES'][0]
+        source = std_rec.info['ALGORITHMS'][0]
 
         # Add per-sample genotypes (ignoring other FORMAT fields)
         for sample in raw_rec.samples:
             gt = raw_rec.samples[sample]['GT']
+            if self.call_null_sites:
+                if gt == (None, None):
+                    gt = (0, 1)
+                if gt == (None,):
+                    gt = (1,)
             std_rec.samples[sample]['GT'] = gt
 
             if gt not in NULL_GT:
@@ -181,8 +246,12 @@ def parse_bnd_pos(alt):
     alt = alt.strip('ATCGN')
     # Strip brackets separately, otherwise GL contigs will be altered
     alt = alt.strip('[]')
-    chr2, end = alt.split(':')
-    end = int(end)
+
+    # HLA contigs include colons, so be careful when parsing
+    data = alt.split(':')
+    chr2 = ':'.join(data[:-1])
+    end = int(data[-1])
+
     return chr2, end
 
 

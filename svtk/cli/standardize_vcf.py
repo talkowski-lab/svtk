@@ -14,7 +14,7 @@ INFO fields, with specified constraints:
   END:     SV end position (or position on CHR2 in translocations)
   STRANDS: Breakpoint strandedness [++,+-,-+,--]
   SVLEN:   SV length (-1 if translocation)
-  SOURCE:  Source algorithm
+  ALGORITHMS:  Source algorithm
 """
 
 import argparse
@@ -22,15 +22,6 @@ import sys
 import pkg_resources
 from svtk.standardize import VCFStandardizer
 from pysam import VariantFile
-
-
-def any_called(record):
-    null_GTs = [(0, 0), (None, None), (0, ), (None, )]
-
-    def _is_called(sample):
-        return record.samples[sample]['GT'] not in null_GTs
-
-    return any([_is_called(sample) for sample in record.samples])
 
 
 def main(argv):
@@ -57,10 +48,11 @@ def main(argv):
                         'removed.')
     parser.add_argument('--min-size', type=int, default=50,
                         help='Minimum SV size to report [50].')
-    parser.add_argument('--keep-unstranded', action='store_true',
+    parser.add_argument('--call-null-sites', action='store_true',
                         default=False,
-                        help='By default, unstranded breakpoints are removed. '
-                        'Use this flag to retain them.')
+                        help='Call sites with null genotypes (./.). Generally '
+                        'useful when an algorithm has been run on a single '
+                        'sample and has only reported variant sites.')
 
     # Print help if no arguments specified
     if len(argv) == 0:
@@ -100,30 +92,12 @@ def main(argv):
 
     fout = VariantFile(args.fout, mode='w', header=header)
 
-    standardizer = VCFStandardizer.create(args.source, vcf, fout)
-    idx = 1
+    standardizer = VCFStandardizer.create(
+            args.source, vcf, fout, args.prefix, args.min_size,
+            args.include_reference_sites, args.call_null_sites)
+
     for record in standardizer.standardize_vcf():
-        # Skip variants on non-whitelisted contigs
-        if record.chrom not in fout.header.contigs:
-            continue
-        if record.info['CHR2'] not in fout.header.contigs:
-            continue
-
-        # Apply size filter (but keep breakends (SVLEN=-1))
-        if 0 < record.info['SVLEN'] < args.min_size:
-            continue
-
-        # Remove unstranded breakpoints
-        if record.info['STRANDS'] == '.' and not args.keep_unstranded:
-            continue
-
-        # Only report sites with called samples unless requested otherwise
-        if any_called(record) or args.include_reference_sites:
-            if args.prefix is not None:
-                record.id = '{0}_{1}'.format(args.prefix, idx)
-                idx += 1
-
-            fout.write(record)
+        fout.write(record)
 
     fout.close()
     vcf.close()
