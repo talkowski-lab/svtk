@@ -16,7 +16,7 @@ from .standardize import VCFStandardizer, parse_bnd_pos, parse_bnd_strands
 
 @VCFStandardizer.register('manta')
 class MantaStandardizer(VCFStandardizer):
-    def standardize_vcf(self):
+    def standardize_records(self):
         """
         Filter Manta VCF.
 
@@ -24,7 +24,7 @@ class MantaStandardizer(VCFStandardizer):
         """
 
         mate_IDs = deque()
-        for record in self.filter_vcf():
+        for record in self.filter_raw_vcf():
             # Filter unmarked SECONDARY on same chromosome
             # TODO: Check if necessary to filter diff chromosomes
             if 'MATEID' in record.info:

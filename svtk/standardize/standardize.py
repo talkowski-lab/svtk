@@ -73,7 +73,7 @@ class VCFStandardizer:
             raise ValueError(msg)
         return cls.subclasses[source](*args)
 
-    def filter_vcf(self):
+    def filter_raw_vcf(self):
         """
         Filter records.
 
@@ -96,9 +96,22 @@ class VCFStandardizer:
 
             yield record
 
-    def standardize_vcf(self):
+    def standardize_records(self):
         """
         Standardize every record in a VCF.
+
+        Yields
+        ------
+        std_rec : pysam.VariantRecord
+            Standardized records
+        """
+        for record in self.filter_raw_vcf():
+            std_rec = self.std_vcf.new_record()
+            std_rec = self.standardize_record(std_rec, record)
+
+    def standardize_vcf(self):
+        """
+        Standardize a VCF of SV records.
 
         Any filtering of records should be implemented in this method.
 
@@ -107,11 +120,9 @@ class VCFStandardizer:
         std_rec : pysam.VariantRecord
             Standardized records
         """
-        idx = 1
-        for record in self.filter_vcf():
-            std_rec = self.std_vcf.new_record()
-            std_rec = self.standardize_record(std_rec, record)
 
+        idx = 1
+        for std_rec in self.standardize_records():
             # Apply size filter (but keep breakends (SVLEN=-1))
             if 0 < std_rec.info['SVLEN'] < self.min_size:
                 continue

@@ -15,8 +15,8 @@ from svtk.utils import is_smaller_chrom
 
 @VCFStandardizer.register('lumpy')
 class LumpyStandardizer(VCFStandardizer):
-    def standardize_vcf(self):
-        for record in self.filter_vcf():
+    def standardize_records(self):
+        for record in self.filter_raw_vcf():
             # Split inversion events into their constituent breakpoints
             # For each strandedness in record, make a corresponding std record
             strands = record.info['STRANDS']
