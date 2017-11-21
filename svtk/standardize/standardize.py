@@ -120,7 +120,6 @@ class VCFStandardizer:
         std_rec : pysam.VariantRecord
             Standardized records
         """
-
         idx = 1
         for std_rec in self.standardize_records():
             # Apply size filter (but keep breakends (SVLEN=-1))
