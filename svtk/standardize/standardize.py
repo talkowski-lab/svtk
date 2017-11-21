@@ -107,7 +107,7 @@ class VCFStandardizer:
         """
         for record in self.filter_raw_vcf():
             std_rec = self.std_vcf.new_record()
-            std_rec = self.standardize_record(std_rec, record)
+            yield self.standardize_record(std_rec, record)
 
     def standardize_vcf(self):
         """
