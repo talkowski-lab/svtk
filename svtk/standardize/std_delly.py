@@ -43,6 +43,12 @@ class DellyStandardizer(VCFStandardizer):
             strands = '--'
         elif raw_strands == '3to5':
             strands = '+-'
+        elif raw_strands == 'NtoN' and svtype == 'INS':
+            strands = '+-'
+        else:
+            msg = 'Improper strands ({0}) in record {1}'
+            raise Exception(msg.format(raw_strands, raw_rec.id))
+
         std_rec.info['STRANDS'] = strands
 
         pos, end = raw_rec.pos, raw_rec.stop
