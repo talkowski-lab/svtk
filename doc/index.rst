@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to svtools's documentation!
-===================================
+SVTK: A toolkit for manipulating and analyzing structural variants
+==================================================================
 
 .. toctree::
    :maxdepth: 2

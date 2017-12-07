@@ -93,7 +93,7 @@
 <li><a class="reference internal" href="#">svtools package</a><ul>
 <li><a class="reference internal" href="#subpackages">Subpackages</a></li>
 <li><a class="reference internal" href="#submodules">Submodules</a></li>
-<li><a class="reference internal" href="#module-svtools.genomeslink">svtools.genomeslink module</a></li>
+<li><a class="reference internal" href="#svtools-genomeslink-module">svtools.genomeslink module</a></li>
 <li><a class="reference internal" href="#module-svtools.svfile">svtools.svfile module</a></li>
 <li><a class="reference internal" href="#module-svtools.utils">svtools.utils module</a></li>
 <li><a class="reference internal" href="#module-svtools">Module contents</a></li>
@@ -184,187 +184,29 @@
 <div class="section" id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-svtools.genomeslink">
-<span id="svtools-genomeslink-module"></span><h2>svtools.genomeslink module<a class="headerlink" href="#module-svtools.genomeslink" title="Permalink to this headline">¶</a></h2>
-<p>genomeslink.py</p>
-<p>Implementation of single-linkage clustering for genomic coordinates.</p>
-<p>Not actually an implementation of the SLINK algorithm.</p>
-<p>Copyright © 2015 Matthew Stone &lt;<a class="reference external" href="mailto:mstone5&#37;&#52;&#48;mgh&#46;harvard&#46;edu">mstone5<span>&#64;</span>mgh<span>&#46;</span>harvard<span>&#46;</span>edu</a>&gt;
-Distributed under terms of the MIT license.</p>
-<dl class="class">
-<dt id="svtools.genomeslink.GSNode">
-<em class="property">class </em><code class="descclassname">svtools.genomeslink.</code><code class="descname">GSNode</code><span class="sig-paren">(</span><em>chrA</em>, <em>posA</em>, <em>chrB</em>, <em>posB</em>, <em>name='.'</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.genomeslink.GSNode" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
-<dl class="method">
-<dt id="svtools.genomeslink.GSNode.__init__">
-<code class="descname">__init__</code><span class="sig-paren">(</span><em>chrA</em>, <em>posA</em>, <em>chrB</em>, <em>posB</em>, <em>name='.'</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.genomeslink.GSNode.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Node in graph-based single-linkage clustering of genomic coordinates.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="svtools.genomeslink.GSNode.clusters_with">
-<code class="descname">clusters_with</code><span class="sig-paren">(</span><em>other</em>, <em>dist</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.genomeslink.GSNode.clusters_with" title="Permalink to this definition">¶</a></dt>
-<dd><p>Test if candidates meet cluster distance requirement on chrB, posB</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="svtools.genomeslink.GSNode.is_allowed_chrom">
-<code class="descname">is_allowed_chrom</code><span class="sig-paren">(</span><em>chroms='either'</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.genomeslink.GSNode.is_allowed_chrom" title="Permalink to this definition">¶</a></dt>
-<dd><p>Whitelist chromosomes.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>chroms</strong> (<em>str</em><em> or </em><em>list</em><em>, </em><em>optional</em>) &#8211; <ol class="arabic simple">
-<li>List of permitted chromosomes</li>
-</ol>
-<p>2) One of &#8216;GRCh&#8217;, &#8216;UCSC&#8217;, &#8216;either&#8217;. Allows the 22 autosomes and sex
-chromosomes in GRCh format (1, 2, ... X, Y), UCSC format
-(chr1, chr2, ... chrX, chrY), or either format.
-Defaults to &#8216;either&#8217;.</p>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>is_allowed_chrom</strong> &#8211; True if both reads are on whitelisted chromosomes.</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">bool</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="svtools.genomeslink.GSNode.is_clusterable_with">
-<code class="descname">is_clusterable_with</code><span class="sig-paren">(</span><em>other</em>, <em>dist</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.genomeslink.GSNode.is_clusterable_with" title="Permalink to this definition">¶</a></dt>
-<dd><p>Identify cluster candidates if chrA, posB meet cluster distance limit</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="svtools.genomeslink.GSNode.is_in">
-<code class="descname">is_in</code><span class="sig-paren">(</span><em>tabixfile</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.genomeslink.GSNode.is_in" title="Permalink to this definition">¶</a></dt>
-<dd><p>Test if breakpoints of SV fall into any region in tabix-indexed bed.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>tabixfile</strong> (<em>pysam.TabixFile</em>) &#8211; </td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>is_in</strong></td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">bool</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="svtools.genomeslink.GSNode.secondary">
-<code class="descname">secondary</code><a class="headerlink" href="#svtools.genomeslink.GSNode.secondary" title="Permalink to this definition">¶</a></dt>
-<dd><p>Filter function</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="svtools.genomeslink.GSNode.sort_positions">
-<code class="descname">sort_positions</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#svtools.genomeslink.GSNode.sort_positions" title="Permalink to this definition">¶</a></dt>
-<dd><p>Force chrA, posA to be upstream of chrB, posB</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="svtools.genomeslink.GenomeSLINK">
-<em class="property">class </em><code class="descclassname">svtools.genomeslink.</code><code class="descname">GenomeSLINK</code><span class="sig-paren">(</span><em>nodes</em>, <em>dist</em>, <em>size=1</em>, <em>blacklist=None</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.genomeslink.GenomeSLINK" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
-<dl class="method">
-<dt id="svtools.genomeslink.GenomeSLINK.__init__">
-<code class="descname">__init__</code><span class="sig-paren">(</span><em>nodes</em>, <em>dist</em>, <em>size=1</em>, <em>blacklist=None</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.genomeslink.GenomeSLINK.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Graph-based single-linkage clustering of genomic coordinates.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>nodes</strong> (<em>iterable of GSNode</em>) &#8211; GSNodes sorted by chrA, posA</li>
-<li><strong>dist</strong> (<em>int</em>) &#8211; Maximum clustering distance.</li>
-<li><strong>size</strong> (<em>int</em>) &#8211; Minimum cluster size. Recommended to use 1 for call/variant
-clustering, scale up for read pair clustering.</li>
-<li><strong>blacklist</strong> (<em>pysam.TabixFile</em><em>, </em><em>optional</em>) &#8211; Regions to exclude from clustering. Any node with a coordinate
-inside an excluding region is omitted. (NOTE: not overlap-based.)</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="svtools.genomeslink.GenomeSLINK.cluster">
-<code class="descname">cluster</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.genomeslink.GenomeSLINK.cluster" title="Permalink to this definition">¶</a></dt>
-<dd><p>Perform single linkage clustering on a candidate batch of GSNodes</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Yields:</th><td class="field-body"><em>list of GSNode</em> &#8211; A cluster of GSNodes</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="svtools.genomeslink.GenomeSLINK.cluster_candidates">
-<code class="descname">cluster_candidates</code><span class="sig-paren">(</span><em>candidates</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.genomeslink.GenomeSLINK.cluster_candidates" title="Permalink to this definition">¶</a></dt>
-<dd><p>Batch of clustering</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="svtools.genomeslink.GenomeSLINK.filter_nodes">
-<code class="descname">filter_nodes</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#svtools.genomeslink.GenomeSLINK.filter_nodes" title="Permalink to this definition">¶</a></dt>
-<dd><p>Filter provided nodes. By default, remove nodes in blacklisted regions.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Yields:</th><td class="field-body"><strong>node</strong> (<em>GSNode</em>)</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="svtools.genomeslink.GenomeSLINK.get_candidates">
-<code class="descname">get_candidates</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#svtools.genomeslink.GenomeSLINK.get_candidates" title="Permalink to this definition">¶</a></dt>
-<dd><p>Find batches of SVCalls eligible for clustering.</p>
-<p>Requires input sorted by chromosome and position of first read in each
-pair. Pairs are collected while the first read in the next pair in the
-parser is within the maximum clustering distance of the first read of
-the previous pair.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Yields:</th><td class="field-body"><strong>candidates</strong> (<em>deque of GSNode</em>)</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-</dd></dl>
-
+<div class="section" id="svtools-genomeslink-module">
+<h2>svtools.genomeslink module<a class="headerlink" href="#svtools-genomeslink-module" title="Permalink to this headline">¶</a></h2>
 </div>
 <div class="section" id="module-svtools.svfile">
 <span id="svtools-svfile-module"></span><h2>svtools.svfile module<a class="headerlink" href="#module-svtools.svfile" title="Permalink to this headline">¶</a></h2>
 <p>svfile.py</p>
 <p>Wrap the pysam API to permit clustering of standardized SV VCF records.</p>
-<p>Copyright © 2016 Matthew Stone &lt;<a class="reference external" href="mailto:mstone5&#37;&#52;&#48;mgh&#46;harvard&#46;edu">mstone5<span>&#64;</span>mgh<span>&#46;</span>harvard<span>&#46;</span>edu</a>&gt;
-Distributed under terms of the MIT license.</p>
 <dl class="class">
 <dt id="svtools.svfile.SVFile">
-<em class="property">class </em><code class="descclassname">svtools.svfile.</code><code class="descname">SVFile</code><span class="sig-paren">(</span><em>filename</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.svfile.SVFile" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">svtools.svfile.</code><code class="descname">SVFile</code><span class="sig-paren">(</span><em>vcf</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.svfile.SVFile" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
 <dl class="method">
 <dt id="svtools.svfile.SVFile.__init__">
-<code class="descname">__init__</code><span class="sig-paren">(</span><em>filename</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.svfile.SVFile.__init__" title="Permalink to this definition">¶</a></dt>
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>vcf</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.svfile.SVFile.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Wrapper for standardized VCF files.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>vcf</strong> (<em>pysam.VariantFile</em>) &#8211; </td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -397,7 +239,7 @@ Distributed under terms of the MIT license.</p>
 <dl class="class">
 <dt id="svtools.svfile.SVRecord">
 <em class="property">class </em><code class="descclassname">svtools.svfile.</code><code class="descname">SVRecord</code><span class="sig-paren">(</span><em>record</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.svfile.SVRecord" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#svtools.genomeslink.GSNode" title="svtools.genomeslink.GSNode"><code class="xref py py-class docutils literal"><span class="pre">svtools.genomeslink.GSNode</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">svtools.genomeslink.GSNode</span></code></p>
 <p>Clusterable VCF record.</p>
 <dl class="method">
 <dt id="svtools.svfile.SVRecord.__init__">
@@ -411,12 +253,38 @@ Distributed under terms of the MIT license.</p>
 <dl class="method">
 <dt id="svtools.svfile.SVRecord.clusters_with">
 <code class="descname">clusters_with</code><span class="sig-paren">(</span><em>other</em>, <em>dist</em>, <em>frac=0.0</em>, <em>match_strands=False</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.svfile.SVRecord.clusters_with" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Check if two SV cluster with each other.</p>
+<p>Default behavior is to check whether coordinates are within a specified
+window. Here the following additional criteria are required:
+1) SV types match
+2) SV regions share a minimum reciprocal overlap</p>
+<blockquote>
+<div><ul class="simple">
+<li>Not applicable to translocations</li>
+<li>Insertion &#8220;regions&#8221; are calculated as the insertion site plus the
+predicted length of the insertion.</li>
+</ul>
+</div></blockquote>
+<ol class="arabic simple" start="3">
+<li>Strands of each breakpoint match (optional)</li>
+</ol>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="svtools.svfile.SVRecord.is_tloc">
 <code class="descname">is_tloc</code><a class="headerlink" href="#svtools.svfile.SVRecord.is_tloc" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
+
+<dl class="method">
+<dt id="svtools.svfile.SVRecord.overlaps">
+<code class="descname">overlaps</code><span class="sig-paren">(</span><em>other</em>, <em>frac=0.0</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.svfile.SVRecord.overlaps" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if two records meet minimum reciprocal overlap.</p>
+<ol class="arabic simple">
+<li>DEL, DUP, INV - reciprocal overlap calculated between SV intervals</li>
+<li>INS - intervals are calculated as insertion site plus SVLEN</li>
+<li>BND - always true</li>
+</ol>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="svtools.svfile.SVRecord.svtype">
@@ -435,33 +303,6 @@ Distributed under terms of the MIT license.</p>
 <dt id="svtools.svfile.SVRecordCluster.__init__">
 <code class="descname">__init__</code><span class="sig-paren">(</span><em>records</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.svfile.SVRecordCluster.__init__" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
-
-<dl class="method">
-<dt id="svtools.svfile.SVRecordCluster.merge">
-<code class="descname">merge</code><span class="sig-paren">(</span><em>new_record</em>, <em>sources</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.svfile.SVRecordCluster.merge" title="Permalink to this definition">¶</a></dt>
-<dd><p>Aggregate clustered records.</p>
-<ul class="simple">
-<li>Original record IDs are preserved in a new INFO field</li>
-</ul>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>new_record</strong> (<em>pysam.VariantRecord</em>) &#8211; Blank record to fill with aggregated data</li>
-<li><strong>sources</strong> (<em>list of str</em>) &#8211; List of all sources</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>new_record</strong> &#8211; VCF record populated with aggregate cluster data</p>
-</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">pysam.VariantRecord</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
 
 <dl class="method">
 <dt id="svtools.svfile.SVRecordCluster.merge_pos">
@@ -486,10 +327,84 @@ over POS and END.</p>
 </table>
 </dd></dl>
 
+<dl class="method">
+<dt id="svtools.svfile.SVRecordCluster.merge_record_data">
+<code class="descname">merge_record_data</code><span class="sig-paren">(</span><em>new_record</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.svfile.SVRecordCluster.merge_record_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Aggregate metadata (coordinates, alts, and INFO) of clustered records.</p>
+<ul class="simple">
+<li>Original record IDs are preserved in a new INFO field</li>
+</ul>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>new_record</strong> (<em>pysam.VariantRecord</em>) &#8211; Blank record to fill with aggregated data</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>new_record</strong> &#8211; VCF record populated with aggregate cluster data</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">pysam.VariantRecord</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="svtools.svfile.SVRecordCluster.merge_record_formats">
+<code class="descname">merge_record_formats</code><span class="sig-paren">(</span><em>new_record</em>, <em>sourcelist</em>, <em>call_sources=False</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.svfile.SVRecordCluster.merge_record_formats" title="Permalink to this definition">¶</a></dt>
+<dd><p>Aggregate sample genotype data across records.</p>
+<ol class="arabic simple">
+<li>Set GT to 0/1 for samples called in any record, 0/0 otherwise.</li>
+<li>For each provided source, set a corresponding FORMAT field to 1
+for samples called by the source. If the FORMAT field is available
+in the record being merged, use per-sample data. If the FORMAT field
+is not available, use the record&#8217;s SOURCE or SOURCES to determine
+support for all samples called in that record.</li>
+</ol>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>new_record</strong> (<em>pysam.VariantRecord</em>) &#8211; Record to populate with FORMAT data</li>
+<li><strong>sourcelist</strong> (<em>list of str</em>) &#8211; List of all sources to add a FORMAT field for</li>
+<li><strong>call_sources</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; If True, each record is already annotated with FORMAT data
+indicating the supporting source algorithms for each sample.
+If False, use each record&#8217;s SOURCE key to derive a supporting
+algorithm for all samples called in the record.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>new_record</strong> &#8211; Populated record</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">pysam.VariantRecord</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 <dl class="attribute">
 <dt id="svtools.svfile.SVRecordCluster.rmsstd">
 <code class="descname">rmsstd</code><a class="headerlink" href="#svtools.svfile.SVRecordCluster.rmsstd" title="Permalink to this definition">¶</a></dt>
 <dd><p>Root-mean-square standard deviation of cluster coordinates</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="svtools.svfile.SVRecordCluster.sources">
+<code class="descname">sources</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#svtools.svfile.SVRecordCluster.sources" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return list of source algorithms in clustered records.</p>
+<p>By default, searches for both a SOURCE and a SOURCES INFO field</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><strong>sources</strong></td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">list of str</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </dd></dl>
@@ -497,29 +412,6 @@ over POS and END.</p>
 </div>
 <div class="section" id="module-svtools.utils">
 <span id="svtools-utils-module"></span><h2>svtools.utils module<a class="headerlink" href="#module-svtools.utils" title="Permalink to this headline">¶</a></h2>
-<p>utils.py</p>
-<p>Helper functions for svtools.</p>
-<p>Copyright © 2017 Matthew Stone &lt;<a class="reference external" href="mailto:mstone5&#37;&#52;&#48;mgh&#46;harvard&#46;edu">mstone5<span>&#64;</span>mgh<span>&#46;</span>harvard<span>&#46;</span>edu</a>&gt;
-Distributed under terms of the MIT license.</p>
-<dl class="function">
-<dt id="svtools.utils.is_smaller_chrom">
-<code class="descclassname">svtools.utils.</code><code class="descname">is_smaller_chrom</code><span class="sig-paren">(</span><em>chrA</em>, <em>chrB</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.utils.is_smaller_chrom" title="Permalink to this definition">¶</a></dt>
-<dd><p>Test if chrA is naturally less than chrB</p>
-<p>Returns True if chrA == chrB so comparison will default to position</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="svtools.utils.make_bnd_alt">
-<code class="descclassname">svtools.utils.</code><code class="descname">make_bnd_alt</code><span class="sig-paren">(</span><em>chrom</em>, <em>pos</em>, <em>strands</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.utils.make_bnd_alt" title="Permalink to this definition">¶</a></dt>
-<dd><p>Make ALT for BND record in accordance with VCF specification.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="svtools.utils.recip">
-<code class="descclassname">svtools.utils.</code><code class="descname">recip</code><span class="sig-paren">(</span><em>startA</em>, <em>endA</em>, <em>startB</em>, <em>endB</em>, <em>frac</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.utils.recip" title="Permalink to this definition">¶</a></dt>
-<dd><p>Test if two intervals share a specified reciprocal overlap.</p>
-</dd></dl>
-
 </div>
 <div class="section" id="module-svtools">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-svtools" title="Permalink to this headline">¶</a></h2>

@@ -180,8 +180,6 @@ CHR2:    Secondary chromosome [Must be lexicographically greater than CHROM]
 END:     SV end position (or position on CHR2 in translocations)
 STRANDS: Breakpoint strandedness [++,+-,-+,&#8211;]
 SVLEN:   SV length (-1 if translocation)</div></blockquote>
-<p>Copyright © 2017 Matthew Stone &lt;<a class="reference external" href="mailto:mstone5&#37;&#52;&#48;mgh&#46;harvard&#46;edu">mstone5<span>&#64;</span>mgh<span>&#46;</span>harvard<span>&#46;</span>edu</a>&gt;
-Distributed under terms of the MIT license.</p>
 <dl class="class">
 <dt id="svtools.standardize.standardize.VCFStandardizer">
 <em class="property">class </em><code class="descclassname">svtools.standardize.standardize.</code><code class="descname">VCFStandardizer</code><span class="sig-paren">(</span><em>raw_vcf</em>, <em>std_vcf</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.standardize.standardize.VCFStandardizer" title="Permalink to this definition">¶</a></dt>
@@ -226,7 +224,7 @@ other SVTYPE alts untouched.</p>
 <dt id="svtools.standardize.standardize.VCFStandardizer.standardize_format">
 <code class="descname">standardize_format</code><span class="sig-paren">(</span><em>std_rec</em>, <em>raw_rec</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.standardize.standardize.VCFStandardizer.standardize_format" title="Permalink to this definition">¶</a></dt>
 <dd><p>Copy desired FORMAT fields to new record.</p>
-<p>By default, only GT is copied.</p>
+<p>By default, copy GT and tag source FORMAT appropriately.</p>
 </dd></dl>
 
 <dl class="method">
@@ -287,7 +285,7 @@ overridden with the logic for each algorithm&#8217;s formatting.</p>
 
 <dl class="attribute">
 <dt id="svtools.standardize.standardize.VCFStandardizer.subclasses">
-<code class="descname">subclasses</code><em class="property"> = {'wham': &lt;class 'svtools.standardize.std_wham.WhamStandardizer'&gt;, 'delly': &lt;class 'svtools.standardize.std_delly.DellyStandardizer'&gt;, 'lumpy': &lt;class 'svtools.standardize.std_lumpy.LumpyStandardizer'&gt;, 'manta': &lt;class 'svtools.standardize.std_manta.MantaStandardizer'&gt;}</em><a class="headerlink" href="#svtools.standardize.standardize.VCFStandardizer.subclasses" title="Permalink to this definition">¶</a></dt>
+<code class="descname">subclasses</code><em class="property"> = {'manta': &lt;class 'svtools.standardize.std_manta.MantaStandardizer'&gt;, 'lumpy': &lt;class 'svtools.standardize.std_lumpy.LumpyStandardizer'&gt;, 'wham': &lt;class 'svtools.standardize.std_wham.WhamStandardizer'&gt;, 'delly': &lt;class 'svtools.standardize.std_delly.DellyStandardizer'&gt;, 'melt': &lt;class 'svtools.standardize.std_melt.MeltStandardizer'&gt;}</em><a class="headerlink" href="#svtools.standardize.standardize.VCFStandardizer.subclasses" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -340,8 +338,6 @@ t]p] reverse comp piece extending left of p is joined after t (++)
 <span id="svtools-standardize-std-delly-module"></span><h2>svtools.standardize.std_delly module<a class="headerlink" href="#module-svtools.standardize.std_delly" title="Permalink to this headline">¶</a></h2>
 <p>std_delly.py</p>
 <p>Standardize a Delly record.</p>
-<p>Copyright © 2017 Matthew Stone &lt;<a class="reference external" href="mailto:mstone5&#37;&#52;&#48;mgh&#46;harvard&#46;edu">mstone5<span>&#64;</span>mgh<span>&#46;</span>harvard<span>&#46;</span>edu</a>&gt;
-Distributed under terms of the MIT license.</p>
 <dl class="class">
 <dt id="svtools.standardize.std_delly.DellyStandardizer">
 <em class="property">class </em><code class="descclassname">svtools.standardize.std_delly.</code><code class="descname">DellyStandardizer</code><span class="sig-paren">(</span><em>raw_vcf</em>, <em>std_vcf</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.standardize.std_delly.DellyStandardizer" title="Permalink to this definition">¶</a></dt>
@@ -368,8 +364,6 @@ Distributed under terms of the MIT license.</p>
 <span id="svtools-standardize-std-lumpy-module"></span><h2>svtools.standardize.std_lumpy module<a class="headerlink" href="#module-svtools.standardize.std_lumpy" title="Permalink to this headline">¶</a></h2>
 <p>std_lumpy.py</p>
 <p>Standardize Lumpy records.</p>
-<p># Copyright © 2017 Matthew Stone &lt;<a class="reference external" href="mailto:mstone5&#37;&#52;&#48;mgh&#46;harvard&#46;edu">mstone5<span>&#64;</span>mgh<span>&#46;</span>harvard<span>&#46;</span>edu</a>&gt;
-# Distributed under terms of the MIT license.</p>
 <dl class="class">
 <dt id="svtools.standardize.std_lumpy.LumpyStandardizer">
 <em class="property">class </em><code class="descclassname">svtools.standardize.std_lumpy.</code><code class="descname">LumpyStandardizer</code><span class="sig-paren">(</span><em>raw_vcf</em>, <em>std_vcf</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.standardize.std_lumpy.LumpyStandardizer" title="Permalink to this definition">¶</a></dt>
@@ -395,8 +389,6 @@ Distributed under terms of the MIT license.</p>
 <span id="svtools-standardize-std-manta-module"></span><h2>svtools.standardize.std_manta module<a class="headerlink" href="#module-svtools.standardize.std_manta" title="Permalink to this headline">¶</a></h2>
 <p>std_manta.py</p>
 <p>Standardize a Manta record.</p>
-<p>Copyright © 2017 Matthew Stone &lt;<a class="reference external" href="mailto:mstone5&#37;&#52;&#48;mgh&#46;harvard&#46;edu">mstone5<span>&#64;</span>mgh<span>&#46;</span>harvard<span>&#46;</span>edu</a>&gt;
-Distributed under terms of the MIT license.</p>
 <dl class="class">
 <dt id="svtools.standardize.std_manta.MantaStandardizer">
 <em class="property">class </em><code class="descclassname">svtools.standardize.std_manta.</code><code class="descname">MantaStandardizer</code><span class="sig-paren">(</span><em>raw_vcf</em>, <em>std_vcf</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.standardize.std_manta.MantaStandardizer" title="Permalink to this definition">¶</a></dt>
@@ -435,8 +427,6 @@ insertions, replace with N and &lt;SVTYPE&gt;</p>
 <span id="svtools-standardize-std-wham-module"></span><h2>svtools.standardize.std_wham module<a class="headerlink" href="#module-svtools.standardize.std_wham" title="Permalink to this headline">¶</a></h2>
 <p>std_wham.py</p>
 <p>Standardize WHAM record.</p>
-<p>Copyright © 2017 Matthew Stone &lt;<a class="reference external" href="mailto:mstone5&#37;&#52;&#48;mgh&#46;harvard&#46;edu">mstone5<span>&#64;</span>mgh<span>&#46;</span>harvard<span>&#46;</span>edu</a>&gt;
-Distributed under terms of the MIT license.</p>
 <dl class="class">
 <dt id="svtools.standardize.std_wham.WhamStandardizer">
 <em class="property">class </em><code class="descclassname">svtools.standardize.std_wham.</code><code class="descname">WhamStandardizer</code><span class="sig-paren">(</span><em>raw_vcf</em>, <em>std_vcf</em><span class="sig-paren">)</span><a class="headerlink" href="#svtools.standardize.std_wham.WhamStandardizer" title="Permalink to this definition">¶</a></dt>
