@@ -117,7 +117,10 @@ class MantaStandardizer(VCFStandardizer):
         if svtype != 'BND':
             std_rec.alts = (simple_alt, )
 
-        # Set reference to null (after ensuring ALT allele is symbolic)
+        # Set reference to null
+        # BNDs aren't symbolic so setting `ref` will reset `stop`
+        stop = std_rec.stop
         std_rec.ref = 'N'
+        std_rec.stop = stop
 
         return std_rec

@@ -107,6 +107,7 @@ class LumpyStandardizer(VCFStandardizer):
         # Format BND ALT
         std_rec = super().standardize_alts(std_rec, raw_rec)
 
+        stop = std_rec.stop
         if (std_rec.info['SVTYPE'] == 'BND' and
                 std_rec.chrom == std_rec.info['CHR2']):
             if std_rec.info['STRANDS'] == '+-':
@@ -118,7 +119,7 @@ class LumpyStandardizer(VCFStandardizer):
             else:
                 std_rec.info['SVTYPE'] = 'INV'
                 std_rec.alts = ('<INV>', )
-
+        std_rec.stop = stop
         return std_rec
 
     def standardize_format(self, std_rec, raw_rec):
