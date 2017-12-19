@@ -9,3 +9,4 @@ from .collect_pesr import main as collect_pesr
 from .annotate import main as annotate
 from .utils import vcf2bed
 from .pesr_test import pe_test, sr_test
+from .adjudicate import main as adjudicate
