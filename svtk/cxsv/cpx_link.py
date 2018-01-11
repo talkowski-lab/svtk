@@ -153,8 +153,11 @@ class ComplexSV:
         """
         Merge and clean metadata
         """
-        sources = set([s for r in self.records for s in r.info['SOURCES']])
-        self.vcf_record.info['SOURCES'] = tuple(sorted(sources))
+        sources = set([s for r in self.records for s in r.info['ALGORITHMS']])
+        self.vcf_record.info['ALGORITHMS'] = tuple(sorted(sources))
+
+        members = [r.id for r in self.records]
+        self.vcf_record.info['MEMBERS'] = tuple(sorted(members))
 
     @property
     def record_ids(self):
