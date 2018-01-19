@@ -33,7 +33,7 @@ import svtk.utils as svu
 
 
 class PESRCollection:
-    def __init__(self, bam, splitfile, discfile, sample=None,
+    def __init__(self, bam, splitfile, discfile, sample='.',
                  max_split_dist=300):
         self.bam = bam
         self.splitfile = splitfile
@@ -124,7 +124,7 @@ class PESRCollection:
         strandB = '-' if read.mate_is_reverse else '+'
 
         self.discfile.write(
-            ('%s\t%d\t%s\t%s\t%d\t%s\n' % (
+            ('%s\t%d\t%s\t%s\t%d\t%s\t%s\n' % (
                 read.reference_name, read.reference_start, strandA,
                 read.next_reference_name, read.next_reference_start, strandB,
                 self.sample)
@@ -251,6 +251,8 @@ def main(argv):
         formatter_class=argparse.RawDescriptionHelpFormatter)
 
     parser.add_argument('bam', help='Local or S3 path to bam')
+    parser.add_argument('sample', help='ID to append to each line of output '
+                        'files.')
     parser.add_argument('splitfile',
                         help='Output split counts.')
     parser.add_argument('discfile',
@@ -263,8 +265,6 @@ def main(argv):
                         help='Tabix-formatted region to parse')
     parser.add_argument('-z', '--bgzip', default=False, action='store_true',
                         help='bgzip and tabix index output')
-    parser.add_argument('--id', help='ID to append to each line of output '
-                        'files.')
 
     # Print help if no arguments specified
     if len(argv) == 0:
@@ -285,7 +285,7 @@ def main(argv):
     # Collect data and save
     with svu.BgzipFile(args.splitfile, args.bgzip) as splitfile:
         with svu.BgzipFile(args.discfile, args.bgzip) as discfile:
-            PESRCollection(bam, splitfile, discfile, args.id).collect_pesr()
+            PESRCollection(bam, splitfile, discfile, args.sample).collect_pesr()
 
 
 if __name__ == '__main__':
