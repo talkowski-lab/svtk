@@ -28,7 +28,7 @@ def rf_classify(metrics, trainable, testable, features, labeler, cutoffs, name,
 
 class RandomForest:
     def __init__(self, trainable, testable, features, cutoffs, labeler,
-                 clean_cutoffs=False):
+                 clean_cutoffs=False, max_train_size=100000):
         def has_null_features(df):
             return df[features].isnull().any(axis=1)
 
@@ -46,6 +46,7 @@ class RandomForest:
         self.clean_cutoffs = clean_cutoffs
         self.cutoff_features = cutoffs
         self.cutoffs = None
+        self.max_train_size = max_train_size
 
     def run(self):
         self.label_training_data()
@@ -58,7 +59,10 @@ class RandomForest:
         self.clean['label'] = self.labeler.label(self.clean)
 
     def select_training_data(self):
-        self.train = self.clean.loc[self.clean.label != 'Unlabeled'].copy()
+        self.train = self.clean.loc[self.clean.label != 'Unlabeled']
+
+        if self.train.shape[0] >= self.max_train_size:
+            self.train = self.train.sample(self.max_train_size)
 
     def learn_probs(self):
         X_train = self.train[self.features].as_matrix()
