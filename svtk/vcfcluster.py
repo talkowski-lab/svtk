@@ -67,6 +67,7 @@ class VCFCluster(GenomeSLINK):
         """
 
         # Wrap VCFs as SVFiles
+        self.vcfs = vcfs
         svfiles = [SVFile(vcf) for vcf in vcfs]
 
         # Fetch region of interest
@@ -164,6 +165,18 @@ class VCFCluster(GenomeSLINK):
         # Add samples
         for sample in self.samples:
             header.add_sample(sample)
+
+        # Add contigs
+        contigs = []
+        for vcf in self.vcfs:
+            for contig in vcf.header.contigs.values():
+                tup = (contig.name, contig.length)
+                if tup not in contigs:
+                    contigs.append(tup)
+
+        contig_line = '##contig=<ID={0},length={1}>'
+        for contig in contigs:
+            header.add_line(contig_line.format(*contig))
 
         # Add source
         sourcelist = sorted(set(self.sources))
