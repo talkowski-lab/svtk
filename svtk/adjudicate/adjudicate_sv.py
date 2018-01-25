@@ -19,24 +19,24 @@ ALLOSOMES = 'X Y chrX chrY'.split()
 def adjudicate_BAF(metrics, labeler):
     # Deletions
     testable = metrics.loc[(metrics.svtype == 'DEL') &
-                           (metrics.svsize >= 5000)].copy()
+                           (metrics.svsize >= 5000)]
     trainable = testable.loc[(testable.poor_region_cov < 0.3) &
-                             ~testable.chrom.isin(ALLOSOMES)].copy()
+                             ~testable.chrom.isin(ALLOSOMES)]
     features = 'BAF_snp_ratio BAF_del_loglik'.split()
     cutoffs = {'indep': ['BAF_snp_ratio'], 'dep': ['BAF_del_loglik']}
 
-    metrics, del_cutoffs = rf_classify(metrics, trainable, testable, features,
+    del_cutoffs = rf_classify(metrics, trainable, testable, features,
                                        labeler, cutoffs, 'BAF_prob')
 
     # Duplications
     testable = metrics.loc[(metrics.svtype == 'DUP') &
-                           (metrics.svsize >= 5000)].copy()
+                           (metrics.svsize >= 5000)]
     trainable = testable.loc[(testable.poor_region_cov < 0.3) &
-                             ~testable.chrom.isin(ALLOSOMES)].copy()
+                             ~testable.chrom.isin(ALLOSOMES)]
     features = 'BAF_KS_stat BAF_KS_log_pval'.split()
     cutoffs = {'indep': ['BAF_KS_stat'], 'dep': ['BAF_KS_log_pval']}
 
-    metrics, dup_cutoffs = rf_classify(metrics, trainable, testable, features,
+    dup_cutoffs = rf_classify(metrics, trainable, testable, features,
                                        labeler, cutoffs, 'BAF_prob')
 
     # Combine cutoffs
@@ -48,38 +48,38 @@ def adjudicate_BAF(metrics, labeler):
     cutoffs['min_svsize'] = 5000
     cutoffs['algtype'] = 'any'
 
-    return metrics, cutoffs
+    return cutoffs
 
 
 def adjudicate_BAF1(metrics):
-    metrics, cutoffs = adjudicate_BAF(metrics, labelers.BAF1TrainingLabeler())
+    cutoffs = adjudicate_BAF(metrics, labelers.BAF1TrainingLabeler())
     cutoffs['test'] = 'BAF1'
 
-    return metrics, cutoffs
+    return cutoffs
 
 
 def adjudicate_BAF2(metrics):
-    metrics, cutoffs = adjudicate_BAF(metrics, labelers.BAF2TrainingLabeler())
+    cutoffs = adjudicate_BAF(metrics, labelers.BAF2TrainingLabeler())
     cutoffs['test'] = 'BAF2'
-    return metrics, cutoffs
+    return cutoffs
 
 
 def adjudicate_SR1(metrics):
-    testable = metrics.loc[~metrics.name.str.contains('_depth_')].copy()
+    testable = metrics.loc[~metrics.name.str.contains('_depth_')]
     trainable = testable.loc[(testable.poor_region_cov < 0.3) &
-                             ~testable.chrom.isin(ALLOSOMES)].copy()
+                             ~testable.chrom.isin(ALLOSOMES)]
     features = ['SR_sum_log_pval', 'SR_sum_called_median', 'SR_sum_bg_median']
     cutoffs = {'indep': ['SR_sum_log_pval'], 'dep': []}
     labeler = labelers.SR1TrainingLabeler()
 
-    metrics, cutoffs = rf_classify(metrics, trainable, testable, features,
+    cutoffs = rf_classify(metrics, trainable, testable, features,
                                    labeler, cutoffs, 'SR_prob')
 
     cutoffs['test'] = 'SR1'
     cutoffs['svtype'] = 'CNV'
     cutoffs['algtype'] = 'PESR'
 
-    return metrics, cutoffs
+    return cutoffs
 
 
 def adjudicate_RD(metrics):
@@ -91,12 +91,12 @@ def adjudicate_RD(metrics):
 
     # PE/SR >1 kb
     testable = metrics.loc[~metrics.name.str.contains('_depth_') &
-                           (metrics.svsize >= 1000)].copy()
+                           (metrics.svsize >= 1000)]
     trainable = testable.loc[(testable.svsize >= 5000) &
                              (testable.poor_region_cov < 0.3) &
-                             ~testable.chrom.isin(ALLOSOMES)].copy()
+                             ~testable.chrom.isin(ALLOSOMES)]
 
-    metrics, cutoffs = rf_classify(metrics, trainable, testable, features,
+    cutoffs = rf_classify(metrics, trainable, testable, features,
                                    labeler, cutoff_features, 'RD_prob')
 
     cutoff_dfs.append(cutoffs)
@@ -107,12 +107,12 @@ def adjudicate_RD(metrics):
 
     # PE/SR <1 kb
     testable = metrics.loc[~metrics.name.str.contains('_depth_') &
-                           (metrics.svsize < 1000)].copy()
+                           (metrics.svsize < 1000)]
     trainable = testable.loc[(testable.svsize >= 100) &
                              (testable.poor_region_cov < 0.3) &
-                             ~testable.chrom.isin(ALLOSOMES)].copy()
+                             ~testable.chrom.isin(ALLOSOMES)]
 
-    metrics, cutoffs = rf_classify(metrics, trainable, testable, features,
+    cutoffs = rf_classify(metrics, trainable, testable, features,
                                    labeler, cutoff_features, 'RD_prob')
 
     cutoff_dfs.append(cutoffs)
@@ -125,12 +125,12 @@ def adjudicate_RD(metrics):
     cutoff_features = {'indep': ['RD_log_pval', 'RD_Median_Separation'], 
                        'dep': []}
     testable = metrics.loc[metrics.name.str.contains('_depth_') &
-                           (metrics.svtype == 'DEL')].copy()
+                           (metrics.svtype == 'DEL')]
     trainable = testable.loc[(testable.svsize >= 5000) &
                              (testable.poor_region_cov < 0.3) &
-                             ~testable.chrom.isin(ALLOSOMES)].copy()
+                             ~testable.chrom.isin(ALLOSOMES)]
 
-    metrics, cutoffs = rf_classify(metrics, trainable, testable, features,
+    cutoffs = rf_classify(metrics, trainable, testable, features,
                                    labeler, cutoff_features, 'RD_prob',
                                    clean_cutoffs=True)
     
@@ -142,12 +142,12 @@ def adjudicate_RD(metrics):
     
     # Depth dups
     testable = metrics.loc[metrics.name.str.contains('_depth_') &
-                           (metrics.svtype == 'DUP')].copy()
+                           (metrics.svtype == 'DUP')]
     trainable = testable.loc[(testable.svsize >= 5000) &
                              (testable.poor_region_cov < 0.3) &
-                             ~testable.chrom.isin(ALLOSOMES)].copy()
+                             ~testable.chrom.isin(ALLOSOMES)]
 
-    metrics, cutoffs = rf_classify(metrics, trainable, testable, features,
+    cutoffs = rf_classify(metrics, trainable, testable, features,
                                    labeler, cutoff_features, 'RD_prob',
                                    clean_cutoffs=True)
     
@@ -165,62 +165,61 @@ def adjudicate_RD(metrics):
     cutoffs = pd.concat(cutoff_dfs)
     cutoffs['test'] = 'RD'
 
-    return metrics, cutoffs
+    return cutoffs
 
 
 def adjudicate_PE(metrics):
-    testable = metrics.loc[~metrics.name.str.contains('_depth_')].copy()
+    testable = metrics.loc[~metrics.name.str.contains('_depth_')]
     trainable = testable.loc[(testable.poor_region_cov < 0.3) &
-                             ~testable.chrom.isin(ALLOSOMES)].copy()
+                             ~testable.chrom.isin(ALLOSOMES)]
     features = ['PE_log_pval', 'PE_called_median', 'PE_bg_median']
     cutoffs = {'indep': ['PE_log_pval'], 'dep': []}
     labeler = labelers.PETrainingLabeler()
 
-    metrics, cutoffs = rf_classify(metrics, trainable, testable, features,
+    cutoffs = rf_classify(metrics, trainable, testable, features,
                                    labeler, cutoffs, 'PE_prob')
 
     cutoffs['test'] = 'PE'
     cutoffs['svtype'] = 'CNV'
     cutoffs['algtype'] = 'PESR'
 
-    return metrics, cutoffs
+    return cutoffs
 
 
 def adjudicate_SR2(metrics):
-    testable = metrics.loc[~metrics.name.str.contains('_depth_')].copy()
+    testable = metrics.loc[~metrics.name.str.contains('_depth_')]
     trainable = testable.loc[(testable.svsize >= 5000) &
                              (testable.poor_region_cov < 0.3) &
-                             ~testable.chrom.isin(ALLOSOMES)].copy()
+                             ~testable.chrom.isin(ALLOSOMES)]
     features = ['SR_sum_log_pval', 'SR_sum_called_median', 'SR_sum_bg_median']
     cutoffs = {'indep': ['SR_sum_log_pval'], 'dep': []}
     labeler = labelers.SR2TrainingLabeler()
 
-    metrics, cutoffs = rf_classify(metrics, trainable, testable, features,
+    cutoffs = rf_classify(metrics, trainable, testable, features,
                                    labeler, cutoffs, 'SR_prob')
 
     cutoffs['test'] = 'SR2'
     cutoffs['svtype'] = 'CNV'
     cutoffs['algtype'] = 'PESR'
 
-    return metrics, cutoffs
-
+    return cutoffs
 
 def adjudicate_PESR(metrics):
-    testable = metrics.loc[~metrics.name.str.contains('_depth_')].copy()
+    testable = metrics.loc[~metrics.name.str.contains('_depth_')]
     trainable = testable.loc[(testable.poor_region_cov < 0.3) &
-                             ~testable.chrom.isin(ALLOSOMES)].copy()
+                             ~testable.chrom.isin(ALLOSOMES)]
     features = ['PESR_log_pval', 'PESR_called_median', 'PESR_bg_median']
     cutoffs = {'indep': ['PESR_log_pval'], 'dep': []}
     labeler = labelers.PESRTrainingLabeler()
 
-    metrics, cutoffs = rf_classify(metrics, trainable, testable, features,
+    cutoffs = rf_classify(metrics, trainable, testable, features,
                                    labeler, cutoffs, 'PESR_prob')
 
     cutoffs['test'] = 'PESR'
     cutoffs['svtype'] = 'CNV'
     cutoffs['algtype'] = 'PESR'
 
-    return metrics, cutoffs
+    return cutoffs
 
 
 def consolidate_score(metrics, cutoffs):
@@ -282,13 +281,13 @@ def adjudicate_SV(metrics):
     if 'chrom' not in metrics.columns:
         metrics['chrom'] = metrics.name.str.split('_').str[-2]
     cutoffs = np.empty(7, dtype=object)
-    metrics, cutoffs[0] = adjudicate_BAF1(metrics)
-    metrics, cutoffs[1] = adjudicate_SR1(metrics)
-    metrics, cutoffs[2] = adjudicate_RD(metrics)
-    metrics, cutoffs[3] = adjudicate_PE(metrics)
-    metrics, cutoffs[4] = adjudicate_BAF2(metrics)
-    metrics, cutoffs[5] = adjudicate_SR2(metrics)
-    metrics, cutoffs[6] = adjudicate_PESR(metrics)
+    cutoffs[0] = adjudicate_BAF1(metrics)
+    cutoffs[1] = adjudicate_SR1(metrics)
+    cutoffs[2] = adjudicate_RD(metrics)
+    cutoffs[3] = adjudicate_PE(metrics)
+    cutoffs[4] = adjudicate_BAF2(metrics)
+    cutoffs[5] = adjudicate_SR2(metrics)
+    cutoffs[6] = adjudicate_PESR(metrics)
 
     cutoffs = pd.concat(cutoffs)
 

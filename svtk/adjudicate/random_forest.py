@@ -14,7 +14,6 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import roc_curve
 
-
 def rf_classify(metrics, trainable, testable, features, labeler, cutoffs, name,
                 clean_cutoffs=False):
     """Wrapper to run random forest and assign probabilities"""
@@ -22,8 +21,14 @@ def rf_classify(metrics, trainable, testable, features, labeler, cutoffs, name,
                       clean_cutoffs)
     rf.run()
     metrics.loc[rf.testable.index, name] = rf.probs
+    cutoffs = rf.cutoffs.copy()
 
-    return metrics, rf.cutoffs
+    del rf.clean
+    del rf.testable
+    del rf.rf
+    del rf
+
+    return cutoffs
 
 
 class RandomForest:
@@ -62,7 +67,17 @@ class RandomForest:
         self.train = self.clean.loc[self.clean.label != 'Unlabeled']
 
         if self.train.shape[0] >= self.max_train_size:
-            self.train = self.train.sample(self.max_train_size)
+            max_subset_size = int(self.max_train_size / 2)
+
+            passes = self.train.loc[self.train.label == 'Pass']
+            if passes.shape[0] >= max_subset_size:
+                passes = passes.sample(max_subset_size)
+
+            fails = self.train.loc[self.train.label == 'Fail']
+            if fails.shape[0] >= max_subset_size:
+                fails = fails.sample(max_subset_size)
+
+            self.train = pd.concat([passes, fails])
 
     def learn_probs(self):
         X_train = self.train[self.features].as_matrix()
