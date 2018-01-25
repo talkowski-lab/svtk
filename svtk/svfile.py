@@ -9,6 +9,7 @@ Wrap the pysam API to permit clustering of standardized SV VCF records.
 """
 
 import numpy as np
+from collections import defaultdict
 from .utils import recip, make_bnd_alt
 from .genomeslink import GSNode
 
@@ -282,6 +283,37 @@ class SVRecordCluster:
 
         # List of aggregate sources
         new_record.info['ALGORITHMS'] = self.sources()
+
+        return new_record
+
+    def merge_record_infos(self, new_record, header):
+        """
+        Aggregate INFO fields in child records
+        """
+        PROTECTED_INFOS = ('SVTYPE CHR2 END STRANDS SVLEN ALGORITHMS CIPOS '
+                           'CIEND RMSSTD MEMBERS').split()
+        records = [r.record for r in self.records]
+        infos = defaultdict(list)
+        
+        for record in records:
+            for info, value in record.info.items():
+                if info not in PROTECTED_INFOS:
+                    infos[info].append(value)
+
+        for info, values in infos.items():
+            if header.info[info].type == 'Flag':
+                new_record.info[info] = True
+            elif header.info[info].type == 'String':
+                if header.info[info].number == '.':
+                    new_record.info[info] = [v for vlist in values for v in vlist]
+                elif header.info[info].number == 1:
+                    new_record.info[info] = ','.join([v for vlist in values for v in vlist])
+                else:
+                    new_record.info[info] = [','.join(vlist) for vlist in zip(values)]
+
+            # TODO merge numeric INFO
+            else:
+                pass
 
         return new_record
 

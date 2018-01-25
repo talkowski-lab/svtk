@@ -139,6 +139,7 @@ class VCFCluster(GenomeSLINK):
                 record = self.header.new_record()
                 record = cluster.merge_record_data(record)
                 record = cluster.merge_record_formats(record, self.sources)
+                record = cluster.merge_record_infos(record, self.header)
                 if self.preserve_ids:
                     record.info['MEMBERS'] = [r.record.id for r in records]
                 yield record
@@ -178,6 +179,20 @@ class VCFCluster(GenomeSLINK):
         for contig in contigs:
             header.add_line(contig_line.format(*contig))
 
+        # Add INFO
+        infos = []
+        for vcf in self.vcfs:
+            for tag, info in vcf.header.info.items():
+                if tag in header.info.keys():
+                    continue
+                tup = (info.name, info.number, info.type, info.description)
+                if tup not in infos:
+                    infos.append(tup)
+        
+        info_line = '##INFO=<ID={0},Number={1},Type={2},Description="{3}">'
+        for info in infos:
+            header.add_line(info_line.format(*info))
+        
         # Add source
         sourcelist = sorted(set(self.sources))
         header.add_line('##source={0}'.format(','.join(sourcelist)))
