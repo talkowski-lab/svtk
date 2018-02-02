@@ -16,7 +16,7 @@ from svtk.adjudicate import rf_classify, labelers
 ALLOSOMES = 'X Y chrX chrY'.split()
 
 
-def adjudicate_BAF(metrics, labeler):
+def adjudicate_BAF(metrics, labeler, name):
     # Deletions
     testable = metrics.loc[(metrics.svtype == 'DEL') &
                            (metrics.svsize >= 5000)]
@@ -26,7 +26,7 @@ def adjudicate_BAF(metrics, labeler):
     cutoffs = {'indep': ['BAF_snp_ratio'], 'dep': ['BAF_del_loglik']}
 
     del_cutoffs = rf_classify(metrics, trainable, testable, features,
-                                       labeler, cutoffs, 'BAF_prob')
+                                       labeler, cutoffs, name)
 
     # Duplications
     testable = metrics.loc[(metrics.svtype == 'DUP') &
@@ -37,7 +37,7 @@ def adjudicate_BAF(metrics, labeler):
     cutoffs = {'indep': ['BAF_KS_stat'], 'dep': ['BAF_KS_log_pval']}
 
     dup_cutoffs = rf_classify(metrics, trainable, testable, features,
-                                       labeler, cutoffs, 'BAF_prob')
+                                       labeler, cutoffs, name)
 
     # Combine cutoffs
     del_cutoffs['svtype'] = 'DEL'
@@ -52,14 +52,14 @@ def adjudicate_BAF(metrics, labeler):
 
 
 def adjudicate_BAF1(metrics):
-    cutoffs = adjudicate_BAF(metrics, labelers.BAF1TrainingLabeler())
+    cutoffs = adjudicate_BAF(metrics, labelers.BAF1TrainingLabeler(), 'BAF1_prob')
     cutoffs['test'] = 'BAF1'
 
     return cutoffs
 
 
 def adjudicate_BAF2(metrics):
-    cutoffs = adjudicate_BAF(metrics, labelers.BAF2TrainingLabeler())
+    cutoffs = adjudicate_BAF(metrics, labelers.BAF2TrainingLabeler(), 'BAF2_prob')
     cutoffs['test'] = 'BAF2'
     return cutoffs
 
@@ -73,7 +73,7 @@ def adjudicate_SR1(metrics):
     labeler = labelers.SR1TrainingLabeler()
 
     cutoffs = rf_classify(metrics, trainable, testable, features,
-                                   labeler, cutoffs, 'SR_prob')
+                                   labeler, cutoffs, 'SR1_prob')
 
     cutoffs['test'] = 'SR1'
     cutoffs['svtype'] = 'CNV'
@@ -196,7 +196,7 @@ def adjudicate_SR2(metrics):
     labeler = labelers.SR2TrainingLabeler()
 
     cutoffs = rf_classify(metrics, trainable, testable, features,
-                                   labeler, cutoffs, 'SR_prob')
+                                   labeler, cutoffs, 'SR2_prob')
 
     cutoffs['test'] = 'SR2'
     cutoffs['svtype'] = 'CNV'
@@ -227,7 +227,7 @@ def consolidate_score(metrics, cutoffs):
 
     # Score PE/SR <1 kb
     lt1kb = ~metrics.name.str.contains('depth') & (metrics.svsize < 1000)
-    pesr_cols = 'PE_prob SR_prob'.split()
+    pesr_cols = 'PE_prob SR2_prob'.split()
     metrics.loc[lt1kb, 'score'] = metrics[pesr_cols].max(axis=1)
 
     # Score depth
@@ -236,9 +236,9 @@ def consolidate_score(metrics, cutoffs):
 
     # Score PE/SR >1 kb
     gt1kb = ~metrics.name.str.contains('depth') & (metrics.svsize >= 1000)
-    PESR_pass = (metrics.PE_prob >= 0.5) | (metrics.SR_prob >= 0.5)
+    PESR_pass = (metrics.PE_prob >= 0.5) | (metrics.SR2_prob >= 0.5)
     RD_pass = (metrics.RD_prob >= 0.5)
-    prob_cols = 'PE_prob SR_prob RD_prob'.split()
+    prob_cols = 'PE_prob SR2_prob RD_prob'.split()
 
     # If variants pass both RD + PE/SR or fail both, use max across the three
     metrics.loc[gt1kb & ~(PESR_pass ^ RD_pass), 'score'] = metrics[prob_cols].max(axis=1)
@@ -273,7 +273,7 @@ def consolidate_score(metrics, cutoffs):
     metrics.loc[depth_dups & depth_pass, 'score'] = metrics.RD_prob
     metrics.loc[depth_dups & ~depth_pass, 'score'] = 0.495
 
-    probs = 'BAF_prob SR_prob RD_prob PE_prob PESR_prob'.split()
+    probs = 'BAF2_prob SR2_prob RD_prob PE_prob PESR_prob'.split()
     return metrics['name svtype score'.split() + probs].copy()
 
 
