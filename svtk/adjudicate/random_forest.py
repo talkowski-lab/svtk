@@ -23,6 +23,8 @@ def rf_classify(metrics, trainable, testable, features, labeler, cutoffs, name,
     metrics.loc[rf.testable.index, name] = rf.probs
     cutoffs = rf.cutoffs.copy()
 
+    evidence = name.split('_')
+    rf.clean.to_csv('{0}_training.txt', index=False, sep='\t')
     del rf.clean
     del rf.testable
     del rf.rf
