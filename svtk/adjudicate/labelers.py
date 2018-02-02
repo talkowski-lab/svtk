@@ -71,9 +71,9 @@ class RDTrainingLabeler(TrainingLabeler):
 
 class PETrainingLabeler(TrainingLabeler):
     def label_row(self, row):
-        if row.SR1_prob < 0.1 and row.RD1_prob < 0.1:
+        if row.SR1_prob < 0.1 and row.RD_prob < 0.1:
             return 'Fail'
-        elif row.SR1_prob >= 0.9 and row.RD1_prob >= 0.9:
+        elif row.SR1_prob >= 0.9 and row.RD_prob >= 0.9:
             return 'Pass'
         else:
             return 'Unlabeled'
