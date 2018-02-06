@@ -96,7 +96,7 @@ class SR2TrainingLabeler(TrainingLabeler):
         if (row.RD_prob < 0.1 or row.PE_prob < 0.1):
             return 'Fail'
         elif (row.RD_prob >= 0.9 and row.PE_prob >= 0.9 and
-                row.SR_prob >= 0.1):
+                row.SR1_prob >= 0.1):
             return 'Pass'
         else:
             return 'Unlabeled'
