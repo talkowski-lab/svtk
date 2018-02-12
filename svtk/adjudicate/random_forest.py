@@ -8,11 +8,13 @@
 
 """
 
+import sys
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import roc_curve
+
 
 def rf_classify(metrics, trainable, testable, features, labeler, cutoffs, name,
                 clean_cutoffs=False):
@@ -57,10 +59,15 @@ class RandomForest:
         self.max_train_size = max_train_size
 
     def run(self):
+        sys.stderr.write('Labeling training data...\n')
         self.label_training_data()
+        sys.stderr.write('Selecting training data...\n')
         self.select_training_data()
+        sys.stderr.write('Learning probabilities...\n')
         self.learn_probs()
+        sys.stderr.write('Learning cutoffs...\n')
         self.learn_cutoffs()
+        sys.stderr.write('Trimming probabilities...\n')
         self.cutoff_probs()
 
     def label_training_data(self):

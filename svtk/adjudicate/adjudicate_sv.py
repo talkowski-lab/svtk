@@ -8,6 +8,7 @@
 
 """
 
+import sys 
 import pandas as pd
 import numpy as np
 from svtk.adjudicate import rf_classify, labelers
@@ -204,6 +205,7 @@ def adjudicate_SR2(metrics):
 
     return cutoffs
 
+
 def adjudicate_PESR(metrics):
     testable = metrics.loc[~metrics.name.str.contains('_depth_')]
     trainable = testable.loc[(testable.poor_region_cov < 0.3) &
@@ -281,16 +283,23 @@ def adjudicate_SV(metrics):
     if 'chrom' not in metrics.columns:
         metrics['chrom'] = metrics.name.str.split('_').str[-2]
     cutoffs = np.empty(7, dtype=object)
+    sys.stderr.write('Adjudicating BAF (1)...\n')
     cutoffs[0] = adjudicate_BAF1(metrics)
+    sys.stderr.write('Adjudicating SR (1)...\n')
     cutoffs[1] = adjudicate_SR1(metrics)
+    sys.stderr.write('Adjudicating RD...\n')
     cutoffs[2] = adjudicate_RD(metrics)
+    sys.stderr.write('Adjudicating PE...\n')
     cutoffs[3] = adjudicate_PE(metrics)
+    sys.stderr.write('Adjudicating BAF (2)...\n')
     cutoffs[4] = adjudicate_BAF2(metrics)
+    sys.stderr.write('Adjudicating SR (2)...\n')
     cutoffs[5] = adjudicate_SR2(metrics)
+    sys.stderr.write('Adjudicating PESR...\n')
     cutoffs[6] = adjudicate_PESR(metrics)
 
     cutoffs = pd.concat(cutoffs)
 
     scores = consolidate_score(metrics, cutoffs)
-
+    
     return scores, cutoffs
