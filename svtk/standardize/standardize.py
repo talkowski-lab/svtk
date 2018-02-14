@@ -84,6 +84,10 @@ class VCFStandardizer:
         for record in self.raw_vcf:
             if record.chrom not in self.std_vcf.header.contigs:
                 continue
+
+            if record.info.get('CHR2', None) not in self.std_vcf.header.contigs:
+                continue
+
             # Filter on chr2 if a breakend
             if '[' in record.alts[0] or ']' in record.alts[0]:
                 chr2, end = parse_bnd_pos(record.alts[0])
