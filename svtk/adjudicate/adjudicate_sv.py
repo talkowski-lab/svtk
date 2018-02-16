@@ -48,6 +48,7 @@ def adjudicate_BAF(metrics, labeler, name):
     del_cutoffs['svtype'] = 'DEL'
     dup_cutoffs['svtype'] = 'DUP'
     cutoffs = pd.concat([del_cutoffs, dup_cutoffs]).reset_index()
+    cutoffs.to_csv('{0}_cutoffs.txt'.format(name), index=False, sep='\t')
     cutoffs['test'] = 'BAF'
     cutoffs['max_svsize'] = np.nan
     cutoffs['min_svsize'] = 5000
@@ -81,6 +82,7 @@ def adjudicate_SR1(metrics):
     cutoffs = rf_classify(metrics, trainable, testable, features,
                                    labeler, cutoffs, 'SR1_prob')
 
+    cutoffs.to_csv('SR1_cutoffs.txt', index=False, sep='\t')
     cutoffs['test'] = 'SR1'
     cutoffs['svtype'] = 'CNV'
     cutoffs['algtype'] = 'PESR'
@@ -173,6 +175,7 @@ def adjudicate_RD(metrics):
                 (metrics.RD_prob >= 0.5), 'RD_prob'] = 0.499
 
     cutoffs = pd.concat(cutoff_dfs)
+    cutoffs.to_csv('RD_cutoffs.txt', index=False, sep='\t')
     cutoffs['test'] = 'RD'
 
     return cutoffs
@@ -190,6 +193,7 @@ def adjudicate_PE(metrics):
     cutoffs = rf_classify(metrics, trainable, testable, features,
                                    labeler, cutoffs, 'PE_prob')
 
+    cutoffs.to_csv('PE_cutoffs.txt', index=False, sep='\t')
     cutoffs['test'] = 'PE'
     cutoffs['svtype'] = 'CNV'
     cutoffs['algtype'] = 'PESR'
@@ -209,6 +213,7 @@ def adjudicate_SR2(metrics):
 
     cutoffs = rf_classify(metrics, trainable, testable, features,
                                    labeler, cutoffs, 'SR2_prob')
+    cutoffs.to_csv('SR2_cutoffs.txt', index=False, sep='\t')
 
     cutoffs['test'] = 'SR2'
     cutoffs['svtype'] = 'CNV'
@@ -229,6 +234,7 @@ def adjudicate_PESR(metrics):
     cutoffs = rf_classify(metrics, trainable, testable, features,
                                    labeler, cutoffs, 'PESR_prob')
 
+    cutoffs.to_csv('PESR_cutoffs.txt', index=False, sep='\t')
     cutoffs['test'] = 'PESR'
     cutoffs['svtype'] = 'CNV'
     cutoffs['algtype'] = 'PESR'
