@@ -23,6 +23,9 @@ def adjudicate_BAF(metrics, labeler, name):
                            (metrics.svsize >= 5000)]
     trainable = testable.loc[(testable.poor_region_cov < 0.3) &
                              ~testable.chrom.isin(ALLOSOMES)]
+
+    trainable.to_csv('{0}_DEL_trainable.txt'.format(name), index=False, sep='\t')
+
     features = 'BAF_snp_ratio BAF_del_loglik'.split()
     cutoffs = {'indep': ['BAF_snp_ratio'], 'dep': ['BAF_del_loglik']}
 
@@ -34,6 +37,7 @@ def adjudicate_BAF(metrics, labeler, name):
                            (metrics.svsize >= 5000)]
     trainable = testable.loc[(testable.poor_region_cov < 0.3) &
                              ~testable.chrom.isin(ALLOSOMES)]
+    trainable.to_csv('{0}_DUP_trainable.txt'.format(name), index=False, sep='\t')
     features = 'BAF_KS_stat BAF_KS_log_pval'.split()
     cutoffs = {'indep': ['BAF_KS_stat'], 'dep': ['BAF_KS_log_pval']}
 
@@ -69,6 +73,7 @@ def adjudicate_SR1(metrics):
     testable = metrics.loc[~metrics.name.str.contains('_depth_')]
     trainable = testable.loc[(testable.poor_region_cov < 0.3) &
                              ~testable.chrom.isin(ALLOSOMES)]
+    trainable.to_csv('SR1_trainable.txt', index=False, sep='\t')
     features = ['SR_sum_log_pval', 'SR_sum_called_median', 'SR_sum_bg_median']
     cutoffs = {'indep': ['SR_sum_log_pval'], 'dep': []}
     labeler = labelers.SR1TrainingLabeler()
@@ -97,6 +102,7 @@ def adjudicate_RD(metrics):
                              (testable.poor_region_cov < 0.3) &
                              ~testable.chrom.isin(ALLOSOMES)]
 
+    trainable.to_csv('RD_pesr_gt1kb_trainable.txt', index=False, sep='\t')
     cutoffs = rf_classify(metrics, trainable, testable, features,
                                    labeler, cutoff_features, 'RD_prob')
 
@@ -112,6 +118,7 @@ def adjudicate_RD(metrics):
     trainable = testable.loc[(testable.svsize >= 100) &
                              (testable.poor_region_cov < 0.3) &
                              ~testable.chrom.isin(ALLOSOMES)]
+    trainable.to_csv('RD_pesr_lt1kb_trainable.txt', index=False, sep='\t')
 
     cutoffs = rf_classify(metrics, trainable, testable, features,
                                    labeler, cutoff_features, 'RD_prob')
@@ -130,6 +137,7 @@ def adjudicate_RD(metrics):
     trainable = testable.loc[(testable.svsize >= 5000) &
                              (testable.poor_region_cov < 0.3) &
                              ~testable.chrom.isin(ALLOSOMES)]
+    trainable.to_csv('RD_depth_DEL_trainable.txt', index=False, sep='\t')
 
     cutoffs = rf_classify(metrics, trainable, testable, features,
                                    labeler, cutoff_features, 'RD_prob',
@@ -147,6 +155,7 @@ def adjudicate_RD(metrics):
     trainable = testable.loc[(testable.svsize >= 5000) &
                              (testable.poor_region_cov < 0.3) &
                              ~testable.chrom.isin(ALLOSOMES)]
+    trainable.to_csv('RD_depth_DUP_trainable.txt', index=False, sep='\t')
 
     cutoffs = rf_classify(metrics, trainable, testable, features,
                                    labeler, cutoff_features, 'RD_prob',
@@ -173,6 +182,7 @@ def adjudicate_PE(metrics):
     testable = metrics.loc[~metrics.name.str.contains('_depth_')]
     trainable = testable.loc[(testable.poor_region_cov < 0.3) &
                              ~testable.chrom.isin(ALLOSOMES)]
+    trainable.to_csv('PE_trainable.txt', index=False, sep='\t')
     features = ['PE_log_pval', 'PE_called_median', 'PE_bg_median']
     cutoffs = {'indep': ['PE_log_pval'], 'dep': []}
     labeler = labelers.PETrainingLabeler()
@@ -192,6 +202,7 @@ def adjudicate_SR2(metrics):
     trainable = testable.loc[(testable.svsize >= 5000) &
                              (testable.poor_region_cov < 0.3) &
                              ~testable.chrom.isin(ALLOSOMES)]
+    trainable.to_csv('SR2_trainable.txt', index=False, sep='\t')
     features = ['SR_sum_log_pval', 'SR_sum_called_median', 'SR_sum_bg_median']
     cutoffs = {'indep': ['SR_sum_log_pval'], 'dep': []}
     labeler = labelers.SR2TrainingLabeler()
@@ -210,6 +221,7 @@ def adjudicate_PESR(metrics):
     testable = metrics.loc[~metrics.name.str.contains('_depth_')]
     trainable = testable.loc[(testable.poor_region_cov < 0.3) &
                              ~testable.chrom.isin(ALLOSOMES)]
+    trainable.to_csv('PESR_trainable.txt', index=False, sep='\t')
     features = ['PESR_log_pval', 'PESR_called_median', 'PESR_bg_median']
     cutoffs = {'indep': ['PESR_log_pval'], 'dep': []}
     labeler = labelers.PESRTrainingLabeler()
