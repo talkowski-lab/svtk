@@ -104,6 +104,7 @@ def adjudicate_RD(metrics):
                              (testable.poor_region_cov < 0.3) &
                              ~testable.chrom.isin(ALLOSOMES)]
 
+    testable.to_csv('RD_pesr_gt1kb_testable.txt', index=False, sep='\t')
     trainable.to_csv('RD_pesr_gt1kb_trainable.txt', index=False, sep='\t')
     cutoffs = rf_classify(metrics, trainable, testable, features,
                                    labeler, cutoff_features, 'RD_prob')
@@ -120,6 +121,7 @@ def adjudicate_RD(metrics):
     trainable = testable.loc[(testable.svsize >= 100) &
                              (testable.poor_region_cov < 0.3) &
                              ~testable.chrom.isin(ALLOSOMES)]
+    testable.to_csv('RD_pesr_lt1kb_testable.txt', index=False, sep='\t')
     trainable.to_csv('RD_pesr_lt1kb_trainable.txt', index=False, sep='\t')
 
     cutoffs = rf_classify(metrics, trainable, testable, features,
