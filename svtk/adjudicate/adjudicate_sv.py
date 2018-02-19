@@ -25,6 +25,7 @@ def adjudicate_BAF(metrics, labeler, name):
                              ~testable.chrom.isin(ALLOSOMES)]
 
     trainable.to_csv('{0}_DEL_trainable.txt'.format(name), index=False, sep='\t')
+    testable.to_csv('{0}_DEL_testable.txt'.format(name), index=False, sep='\t')
 
     features = 'BAF_snp_ratio BAF_del_loglik'.split()
     cutoffs = {'indep': ['BAF_snp_ratio'], 'dep': ['BAF_del_loglik']}
@@ -38,6 +39,7 @@ def adjudicate_BAF(metrics, labeler, name):
     trainable = testable.loc[(testable.poor_region_cov < 0.3) &
                              ~testable.chrom.isin(ALLOSOMES)]
     trainable.to_csv('{0}_DUP_trainable.txt'.format(name), index=False, sep='\t')
+    testable.to_csv('{0}_DUP_testable.txt'.format(name), index=False, sep='\t')
     features = 'BAF_KS_stat BAF_KS_log_pval'.split()
     cutoffs = {'indep': ['BAF_KS_stat'], 'dep': ['BAF_KS_log_pval']}
 
