@@ -47,16 +47,16 @@ class SR1TrainingLabeler(TrainingLabeler):
 class RDTrainingLabeler(TrainingLabeler):
     def label_row(self, row):
         if 'depth' not in row['name'] and row.svsize >= 1000:
-            if row.BAF1_prob < 0.1 and row.SR1_prob < 0.1:
+            if row.BAF1_prob < 0.3 and row.SR1_prob < 0.3:
                 return 'Fail'
-            elif row.BAF1_prob >= 0.9 and row.SR1_prob >= 0.9:
+            elif row.BAF1_prob >= 0.7 and row.SR1_prob >= 0.7:
                 return 'Pass'
             else:
                 return 'Unlabeled'
         elif 'depth' not in row['name'] and row.svsize < 1000:
-            if row.SR1_prob < 0.1:
+            if row.SR1_prob < 0.3:
                 return 'Fail'
-            elif row.SR1_prob >= 0.9:
+            elif row.SR1_prob >= 0.7:
                 return 'Pass'
             else:
                 return 'Unlabeled'
