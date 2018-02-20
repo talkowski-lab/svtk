@@ -251,7 +251,7 @@ def consolidate_score(metrics, cutoffs):
 
     # Score PE/SR <1 kb
     lt1kb = ~metrics.name.str.contains('depth') & (metrics.svsize < 1000)
-    pesr_cols = 'PE_prob SR2_prob'.split()
+    pesr_cols = 'PE_prob SR1_prob'.split()
     metrics.loc[lt1kb, 'score'] = metrics[pesr_cols].max(axis=1)
 
     # Score depth
@@ -260,9 +260,9 @@ def consolidate_score(metrics, cutoffs):
 
     # Score PE/SR >1 kb
     gt1kb = ~metrics.name.str.contains('depth') & (metrics.svsize >= 1000)
-    PESR_pass = (metrics.PE_prob >= 0.5) | (metrics.SR2_prob >= 0.5)
+    PESR_pass = (metrics.PE_prob >= 0.5) | (metrics.SR1_prob >= 0.5)
     RD_pass = (metrics.RD_prob >= 0.5)
-    prob_cols = 'PE_prob SR2_prob RD_prob'.split()
+    prob_cols = 'PE_prob SR1_prob RD_prob'.split()
 
     # If variants pass both RD + PE/SR or fail both, use max across the three
     metrics.loc[gt1kb & ~(PESR_pass ^ RD_pass), 'score'] = metrics[prob_cols].max(axis=1)
@@ -297,7 +297,7 @@ def consolidate_score(metrics, cutoffs):
     metrics.loc[depth_dups & depth_pass, 'score'] = metrics.RD_prob
     metrics.loc[depth_dups & ~depth_pass, 'score'] = 0.495
 
-    probs = 'BAF2_prob SR2_prob RD_prob PE_prob PESR_prob'.split()
+    probs = 'BAF1_prob SR1_prob RD_prob PE_prob PESR_prob'.split()
     return metrics['name svtype score'.split() + probs].copy()
 
 
