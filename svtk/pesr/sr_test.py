@@ -77,7 +77,7 @@ class SRTest(PESRTest):
         else:
             lines = []
         #  counts = io.StringIO('\n'.join([l for l in lines]))
-        counts = [l.split('\t') for l in lines]
+        counts = [l for l in lines]
 
         cols = 'chrom pos clip count sample'.split()
         #  dtypes = dict(chrom=str, pos=int, clip=str, count=int, sample=str)
