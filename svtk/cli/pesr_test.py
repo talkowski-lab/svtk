@@ -92,6 +92,9 @@ def pe_test(argv):
     parser.add_argument('-s', '--samples', type=argparse.FileType('r'),
                         default=None,
                         help='Whitelist of samples to restrict testing to.')
+    parser.add_argument('--index', default=None,
+                        help='Tabix index of discordant pair file. Required if '
+                        'discordant pair file is hosted remotely.')
 
     if len(argv) == 0:
         parser.print_help()
@@ -116,7 +119,12 @@ def pe_test(argv):
     else:
         whitelist = None
 
-    discfile = pysam.Tabixfile(args.disc)
+    if args.index is not None:
+        discfile = pysam.TabixFile(args.disc, index=args.index)
+    else:
+        if args.disc.startswith('http'):
+            raise Exception('Must provide tabix index with remote URL')
+        discfile = pysam.TabixFile(args.disc)
 
     runner = PETestRunner(vcf, discfile, fout, args.background,
                           args.window_in, args.window_out, whitelist)
