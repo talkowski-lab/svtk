@@ -27,7 +27,6 @@ def sr_test(argv):
     parser.add_argument('fout',
                         help='Output table of most significant start/end'
                         'positions.')
-
     parser.add_argument('-w', '--window', type=int, default=100,
                         help='Window around variant start/end to consider for '
                         'split read support. [100]')
@@ -37,6 +36,9 @@ def sr_test(argv):
     parser.add_argument('-s', '--samples', type=argparse.FileType('r'),
                         default=None,
                         help='Whitelist of samples to restrict testing to.')
+    parser.add_argument('--index', default=None,
+                        help='Tabix index of discordant pair file. Required if '
+                        'discordant pair file is hosted remotely.')
     # TODO: add normalization
     # parser.add_argument('--coverage-csv', default=None,
     #                     help='Median coverage statistics for each library '
@@ -51,7 +53,14 @@ def sr_test(argv):
     args = parser.parse_args(argv)
 
     vcf = pysam.VariantFile(args.vcf)
-    countfile = pysam.TabixFile(args.countfile, parser=pysam.asTuple())
+    
+    if args.index is not None:
+        countfile = pysam.TabixFile(args.countfile, index=args.index,
+                                    parser=pysam.asTuple())
+    else:
+        if args.countfile.startswith('http'):
+            raise Exception('Must provide tabix index with remote URL')
+        countfile = pysam.TabixFile(args.countfile, parser=pysam.asTuple())
 
     if args.fout in '- stdout'.split():
         fout = sys.stdout
