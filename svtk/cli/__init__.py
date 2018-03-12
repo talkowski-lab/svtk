@@ -7,6 +7,6 @@ from .rdtest2vcf import main as rdtest2vcf
 from .resolve import main as resolve
 from .collect_pesr import main as collect_pesr
 from .annotate import main as annotate
-from .utils import vcf2bed
+from .utils import vcf2bed, remote_tabix
 from .pesr_test import pe_test, sr_test
 from .adjudicate import main as adjudicate

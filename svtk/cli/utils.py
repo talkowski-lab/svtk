@@ -75,3 +75,23 @@ def vcf2bed(argv):
             bt.saveas(args.bed, trackline=header)
         else:
             bt.saveas(args.bed)
+
+
+def remote_tabix(argv):
+    parser = argparse.ArgumentParser(
+        description="Tabix into a remotely hosted file",
+        prog='svtk remote_tabix',
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument('url')
+    parser.add_argument('index')
+    parser.add_argument('region')
+
+    # Print help if no arguments specified
+    if len(argv) == 0:
+        parser.print_help()
+        sys.exit(1)
+    args = parser.parse_args(argv)
+
+    tbx = pysam.TabixFile(args.url, index=args.index)
+    f = tbx.fetch(region=args.region)
+    sys.stdout.write('\n'.join([l for l in f]))
