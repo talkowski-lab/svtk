@@ -103,4 +103,5 @@ def remote_tabix(argv):
 
     # Fetch and output region of interest
     f = tbx.fetch(region=args.region)
-    sys.stdout.write('\n'.join([l for l in f]))
+    for line in f:
+        sys.stdout.write(line + '\n')
