@@ -83,10 +83,12 @@ def preprocess(chrom, start, end, tbx, samples, window=None):
 def main(argv):
     parser = argparse.ArgumentParser(
         description=__doc__,
+        prog='svtk baf-test',
         formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('bed', help='GATK VCF.')
+    parser.add_argument('bed', help='BAF bed.')
     parser.add_argument('file', help='Compiled snp file')
     parser.add_argument('-b', '--batch',)
+    parser.add_argument('--index', help='Tabix index for remote bed')
                     # help='Samples')
     
     # Print help if no arguments specified
@@ -111,7 +113,14 @@ def main(argv):
         for line in f:
             splist.append(line.split('\t')[0])
     total_sample = sum(1 for line in open(args.batch))-1
-    tbx=pysam.TabixFile(args.file)
+    
+    if args.index is not None:
+        tbx = pysam.TabixFile(args.file, index=args.index)
+    else:
+        if args.countfile.startswith('http'):
+            raise Exception('Must provide tabix index with remote URL')
+        tbx = pysam.TabixFile(args.file)
+
     with open(args.bed,'r') as f:
         for line in f:
             if line[0]!="#":
