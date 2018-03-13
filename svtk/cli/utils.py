@@ -85,6 +85,8 @@ def remote_tabix(argv):
     parser.add_argument('url')
     parser.add_argument('index')
     parser.add_argument('region')
+    parser.add_argument('--header', help='include header', action='store_true',
+                        default=False)
 
     # Print help if no arguments specified
     if len(argv) == 0:
@@ -92,6 +94,13 @@ def remote_tabix(argv):
         sys.exit(1)
     args = parser.parse_args(argv)
 
+    # Create tabix file
     tbx = pysam.TabixFile(args.url, index=args.index)
+
+    # Print header if requested
+    if args.header:
+        sys.stdout.write('\n'.join(tbx.header) + '\n')
+
+    # Fetch and output region of interest
     f = tbx.fetch(region=args.region)
     sys.stdout.write('\n'.join([l for l in f]))
