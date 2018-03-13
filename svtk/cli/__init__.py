@@ -10,3 +10,4 @@ from .annotate import main as annotate
 from .utils import vcf2bed, remote_tabix
 from .pesr_test import pe_test, sr_test
 from .adjudicate import main as adjudicate
+from .baf_test import main as baf_test
