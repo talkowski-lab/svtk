@@ -40,11 +40,11 @@ def sr_test(argv):
                         help='Tabix index of discordant pair file. Required if '
                         'discordant pair file is hosted remotely.')
     # TODO: add normalization
-    # parser.add_argument('--coverage-csv', default=None,
-    #                     help='Median coverage statistics for each library '
-    #                     '(optional). If provided, each sample\'s split '
-    #                     'counts will be normalized accordingly. CSV: '
-    #                     'sample,MEDIAN_COVERAGE,MAD_COVERAGE')
+    parser.add_argument('--medianfile', default=None,
+                       help='Median coverage statistics for each library '
+                       '(optional). If provided, each sample\'s split '
+                       'counts will be normalized accordingly. '
+                       'Same format as RdTest, one column per sample.')
 
     # Print help if no arguments specified
     if len(argv) == 0:
@@ -75,8 +75,14 @@ def sr_test(argv):
     else:
         whitelist = None
 
+    if args.medianfile is not None:
+        medians = pd.read_table(args.medianfile)
+        medians = pd.melt(medians, var_name='sample', value_name='median_cov')
+    else:
+        medians = None
+
     runner = SRTestRunner(vcf, countfile, fout, args.background, args.window,
-                          whitelist)
+                          whitelist, medians=medians)
     runner.run()
 
 
@@ -104,6 +110,11 @@ def pe_test(argv):
     parser.add_argument('--index', default=None,
                         help='Tabix index of discordant pair file. Required if '
                         'discordant pair file is hosted remotely.')
+    parser.add_argument('--medianfile', default=None,
+                       help='Median coverage statistics for each library '
+                       '(optional). If provided, each sample\'s split '
+                       'counts will be normalized accordingly. '
+                       'Same format as RdTest, one column per sample.')
 
     if len(argv) == 0:
         parser.print_help()
@@ -135,7 +146,14 @@ def pe_test(argv):
             raise Exception('Must provide tabix index with remote URL')
         discfile = pysam.TabixFile(args.disc)
 
+    if args.medianfile is not None:
+        medians = pd.read_table(args.medianfile)
+        medians = pd.melt(medians, var_name='sample', value_name='median_cov')
+    else:
+        medians = None
+
     runner = PETestRunner(vcf, discfile, fout, args.background,
-                          args.window_in, args.window_out, whitelist)
+                          args.window_in, args.window_out, whitelist,
+                          medians=medians)
 
     runner.run()

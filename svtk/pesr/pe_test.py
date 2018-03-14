@@ -27,12 +27,12 @@ class _DiscPair:
 
 
 class PETest(PESRTest):
-    def __init__(self, discfile, window_in=50, window_out=500):
+    def __init__(self, discfile, window_in=50, window_out=500, medians=None):
         self.discfile = discfile
         self.window_in = window_in
         self.window_out = window_out
 
-        super().__init__()
+        super().__init__(medians)
 
     def test_record(self, record, called, background):
         # Test SR support at all coordinates within window of start/end
@@ -71,6 +71,7 @@ class PETest(PESRTest):
 
         # Load split counts.
         counts = self.load_counts(record, window_in, window_out)
+        counts = self.normalize_counts(counts)
 
         return super().test(counts, called, background)
 
@@ -118,12 +119,12 @@ class PETest(PESRTest):
 class PETestRunner(PESRTestRunner):
     def __init__(self, vcf, discfile, fout, n_background=160,
                  window_in=50, window_out=500,
-                 whitelist=None, blacklist=None):
+                 whitelist=None, blacklist=None, medians=None):
         """
         vcf : pysam.VariantFile
         discfile : pysam.TabixFile
         """
-        self.petest = PETest(discfile, window_in, window_out)
+        self.petest = PETest(discfile, window_in, window_out, medians=medians)
         self.fout = fout
 
         super().__init__(vcf, n_background, whitelist, blacklist)

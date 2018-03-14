@@ -15,8 +15,8 @@ import svtk.utils as svu
 
 
 class PESRTest:
-    def __init__(self):
-        pass
+    def __init__(self, medians=None):
+        self.medians = medians
 
     def test(self, counts, samples, background):
         """
@@ -65,6 +65,17 @@ class PESRTest:
         result['log_pval'] = np.abs(np.log10(pval))
 
         return result
+
+    def normalize_counts(self, counts, target_cov=60):
+        if self.medians is None:
+            return counts
+
+        counts = pd.merge(counts, self.medians, on='sample', how='left')
+        counts['norm_count'] = counts['count'] * target_cov / counts['median_cov']
+        counts['count'] = counts['norm_count'].round()
+        counts.drop(['norm_count', 'median_cov'], axis=1, inplace=True)
+        
+        return counts
 
     def null_score(self, null_val=0.0):
         """Null score if no clipped reads observed"""
