@@ -37,7 +37,9 @@ class SRTest(PESRTest):
 
         # Clean up columns
         results['name'] = record.id
-        cols = 'name coord pos log_pval called background'.split()
+        results['bg_frac'] = results.background / (results.background + results.called)
+        results['bg_frac'] = results.bg_frac.fillna(0)
+        cols = 'name coord pos log_pval called background bg_frac'.split()
 
         return results[cols]
 

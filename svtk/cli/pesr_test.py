@@ -67,7 +67,7 @@ def sr_test(argv):
     else:
         fout = open(args.fout, 'w')
 
-    header = 'name coord pos log_pval called_median bg_median'.split()
+    header = 'name coord pos log_pval called_median bg_median bg_frac'.split()
     fout.write('\t'.join(header) + '\n')
 
     if args.samples is not None:
@@ -131,7 +131,7 @@ def pe_test(argv):
     else:
         fout = args.fout
 
-    header = 'name log_pval called_median bg_median'.split()
+    header = 'name log_pval called_median bg_median bg_frac'.split()
     args.fout.write('\t'.join(header) + '\n')
 
     if args.samples is not None:
