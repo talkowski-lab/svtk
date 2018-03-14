@@ -65,6 +65,9 @@ class MantaStandardizer(VCFStandardizer):
                 chrom, chr2 = chr2, chrom
                 std_rec.pos = pos
                 std_rec.chrom = chrom
+        elif svtype == 'INS':
+            chr2 = raw_rec.chrom
+            end = raw_rec.pos + 1
         else:
             chr2 = raw_rec.chrom
             end = raw_rec.stop
@@ -85,7 +88,7 @@ class MantaStandardizer(VCFStandardizer):
         elif svtype == 'DUP':
             strands = '-+'
         elif svtype == 'INS':
-            strands = '.'
+            strands = '+-'
 
         if not is_smaller_chrom(std_rec.chrom, std_rec.info['CHR2']):
             strands = strands[::-1]
@@ -93,6 +96,8 @@ class MantaStandardizer(VCFStandardizer):
 
         if svtype == 'BND' and std_rec.chrom != std_rec.info['CHR2']:
             std_rec.info['SVLEN'] = -1
+        elif svtype == 'INS':
+            std_rec.info['SVLEN'] = raw_rec.info.get('SVLEN', -1)
         else:
             std_rec.info['SVLEN'] = std_rec.stop - std_rec.pos
 

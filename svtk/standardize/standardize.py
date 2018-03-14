@@ -132,6 +132,10 @@ class VCFStandardizer:
             if 0 < std_rec.info['SVLEN'] < self.min_size:
                 continue
 
+            # Exclude insertions of unknown SVLEN
+            if std_rec.info['SVTYPE'] == 'INS' and std_rec.info['SVLEN'] == -1:
+                continue
+
             # Exclude sites with no called samples unless requested otherwise
             if not any_called(std_rec) and not self.include_reference_sites:
                 continue
