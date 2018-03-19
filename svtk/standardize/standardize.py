@@ -167,7 +167,12 @@ class VCFStandardizer:
         # Construct a new record and copy basic VCF fields
         std_rec = self.std_vcf.new_record()
         std_rec.chrom = raw_rec.chrom
-        std_rec.pos = raw_rec.pos
+
+        # pysam/htslib require non-negative pos
+        if raw_rec.pos == 0:
+            std_rec.pos = 1
+        else:
+            std_rec.pos = raw_rec.pos
         std_rec.id = raw_rec.id
         std_rec.ref = raw_rec.ref
         std_rec.alts = raw_rec.alts
