@@ -69,10 +69,10 @@ class GSNode(object):
         -------
         is_in : bool
         """
-
-        return ((self.chrA.encode('utf-8') in tabixfile.contigs and
+        
+        return ((self.chrA in tabixfile.contigs and
                  any(tabixfile.fetch(self.chrA, self.posA, self.posA + 1))) or
-                (self.chrB.encode('utf-8') in tabixfile.contigs and
+                (self.chrB in tabixfile.contigs and
                  any(tabixfile.fetch(self.chrB, self.posB, self.posB + 1))))
 
     @property
