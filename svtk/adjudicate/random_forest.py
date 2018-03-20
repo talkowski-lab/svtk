@@ -139,10 +139,16 @@ class RandomForest:
         self.testable['prob'] = self.probs
         passes = self.testable.prob >= 0.5
 
+        self.testable['passes_all_cutoffs'] = True
+
         # If metrics are below the observed cutoff, force failure
         for idx, row in self.cutoffs.iterrows():
             metric, cutoff = row['metric'], row['cutoff']
             self.testable.loc[passes & (self.testable[metric] < cutoff), 'prob'] = 0.499
+
+            self.testable['passes_all_cutoffs'] = self.testable.passes_all_cutoffs & (self.testable[metric] >= cutoff)
+
+        self.testable.loc[self.testable.passes_all_cutoffs, 'prob'] = 0.501
 
         self.probs = self.testable.prob.as_matrix()
 
