@@ -77,8 +77,8 @@ def adjudicate_SR1(metrics):
     trainable = testable.loc[(testable.poor_region_cov < 0.3) &
                              ~testable.chrom.isin(ALLOSOMES)]
     trainable.to_csv('SR1_trainable.txt', index=False, sep='\t')
-    features = ['SR_sum_log_pval', 'SR_sum_called_median', 'SR_sum_bg_median']
-    cutoffs = {'indep': ['SR_sum_log_pval'], 'dep': []}
+    features = ['SR_sum_log_pval', 'SR_sum_bg_frac']
+    cutoffs = {'indep': ['SR_sum_log_pval'], 'dep': ['SR_sum_bg_frac']}
     labeler = labelers.SR1TrainingLabeler()
 
     cutoffs = rf_classify(metrics, trainable, testable, features,
@@ -190,8 +190,8 @@ def adjudicate_PE(metrics):
     trainable = testable.loc[(testable.poor_region_cov < 0.3) &
                              ~testable.chrom.isin(ALLOSOMES)]
     trainable.to_csv('PE_trainable.txt', index=False, sep='\t')
-    features = ['PE_log_pval', 'PE_called_median', 'PE_bg_median']
-    cutoffs = {'indep': ['PE_log_pval'], 'dep': []}
+    features = ['PE_log_pval', 'PE_bg_frac']
+    cutoffs = {'indep': ['PE_log_pval'], 'dep': ['PE_bg_frac']}
     labeler = labelers.PETrainingLabeler()
 
     cutoffs = rf_classify(metrics, trainable, testable, features,
@@ -211,8 +211,8 @@ def adjudicate_SR2(metrics):
                              (testable.poor_region_cov < 0.3) &
                              ~testable.chrom.isin(ALLOSOMES)]
     trainable.to_csv('SR2_trainable.txt', index=False, sep='\t')
-    features = ['SR_sum_log_pval', 'SR_sum_called_median', 'SR_sum_bg_median']
-    cutoffs = {'indep': ['SR_sum_log_pval'], 'dep': []}
+    features = ['SR_sum_log_pval', 'SR_sum_bg_frac']
+    cutoffs = {'indep': ['SR_sum_log_pval'], 'dep': ['SR_sum_bg_frac']}
     labeler = labelers.SR2TrainingLabeler()
 
     cutoffs = rf_classify(metrics, trainable, testable, features,
@@ -231,8 +231,8 @@ def adjudicate_PESR(metrics):
     trainable = testable.loc[(testable.poor_region_cov < 0.3) &
                              ~testable.chrom.isin(ALLOSOMES)]
     trainable.to_csv('PESR_trainable.txt', index=False, sep='\t')
-    features = ['PESR_log_pval', 'PESR_called_median', 'PESR_bg_median']
-    cutoffs = {'indep': ['PESR_log_pval'], 'dep': []}
+    features = ['PESR_log_pval', 'PESR_bg_frac']
+    cutoffs = {'indep': ['PESR_log_pval'], 'dep': ['PESR_bg_frac']}
     labeler = labelers.PESRTrainingLabeler()
 
     cutoffs = rf_classify(metrics, trainable, testable, features,
