@@ -22,7 +22,8 @@ def adjudicate_BAF(metrics, labeler, name):
     testable = metrics.loc[(metrics.svtype == 'DEL') &
                            (metrics.svsize >= 5000)]
     trainable = testable.loc[(testable.poor_region_cov < 0.3) &
-                             ~testable.chrom.isin(ALLOSOMES)]
+                             ~testable.chrom.isin(ALLOSOMES) &
+                             ~testable.is_outlier_specific]
 
     trainable.to_csv('{0}_DEL_trainable.txt'.format(name), index=False, sep='\t')
     testable.to_csv('{0}_DEL_testable.txt'.format(name), index=False, sep='\t')
@@ -37,7 +38,8 @@ def adjudicate_BAF(metrics, labeler, name):
     testable = metrics.loc[(metrics.svtype == 'DUP') &
                            (metrics.svsize >= 5000)]
     trainable = testable.loc[(testable.poor_region_cov < 0.3) &
-                             ~testable.chrom.isin(ALLOSOMES)]
+                             ~testable.chrom.isin(ALLOSOMES) &
+                             ~testable.is_outlier_specific]
     trainable.to_csv('{0}_DUP_trainable.txt'.format(name), index=False, sep='\t')
     testable.to_csv('{0}_DUP_testable.txt'.format(name), index=False, sep='\t')
     features = 'BAF_KS_stat BAF_KS_log_pval'.split()
@@ -75,7 +77,8 @@ def adjudicate_BAF2(metrics):
 def adjudicate_SR1(metrics):
     testable = metrics.loc[~metrics.name.str.contains('_depth_')]
     trainable = testable.loc[(testable.poor_region_cov < 0.3) &
-                             ~testable.chrom.isin(ALLOSOMES)]
+                             ~testable.chrom.isin(ALLOSOMES) &
+                             ~testable.is_outlier_specific]
     trainable.to_csv('SR1_trainable.txt', index=False, sep='\t')
     features = ['SR_sum_log_pval', 'SR_sum_bg_frac']
     cutoffs = {'indep': ['SR_sum_log_pval'], 'dep': ['SR_sum_bg_frac']}
@@ -104,7 +107,8 @@ def adjudicate_RD(metrics):
                            (metrics.svsize >= 1000)]
     trainable = testable.loc[(testable.svsize >= 5000) &
                              (testable.poor_region_cov < 0.3) &
-                             ~testable.chrom.isin(ALLOSOMES)]
+                             ~testable.chrom.isin(ALLOSOMES) &
+                             ~testable.is_outlier_specific]
 
     testable.to_csv('RD_pesr_gt1kb_testable.txt', index=False, sep='\t')
     trainable.to_csv('RD_pesr_gt1kb_trainable.txt', index=False, sep='\t')
@@ -122,7 +126,8 @@ def adjudicate_RD(metrics):
                            (metrics.svsize < 1000)]
     trainable = testable.loc[(testable.svsize >= 100) &
                              (testable.poor_region_cov < 0.3) &
-                             ~testable.chrom.isin(ALLOSOMES)]
+                             ~testable.chrom.isin(ALLOSOMES) &
+                             ~testable.is_outlier_specific]
     testable.to_csv('RD_pesr_lt1kb_testable.txt', index=False, sep='\t')
     trainable.to_csv('RD_pesr_lt1kb_trainable.txt', index=False, sep='\t')
 
@@ -142,7 +147,8 @@ def adjudicate_RD(metrics):
                            (metrics.svtype == 'DEL')]
     trainable = testable.loc[(testable.svsize >= 5000) &
                              (testable.poor_region_cov < 0.3) &
-                             ~testable.chrom.isin(ALLOSOMES)]
+                             ~testable.chrom.isin(ALLOSOMES) &
+                             ~testable.is_outlier_specific]
     trainable.to_csv('RD_depth_DEL_trainable.txt', index=False, sep='\t')
 
     cutoffs = rf_classify(metrics, trainable, testable, features,
@@ -160,7 +166,8 @@ def adjudicate_RD(metrics):
                            (metrics.svtype == 'DUP')]
     trainable = testable.loc[(testable.svsize >= 5000) &
                              (testable.poor_region_cov < 0.3) &
-                             ~testable.chrom.isin(ALLOSOMES)]
+                             ~testable.chrom.isin(ALLOSOMES) &
+                             ~testable.is_outlier_specific]
     trainable.to_csv('RD_depth_DUP_trainable.txt', index=False, sep='\t')
 
     cutoffs = rf_classify(metrics, trainable, testable, features,
@@ -188,7 +195,8 @@ def adjudicate_RD(metrics):
 def adjudicate_PE(metrics):
     testable = metrics.loc[~metrics.name.str.contains('_depth_')]
     trainable = testable.loc[(testable.poor_region_cov < 0.3) &
-                             ~testable.chrom.isin(ALLOSOMES)]
+                             ~testable.chrom.isin(ALLOSOMES) &
+                             ~testable.is_outlier_specific]
     trainable.to_csv('PE_trainable.txt', index=False, sep='\t')
     features = ['PE_log_pval', 'PE_bg_frac']
     cutoffs = {'indep': ['PE_log_pval'], 'dep': ['PE_bg_frac']}
@@ -209,7 +217,8 @@ def adjudicate_SR2(metrics):
     testable = metrics.loc[~metrics.name.str.contains('_depth_')]
     trainable = testable.loc[(testable.svsize >= 5000) &
                              (testable.poor_region_cov < 0.3) &
-                             ~testable.chrom.isin(ALLOSOMES)]
+                             ~testable.chrom.isin(ALLOSOMES) &
+                             ~testable.is_outlier_specific]
     trainable.to_csv('SR2_trainable.txt', index=False, sep='\t')
     features = ['SR_sum_log_pval', 'SR_sum_bg_frac']
     cutoffs = {'indep': ['SR_sum_log_pval'], 'dep': ['SR_sum_bg_frac']}
@@ -229,7 +238,8 @@ def adjudicate_SR2(metrics):
 def adjudicate_PESR(metrics):
     testable = metrics.loc[~metrics.name.str.contains('_depth_')]
     trainable = testable.loc[(testable.poor_region_cov < 0.3) &
-                             ~testable.chrom.isin(ALLOSOMES)]
+                             ~testable.chrom.isin(ALLOSOMES) &
+                             ~testable.is_outlier_specific]
     trainable.to_csv('PESR_trainable.txt', index=False, sep='\t')
     features = ['PESR_log_pval', 'PESR_bg_frac']
     cutoffs = {'indep': ['PESR_log_pval'], 'dep': ['PESR_bg_frac']}
