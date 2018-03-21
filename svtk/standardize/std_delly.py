@@ -52,6 +52,8 @@ class DellyStandardizer(VCFStandardizer):
         std_rec.info['STRANDS'] = strands
 
         pos, end = raw_rec.pos, raw_rec.stop
+        if pos == 0:
+            pos = 1
 
         # Swap CHR2/CHROM if necessary and update ALT
         if svtype == 'BND':
@@ -59,6 +61,8 @@ class DellyStandardizer(VCFStandardizer):
 
             # swap chr2/chrom, pos/end, and reverse strandedness
             if not is_smaller_chrom(chrom, chr2):
+                if end == 0:
+                    end = 1
                 std_rec.pos, end = end, pos
                 std_rec.chrom, chr2 = chr2, chrom
                 std_rec.info['STRANDS'] = strands[::-1]
