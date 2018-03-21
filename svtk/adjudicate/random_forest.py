@@ -110,6 +110,8 @@ class RandomForest:
         self.probs = probs[:, 1]
 
     def learn_cutoffs(self):
+        import ipdb
+        ipdb.set_trace()
         cutoffs = {}
         # Restrict learning cutoffs to "clean" variants
         if self.clean_cutoffs:
@@ -167,5 +169,9 @@ def learn_cutoff(metric, probs):
     fpr, tpr, thresh = roc_curve(truth, preds)
     dist = np.sqrt((fpr - 0) ** 2 + (tpr - 1) ** 2)
     best_idx = np.argmin(dist)
+
+    # If cutoff set at no instances, scikit-learn sets thresh[0] to max(y_score) + 1
+    if best_idx == 0:
+        return thresh[best_idx] - 1
 
     return thresh[best_idx]
