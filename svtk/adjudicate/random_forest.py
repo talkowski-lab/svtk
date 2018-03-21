@@ -110,8 +110,6 @@ class RandomForest:
         self.probs = probs[:, 1]
 
     def learn_cutoffs(self):
-        import ipdb
-        ipdb.set_trace()
         cutoffs = {}
         # Restrict learning cutoffs to "clean" variants
         if self.clean_cutoffs:
