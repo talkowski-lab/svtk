@@ -148,7 +148,7 @@ class RandomForest:
 
             self.testable['passes_all_cutoffs'] = self.testable.passes_all_cutoffs & (self.testable[metric] >= cutoff)
 
-        self.testable.loc[self.testable.passes_all_cutoffs, 'prob'] = 0.501
+        self.testable.loc[self.testable.passes_all_cutoffs & (self.testable.prob < 0.5), 'prob'] = 0.501
 
         self.probs = self.testable.prob.as_matrix()
 
