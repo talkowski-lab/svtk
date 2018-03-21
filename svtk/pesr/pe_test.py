@@ -43,7 +43,7 @@ class PETest(PESRTest):
 
         # Clean up columns
         results['name'] = record.id
-        results['bg_frac'] = results.background / (results.background + results.called)
+        results['bg_frac'] = results.called / (results.background + results.called)
         results['bg_frac'] = results.bg_frac.fillna(0)
         cols = 'name log_pval called background bg_frac'.split()
 
