@@ -18,7 +18,7 @@ import heapq
 import re
 import pkg_resources
 from pysam import VariantFile
-from svtk.svfile import SVFile, SVRecordCluster
+from svtk.svfile import SVFile, SVRecordCluster, SVRecord
 from svtk.genomeslink import GenomeSLINK
 
 
@@ -142,6 +142,9 @@ class VCFCluster(GenomeSLINK):
                 record = cluster.merge_record_infos(record, self.header)
                 if self.preserve_ids:
                     record.info['MEMBERS'] = [r.record.id for r in records]
+
+                if SVRecord(record).is_in(self.blacklist):
+                    continue
                 yield record
             else:
                 yield cluster

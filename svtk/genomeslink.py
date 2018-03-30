@@ -70,6 +70,9 @@ class GSNode(object):
         is_in : bool
         """
         
+        if tabixfile is None:
+            return False
+
         return ((self.chrA in tabixfile.contigs and
                  any(tabixfile.fetch(self.chrA, self.posA, self.posA + 1))) or
                 (self.chrB in tabixfile.contigs and
