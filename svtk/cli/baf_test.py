@@ -117,7 +117,7 @@ def main(argv):
     if args.index is not None:
         tbx = pysam.TabixFile(args.file, index=args.index)
     else:
-        if args.countfile.startswith('http'):
+        if args.file.startswith('http'):
             raise Exception('Must provide tabix index with remote URL')
         tbx = pysam.TabixFile(args.file)
 
