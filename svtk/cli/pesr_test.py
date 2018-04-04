@@ -12,7 +12,7 @@ import argparse
 import sys
 import pysam
 import pandas as pd
-from svtk.pesr import SRTestRunner, PETestRunner
+from svtk.pesr import SRTestRunner, PETestRunner, PETest
 
 
 def sr_test(argv):
@@ -158,3 +158,79 @@ def pe_test(argv):
                           medians=medians)
 
     runner.run()
+
+
+def count_pe(argv):
+    parser = argparse.ArgumentParser(
+        description="Count discordant pairs supporting a SV breakpoints.",
+        prog='svtk count-pe',
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument('vcf', help='Variants.')
+    parser.add_argument('disc', help='Table of discordant pair coordinates.')
+    parser.add_argument('fout', type=argparse.FileType('w'),
+                        help='Output table of PE counts.')
+    parser.add_argument('-o', '--window-out', type=int, default=500,
+                        help='Window outside breakpoint to query for '
+                        'discordant pairs. [500]')
+    parser.add_argument('-i', '--window-in', type=int, default=50,
+                        help='Window inside breakpoint to query for '
+                        'discordant pairs. [50]')
+    parser.add_argument('-s', '--samples', type=argparse.FileType('r'),
+                        default=None,
+                        help='Whitelist of samples to restrict testing to.')
+    parser.add_argument('--index', default=None,
+                        help='Tabix index of discordant pair file. Required if '
+                        'discordant pair file is hosted remotely.')
+    parser.add_argument('--medianfile', default=None,
+                       help='Median coverage statistics for each library '
+                       '(optional). If provided, each sample\'s split '
+                       'counts will be normalized accordingly. '
+                       'Same format as RdTest, one column per sample.')
+
+    if len(argv) == 0:
+        parser.print_help()
+        sys.exit(1)
+    args = parser.parse_args(argv)
+
+    if args.vcf in '- stdin'.split():
+        vcf = pysam.VariantFile(sys.stdin)
+    else:
+        vcf = pysam.VariantFile(args.vcf)
+
+    if args.fout in '- stdout'.split():
+        fout = sys.stdout
+    else:
+        fout = args.fout
+
+    header = 'name sample count'.split()
+    args.fout.write('\t'.join(header) + '\n')
+
+    if args.samples is not None:
+        whitelist = [s.strip() for s in args.samples.readlines()]
+    else:
+        whitelist = [s for s in vcf.header.samples]
+
+    if args.index is not None:
+        discfile = pysam.TabixFile(args.disc, index=args.index)
+    else:
+        if args.disc.startswith('http'):
+            raise Exception('Must provide tabix index with remote URL')
+        discfile = pysam.TabixFile(args.disc)
+
+    if args.medianfile is not None:
+        medians = pd.read_table(args.medianfile)
+        medians = pd.melt(medians, var_name='sample', value_name='median_cov')
+    else:
+        medians = None
+
+    petest = PETest(discfile, args.window_in, args.window_out, medians=medians)
+
+    for record in vcf:
+        counts = petest.load_counts(record, args.window_in, args.window_out)
+        counts = petest.normalize_counts(counts)
+        counts = counts.set_index('sample')
+        counts = counts.reindex(whitelist).fillna(0).astype(int)
+        counts = counts.reset_index()
+        counts['name'] = record.id
+        cols = 'name sample count'.split()
+        counts[cols].to_csv(fout, header=False, index=False, sep='\t', na_rep='NA')
