@@ -8,6 +8,6 @@ from .resolve import main as resolve
 from .collect_pesr import main as collect_pesr
 from .annotate import main as annotate
 from .utils import vcf2bed, remote_tabix
-from .pesr_test import pe_test, sr_test
+from .pesr_test import pe_test, sr_test, count_pe
 from .adjudicate import main as adjudicate
 from .baf_test import main as baf_test
