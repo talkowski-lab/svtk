@@ -314,6 +314,12 @@ def consolidate_score(metrics, cutoffs):
 def adjudicate_SV(metrics):
     if 'chrom' not in metrics.columns:
         metrics['chrom'] = metrics.name.str.split('_').str[-2]
+
+    # Remove PE metrics from Manta insertions
+    PE_cols = [c for c in metrics.columns if c.startswith('PE_')]
+    for col in PE_cols:
+        metrics.loc[metrics.svtype == 'INS', col] = np.nan
+
     cutoffs = np.empty(7, dtype=object)
     sys.stderr.write('Adjudicating BAF (1)...\n')
     cutoffs[0] = adjudicate_BAF1(metrics)
