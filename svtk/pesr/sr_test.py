@@ -135,7 +135,7 @@ class SRTest(PESRTest):
 
 class SRTestRunner(PESRTestRunner):
     def __init__(self, vcf, countfile, fout, n_background=160, window=100,
-                 whitelist=None, blacklist=None, medians=None):
+                 whitelist=None, blacklist=None, medians=None, log=False):
         """
         vcf : pysam.VariantFile
         countfile : pysam.TabixFile
@@ -148,7 +148,7 @@ class SRTestRunner(PESRTestRunner):
         self.srtest = SRTest(countfile, window, medians=medians)
         self.fout = fout
 
-        super().__init__(vcf, n_background, whitelist, blacklist)
+        super().__init__(vcf, n_background, whitelist, blacklist, log)
 
     def test_record(self, record):
         called, background = self.choose_background(record)

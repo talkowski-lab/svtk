@@ -46,6 +46,8 @@ def sr_test(argv):
                        '(optional). If provided, each sample\'s split '
                        'counts will be normalized accordingly. '
                        'Same format as RdTest, one column per sample.')
+    parser.add_argument('--log', action='store_true', default=False,
+                        help='Print progress log to stderr.')
 
     # Print help if no arguments specified
     if len(argv) == 0:
@@ -83,7 +85,7 @@ def sr_test(argv):
         medians = None
 
     runner = SRTestRunner(vcf, countfile, fout, args.background, args.window,
-                          whitelist, medians=medians)
+                          whitelist, medians=medians, log=args.log)
     runner.run()
 
 
@@ -116,6 +118,8 @@ def pe_test(argv):
                        '(optional). If provided, each sample\'s split '
                        'counts will be normalized accordingly. '
                        'Same format as RdTest, one column per sample.')
+    parser.add_argument('--log', action='store_true', default=False,
+                        help='Print progress log to stderr.')
 
     if len(argv) == 0:
         parser.print_help()
@@ -155,7 +159,7 @@ def pe_test(argv):
 
     runner = PETestRunner(vcf, discfile, fout, args.background,
                           args.window_in, args.window_out, whitelist,
-                          medians=medians)
+                          medians=medians, log=args.log)
 
     runner.run()
 

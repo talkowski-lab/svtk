@@ -8,6 +8,8 @@
 
 """
 
+import sys
+import datetime
 import numpy as np
 import scipy.stats as ss
 import pandas as pd
@@ -87,7 +89,8 @@ class PESRTest:
 
 
 class PESRTestRunner:
-    def __init__(self, vcf, n_background=160, whitelist=None, blacklist=None):
+    def __init__(self, vcf, n_background=160, whitelist=None, blacklist=None,
+                 log=False):
         self.vcf = vcf
 
         self.samples = list(vcf.header.samples)
@@ -96,9 +99,29 @@ class PESRTestRunner:
         self.whitelist = whitelist if whitelist else self.samples
         self.blacklist = blacklist if blacklist else []
 
+        self.log = log
+
     def run(self):
-        for record in self.vcf:
+        if self.log:
+            start = datetime.datetime.now()
+
+        for i, record in enumerate(self.vcf):
+            t0 = datetime.datetime.now()
             self.test_record(record)
+            t1 = datetime.datetime.now()
+
+            if self.log:
+                n_records = i + 1
+                var_time = (t1 - t0).total_seconds()
+                total_time = (t1 - start).total_seconds()
+                hours, remainder = divmod(total_time, 3600)
+                minutes, seconds = divmod(remainder, 60)
+
+                msg = ('%d variants processed. '
+                       'Time to process last variant: %0.2f seconds. '
+                       'Total time elapsed: %d hours, %d minutes, %0.2f seconds.')
+                msg = msg % (n_records, var_time, int(hours), int(minutes), seconds)
+                sys.stderr.write(msg + '\n')
 
     def test_record(self, record):
         called, background = self.choose_background(record)
