@@ -258,6 +258,14 @@ class SVRecordCluster:
             alt = make_bnd_alt(base_record.chrB, END, strands)
             new_record.alts = (alt, )
             new_record.stop = END
+        if new_record.info['SVTYPE'] == 'INS':
+            alts = set()
+            for record in self.records:
+                alts = alts.union(record.record.alts)
+            if len(alts) > 1:
+                alts = tuple(a for a in alts if a != '<INS>')
+            new_record.alts = alts
+            new_record.stop = END
         else:
             new_record.alts = base_record.record.alts
             new_record.stop = END
