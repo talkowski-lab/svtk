@@ -418,7 +418,10 @@ class ComplexSV:
         elif sum(class_counts) == 2:
             self.cluster_type = 'MIXED_BREAKENDS'
         elif sum(class_counts) >= 3:
-            self.cluster_type = 'COMPLEX_3plus'
+            if len(self.insertions) == 1 and len(self.breakends) == 2:
+                self.cluster_type = 'CANDIDATE_INSERTION'
+            else:
+                self.cluster_type = 'COMPLEX_3plus'
         else:
             self.cluster_type = 'ERROR_UNCLASSIFIED'
 
