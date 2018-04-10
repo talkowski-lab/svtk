@@ -145,9 +145,12 @@ def resolve_complex_sv(vcf, cytobands, disc_pairs, variant_prefix='CPX_'):
         if 'CPX_TYPE' in record.info.keys():
             if 'UNRESOLVED' not in record.info.keys():
                 record.info.pop('STRANDS')
-        record.info.pop('CIPOS')
-        record.info.pop('CIEND')
-        record.info.pop('RMSSTD')
+        if 'CIPOS' in record.info.keys():
+            record.info.pop('CIPOS')
+        if 'CIEND' in record.info.keys():
+            record.info.pop('CIEND')
+        if 'RMSSTD' in record.info.keys():
+            record.info.pop('RMSSTD')
         yield record
 
 

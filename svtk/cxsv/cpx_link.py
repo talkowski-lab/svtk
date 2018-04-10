@@ -129,6 +129,7 @@ class ComplexSV:
         self.tlocs = [r for r in records if r.chrom != r.info['CHR2']]
         self.breakends = [r for r in records if (r.chrom == r.info['CHR2']) and
                                                 (r.info['SVTYPE'] == 'BND')]
+        self.insertions = [r for r in records if r.info['SVTYPE'] == 'INS']
 
         cnvtypes = 'DEL DUP'.split()
         self.cnvs = [r for r in records if r.info['SVTYPE'] in cnvtypes]
@@ -146,6 +147,8 @@ class ComplexSV:
             self.resolve_translocation()
         elif self.cluster_type == 'CANDIDATE_INSERTION':
             self.resolve_insertion()
+        elif self.cluster_type == 'RESOLVED_INSERTION':
+            self.report_simple_insertion()
         else:
             self.set_unresolved()
 
@@ -357,6 +360,24 @@ class ComplexSV:
         source = interval.format(source_chrom, source_start, source_end)
         self.vcf_record.info['SOURCE'] = source
 
+        if len(self.insertions) == 1:
+            b_algs = self.vcf_record.info['ALGORITHMS']
+            mei_algs = self.insertions[0].info['ALGORITHMS']
+            algs = tuple(sorted(set(b_algs).union(mei_algs)))
+            self.vcf_record = self.insertions[0]
+            self.vcf_record.info['ALGORITHMS'] = algs
+
+    def report_simple_insertion(self):
+        record = self.insertions[0]
+        self.cpx_type = record.alts[0].strip('<>')
+        self.svtype = 'INS'
+
+        self.vcf_record.alts = record.alts
+        self.vcf_record.info['SVTYPE'] = self.svtype
+        self.vcf_record.info['CPX_TYPE'] = self.cpx_type
+        self.vcf_record.info['CHR2'] = record.info['CHR2']
+        self.vcf_record.info['SVLEN'] = record.info['SVLEN']
+
     def set_cluster_type(self):
         # Restrict to double-ended inversion events with appropriate
         # strand pairing
@@ -365,7 +386,7 @@ class ComplexSV:
         #  n_bnds = len(self.breakends)
 
         class_counts = [len(records) for records in 
-                        [self.inversions, self.tlocs, self.breakends]]
+                        [self.inversions, self.tlocs, self.breakends, self.insertions]]
 
         paired = np.array([count == 2 for count in class_counts])
         absent = np.array([count == 0 for count in class_counts])
@@ -397,11 +418,17 @@ class ComplexSV:
         elif sum(class_counts) == 0:
             self.cluster_type = 'ERROR_CNV_ONLY'
         elif sum(class_counts) == 1:
-            self.cluster_type = 'SINGLE_ENDER'
+            if len(self.insertions) == 1:
+                self.cluster_type = 'RESOLVED_INSERTION'
+            else:
+                self.cluster_type = 'SINGLE_ENDER'
         elif sum(class_counts) == 2:
             self.cluster_type = 'MIXED_BREAKENDS'
         elif sum(class_counts) >= 3:
-            self.cluster_type = 'COMPLEX_3plus'
+            if len(self.insertions) == 1 and len(self.breakends) == 2:
+                self.cluster_type = 'CANDIDATE_INSERTION'
+            else:
+                self.cluster_type = 'COMPLEX_3plus'
         else:
             self.cluster_type = 'ERROR_UNCLASSIFIED'
 

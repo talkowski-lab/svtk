@@ -132,10 +132,12 @@ class SVRecord(GSNode):
         if self.svtype != other.svtype:
             return False
 
-        # Require INS subclass to match
+        # If both records have an INS subclass specified, require it to match
+        # Otherwise, permit clustering if one or both don't have subclass
         if self.svtype == 'INS':
             if self.record.alts[0] != other.record.alts[0]:
-                return False
+                if self.record.alts[0] != '<INS>' and self.record.alts[0] != '<INS>':
+                    return False
 
         # If strands are required to match and don't, skip remaining calcs
         if match_strands:
@@ -247,14 +249,22 @@ class SVRecordCluster:
         POS, END, CIPOS, CIEND = self.merge_pos()
         new_record.pos = POS
         new_record.stop = END
-        new_record.info['CIPOS'] = CIPOS
-        new_record.info['CIEND'] = CIEND
+        #  new_record.info['CIPOS'] = CIPOS
+        #  new_record.info['CIEND'] = CIEND
 
         # Assign alts, updating translocation alt based on merged coordinates
         if new_record.info['SVTYPE'] == 'BND':
             strands = new_record.info['STRANDS']
             alt = make_bnd_alt(base_record.chrB, END, strands)
             new_record.alts = (alt, )
+            new_record.stop = END
+        if new_record.info['SVTYPE'] == 'INS':
+            alts = set()
+            for record in self.records:
+                alts = alts.union(record.record.alts)
+            if len(alts) > 1:
+                alts = tuple(a for a in alts if a != '<INS>')
+            new_record.alts = alts
             new_record.stop = END
         else:
             new_record.alts = base_record.record.alts
@@ -279,7 +289,7 @@ class SVRecordCluster:
         new_record.filter.add('PASS')
 
         # Report cluster RMSSTD
-        new_record.info['RMSSTD'] = self.rmsstd
+        #  new_record.info['RMSSTD'] = self.rmsstd
 
         # List of aggregate sources
         new_record.info['ALGORITHMS'] = self.sources()
