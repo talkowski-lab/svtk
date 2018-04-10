@@ -360,6 +360,13 @@ class ComplexSV:
         source = interval.format(source_chrom, source_start, source_end)
         self.vcf_record.info['SOURCE'] = source
 
+        if len(self.insertions) == 1:
+            b_algs = self.vcf_record.info['ALGORITHMS']
+            mei_algs = self.insertions[0].info['ALGORITHMS']
+            algs = tuple(sorted(set(b_algs).union(mei_algs)))
+            self.vcf_record = self.insertions[0]
+            self.vcf_record.info['ALGORITHMS'] = algs
+
     def report_simple_insertion(self):
         record = self.insertions[0]
         self.cpx_type = record.alts[0].strip('<>')
