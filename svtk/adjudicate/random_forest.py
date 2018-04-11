@@ -164,6 +164,11 @@ def learn_cutoff(metric, probs):
     classify = np.vectorize(lambda x: 1 if x >= 0.5 else 0)
     truth = classify(probs)
 
+    # If all variants which passed prior cutoffs also passed random forest,
+    # return minimum value instead of trying to compute cutoff
+    if 0 not in truth:
+        return preds.min()
+
     fpr, tpr, thresh = roc_curve(truth, preds)
     dist = np.sqrt((fpr - 0) ** 2 + (tpr - 1) ** 2)
     best_idx = np.argmin(dist)
