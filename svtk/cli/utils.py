@@ -11,6 +11,7 @@ Convert a VCF to a BED.
 import argparse
 import sys
 import pysam
+import pybedtools as pbt
 import svtk.utils as svu
 
 
