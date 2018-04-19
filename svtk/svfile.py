@@ -315,9 +315,9 @@ class SVRecordCluster:
                 new_record.info[info] = True
             elif header.info[info].type == 'String':
                 if header.info[info].number == '.':
-                    new_record.info[info] = [v for vlist in values for v in vlist]
+                    new_record.info[info] = sorted(set([v for vlist in values for v in vlist]))
                 elif header.info[info].number == 1:
-                    new_record.info[info] = ','.join([v for vlist in values for v in vlist])
+                    new_record.info[info] = ','.join(sorted(set([v for vlist in values for v in vlist])))
                 else:
                     new_record.info[info] = [','.join(vlist) for vlist in zip(values)]
 
