@@ -349,6 +349,11 @@ class ComplexSV:
             source_start = minus.pos
             source_end = plus.pos
 
+        # Don't report insertions with large deletions at insertion site
+        if self.sink_end - self.sink_start >= 100:
+            self.set_unresolved()
+            return
+
         self.vcf_record.chrom = sink_chrom
         self.vcf_record.pos = sink_start
         self.vcf_record.stop = sink_end
@@ -368,15 +373,29 @@ class ComplexSV:
             self.vcf_record.info['ALGORITHMS'] = algs
 
     def report_simple_insertion(self):
-        record = self.insertions[0]
-        self.cpx_type = record.alts[0].strip('<>')
-        self.svtype = 'INS'
-
-        self.vcf_record.alts = record.alts
-        self.vcf_record.info['SVTYPE'] = self.svtype
-        self.vcf_record.info['CPX_TYPE'] = self.cpx_type
-        self.vcf_record.info['CHR2'] = record.info['CHR2']
-        self.vcf_record.info['SVLEN'] = record.info['SVLEN']
+        # unresolved insertion breakends == simple insertion
+        if len(self.breakends) > 0 and len(self.cnvs) == 0:
+            record = self.insertions[0]
+            self.cpx_type = record.alts[0].strip('<>')
+            self.svtype = 'INS'
+    
+            self.vcf_record.alts = record.alts
+            self.vcf_record.info['SVTYPE'] = self.svtype
+            self.vcf_record.info['CPX_TYPE'] = self.cpx_type
+            self.vcf_record.info['CHR2'] = record.info['CHR2']
+            self.vcf_record.info['SVLEN'] = record.info['SVLEN']
+        elif len(self.cnvs) == 1 and len(self.breakends) == 0:
+            if self.cnvs[0].info['SVTYPE'] == 'DUP':
+                record = self.cnvs[0]
+                self.svtype = 'DUP'
+                self.vcf_record.alts = record.alts
+                self.vcf_record.info['SVTYPE'] = self.svtype
+                self.vcf_record.info['CHR2'] = record.info['CHR2']
+                self.vcf_record.info['SVLEN'] = record.info['SVLEN']
+            else:
+                self.set_unresolved()
+        else:
+            self.set_unresolved()
 
     def set_cluster_type(self):
         # Restrict to double-ended inversion events with appropriate
@@ -494,7 +513,7 @@ def link_cpx(vcf, bkpt_window=300, cpx_dist=20000):
         Path to breakpoint VCF
     """
 
-    bt = svu.vcf2bedtool(vcf.filename)
+    bt = svu.vcf2bedtool(vcf.filename, annotate_ins=False)
 
     # Identify breakpoints which overlap within specified window
     overlap = bt.window(bt, w=bkpt_window).saveas()
