@@ -80,12 +80,11 @@ class SRTest(PESRTest):
         else:
             lines = []
         #  counts = io.StringIO('\n'.join([l for l in lines]))
-        counts = [l for l in lines]
 
         cols = 'chrom pos clip count sample'.split()
         #  dtypes = dict(chrom=str, pos=int, clip=str, count=int, sample=str)
 
-        counts = pd.DataFrame.from_records(counts, columns=cols)
+        counts = pd.DataFrame.from_records([l[:5] for l in lines], columns=cols)
         counts['count'] = counts['count'].astype(int)
 
         # Restrict to splits in orientation of interest
