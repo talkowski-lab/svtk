@@ -89,7 +89,7 @@ def main(argv):
 
     if args.total_variants:
         counts = Counter([record.info['SVTYPE'] for record in vcf])
-        svtypes = 'DEL DUP INV BND'.split()
+        svtypes = 'DEL DUP INV BND INS'.split()
         counts = pd.Series(counts).reindex(svtypes).fillna(0).astype(int)
         counts.to_csv(args.fout, sep='\t')
 
