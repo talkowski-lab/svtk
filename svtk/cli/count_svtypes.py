@@ -86,12 +86,14 @@ def main(argv):
     args = parser.parse_args(argv)
 
     vcf = VariantFile(args.vcf)
+    header = not args.no_header
 
     if args.total_variants:
         counts = Counter([record.info['SVTYPE'] for record in vcf])
         svtypes = 'DEL DUP INV BND INS'.split()
-        counts = pd.Series(counts).reindex(svtypes).fillna(0).astype(int)
-        counts.to_csv(args.fout, sep='\t')
+        counts = pd.Series(counts).reindex(svtypes).fillna(0).astype(int)\
+                                  .reset_index().rename(columns={'index': 'svtype', 0: 'count'})
+        counts.to_csv(args.fout, sep='\t', index=False, header=header)
 
     else:
         counts = count_svtypes(vcf)
@@ -99,7 +101,6 @@ def main(argv):
         if args.total_obs:
             counts = counts.groupby('svtype')['count'].sum().reset_index()
 
-        header = not args.no_header
         counts.to_csv(args.fout, sep='\t', index=False, header=header)
 
 
