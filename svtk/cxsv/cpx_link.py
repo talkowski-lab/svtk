@@ -350,7 +350,7 @@ class ComplexSV:
             source_end = plus.pos
 
         # Don't report insertions with large deletions at insertion site
-        if self.sink_end - self.sink_start >= 100:
+        if sink_end - sink_start >= 100:
             self.set_unresolved()
             return
 
