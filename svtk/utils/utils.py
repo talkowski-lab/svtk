@@ -194,7 +194,7 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
                 infos = [_format_info(v) for v in infos]
                 infos = '\t'.join(infos)
 
-            if record.info['SVTYPE'] == 'BND':
+            if record.info.get('SVTYPE', None) == 'BND':
                 # First end of breakpoint
                 end = record.pos + 1
                 yield entry.format(**locals())
@@ -206,7 +206,7 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
                     end = record.stop + 1
                     yield entry.format(**locals())
 
-            elif record.info['SVTYPE'] == 'INS':
+            elif record.info.get('SVTYPE', None) == 'INS':
                 # Only yield insertion sinks for now
                 # Treat them as deletions
                 # TODO: rename CPX_INTERVALS to SOURCE for insertions
@@ -220,7 +220,14 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
                 start, end = sorted([start, end])
                 yield entry.format(**locals())
 
-            elif record.info['SVTYPE'] == 'CTX':
+            elif record.info.get('SVTYPE', None) == 'INV':
+                end = record.stop
+
+                # Reorder start/end so bedtools doesn't break
+                start, end = sorted([start, end])
+                yield entry.format(**locals())
+
+            elif record.info.get('SVTYPE', None) == 'CTX':
                 end = record.pos + 1
                 yield entry.format(**locals())
 
