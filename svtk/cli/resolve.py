@@ -162,8 +162,16 @@ def main(argv):
     parser.add_argument('raw', help='Filtered breakpoints and CNV intervals.')
     parser.add_argument('cytobands', help='Cytoband file. Required to '
                         'correctly classify interchromosomal events.')
-    parser.add_argument('disc_pairs', help='Scraped discordant pairs. Required '
-                        'to attempt to resolve single-ender inversions.')
+
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('--discfile', default=None,
+                       help='Scraped discordant pairs. Required '
+                       'to attempt to resolve single-ender inversions.')
+    group.add_argument('--discfile-list', default=None,
+                       type=argparse.FileType('r'),
+                       help='Tab-delimited list of discordant pair files '
+                       'and indices')
+
     parser.add_argument('resolved', type=argparse.FileType('w'),
                         help='Resolved simple and complex variants.')
     parser.add_argument('-u', '--unresolved', type=argparse.FileType('w'),
@@ -188,7 +196,15 @@ def main(argv):
     unresolved_f = pysam.VariantFile(args.unresolved, 'w', header=vcf.header)
 
     cytobands = pysam.TabixFile(args.cytobands)
-    disc_pairs = pysam.TabixFile(args.disc_pairs)
+
+    if args.discfile is not None:
+        disc_pairs = pysam.TabixFile(args.discfile)
+    else:
+        tabixfiles = []
+        for line in args.discfile_list:
+            fname, idx = line.strip().split()
+            tabixfiles.append(pysam.TabixFile(fname, index=idx))
+        disc_pairs = svu.MultiTabixFile(tabixfiles)
 
     for record in resolve_complex_sv(vcf, cytobands, disc_pairs, args.prefix):
         if record.info['UNRESOLVED']:
