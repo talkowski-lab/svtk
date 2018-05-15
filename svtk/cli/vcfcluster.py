@@ -100,6 +100,10 @@ def main(argv):
     parser.add_argument('--preserve-ids', action='store_true', default=False,
                         help='Include list of IDs of constituent records in '
                         'each cluster.')
+    parser.add_argument('--preserve-genotypes', action='store_true',
+                        default=False,
+                        help='In a set of clustered variants, report best '
+                        '(highest GQ) non-reference genotype when available.')
     #  parser.add_argument('--cluster-bed', type=argparse.FileType('w'),
     #                      help='Bed of constituent calls in each cluster')
 
@@ -117,7 +121,8 @@ def main(argv):
 
     svc = VCFCluster(vcfs, dist=args.dist, blacklist=args.blacklist,
                      frac=args.frac, svtypes=svtypes, region=args.region,
-                     preserve_ids=args.preserve_ids)
+                     preserve_ids=args.preserve_ids,
+                     preserve_genotypes=args.preserve_genotypes)
 
     # Open new file
     if args.fout in '- stdout'.split():

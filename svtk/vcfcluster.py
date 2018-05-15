@@ -26,7 +26,8 @@ class VCFCluster(GenomeSLINK):
     def __init__(self, vcfs,
                  dist=500, frac=0.0,
                  match_strands=True, preserve_ids=False,
-                 region=None, blacklist=None, svtypes=None):
+                 region=None, blacklist=None, svtypes=None,
+                 preserve_genotypes=False):
         """
         Clustering of VCF records.
 
@@ -53,6 +54,8 @@ class VCFCluster(GenomeSLINK):
             Two records must share strandedness in order to be linked.
         preserve_ids : bool, optional
             Keep list of constituent record IDs for each cluster.
+        preserve_genotypes : bool, optional
+            Report best non-reference genotype for each sample.
         region : str, optional
             Genomic region to fetch for clustering. If None, all regions
             present will be clustered.
@@ -92,6 +95,7 @@ class VCFCluster(GenomeSLINK):
         self.match_strands = match_strands
         self.svtypes = svtypes
         self.preserve_ids = preserve_ids
+        self.preserve_genotypes = preserve_genotypes
 
         # Build VCF header for new record construction
         self.samples = sorted(samples)
@@ -138,7 +142,8 @@ class VCFCluster(GenomeSLINK):
             if merge:
                 record = self.header.new_record()
                 record = cluster.merge_record_data(record)
-                record = cluster.merge_record_formats(record, self.sources)
+                record = cluster.merge_record_formats(record, self.sources,
+                                                      self.preserve_genotypes)
                 record = cluster.merge_record_infos(record, self.header)
                 if self.preserve_ids:
                     record.info['MEMBERS'] = [r.record.id for r in records]
