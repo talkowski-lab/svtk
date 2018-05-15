@@ -453,6 +453,15 @@ class SVRecordCluster:
 def choose_best_genotype(sample, records):
     """
     Return record where sample has best non-reference genotype, if available
+
+    Parameters
+    ----------
+    sample : str
+    records : list of pysam.VariantRecord
+
+    Returns
+    -------
+    best_record : pysam.VariantRecord
     """
 
     best_GT = (0, 0)
@@ -474,6 +483,12 @@ def choose_best_genotype(sample, records):
 def update_best_genotypes(new_record, records, is_multiallelic=False):
     """
     For each sample in record, update GT and other formats with best genotype
+
+    Parameters
+    ----------
+    new_record : pysam.VariantRecord
+    records : list of SVRecord
+    is_multiallelic : bool
     """
     records = [r.record for r in records]
 
