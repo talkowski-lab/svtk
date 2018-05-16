@@ -122,21 +122,32 @@ def resolve_complex_sv(vcf, cytobands, disc_pairs, variant_prefix='CPX_'):
             if opp is not None:
                 cluster = cluster + deque([opp])
 
-        cpx = ComplexSV(cluster, cytobands)
-        cpx_record_ids = cpx_record_ids.union(cpx.record_ids)
-
-        if cpx.svtype == 'UNR':
-            for i, record in enumerate(cpx.records):
-                record.info['EVENT'] = 'UNRESOLVED_{0}'.format(unresolved_idx)
-                record.info['CPX_TYPE'] = cpx.cpx_type
-                record.info['UNRESOLVED'] = True
-                cpx_records.append(record)
-            unresolved_idx += 1
+        # if cxsv overlap pulled in unrelated insertions, keep them separate
+        if all([r.info['SVTYPE'] == 'INS' for r in cluster]):
+            for record in cluster:
+                cpx = ComplexSV([record], cytobands)
+                cpx_record_ids = cpx_record_ids.union(cpx.record_ids)
+    
+                cpx.vcf_record.id = variant_prefix + str(resolved_idx)
+                cpx_records.append(cpx.vcf_record)
+                resolved_idx += 1
 
         else:
-            cpx.vcf_record.id = variant_prefix + str(resolved_idx)
-            cpx_records.append(cpx.vcf_record)
-            resolved_idx += 1
+            cpx = ComplexSV(cluster, cytobands)
+            cpx_record_ids = cpx_record_ids.union(cpx.record_ids)
+    
+            if cpx.svtype == 'UNR':
+                for i, record in enumerate(cpx.records):
+                    record.info['EVENT'] = 'UNRESOLVED_{0}'.format(unresolved_idx)
+                    record.info['CPX_TYPE'] = cpx.cpx_type
+                    record.info['UNRESOLVED'] = True
+                    cpx_records.append(record)
+                unresolved_idx += 1
+    
+            else:
+                cpx.vcf_record.id = variant_prefix + str(resolved_idx)
+                cpx_records.append(cpx.vcf_record)
+                resolved_idx += 1
 
     # Output all variants
     vcf.reset()
