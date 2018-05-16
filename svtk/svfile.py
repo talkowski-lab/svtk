@@ -328,7 +328,7 @@ class SVRecordCluster:
         return new_record
 
     def merge_record_formats(self, new_record, sourcelist,
-                             call_sources=False):
+                             preserve_genotypes=False):
         """
         Aggregate sample genotype data across records.
 
@@ -345,11 +345,6 @@ class SVRecordCluster:
             Record to populate with FORMAT data
         sourcelist : list of str
             List of all sources to add a FORMAT field for
-        call_sources : bool, optional
-            If True, each record is already annotated with FORMAT data
-            indicating the supporting source algorithms for each sample.
-            If False, use each record's ALGORITHMS key to derive a supporting
-            algorithm for all samples called in the record.
 
         Returns
         -------
@@ -365,37 +360,42 @@ class SVRecordCluster:
                 new_record.samples[sample][source] = 0
 
         # Update with called samples
+        if preserve_genotypes:
+            # Check if any clustered records are multiallelic
+            is_multiallelic = False
+            for record in self.records:
+                if record.record.alts[0] == '<CN0>':
+                    is_multiallelic = True
+
+            if is_multiallelic:
+                # If multiallelic, set new record alts to max of clustered
+                # records
+                max_CN = 2
+                for record in self.records:
+                    if record.record.alts[0] == '<CN0>':
+                        CN = int(record.record.alts[-1].strip('<CN>'))
+                        if CN > max_CN:
+                            max_CN = CN
+                new_record.alts = tuple(['<CN0>'] + 
+                                        ['<CN%d>' % i for i in range(1, max_CN + 1)])
+
+            # then overwrite genotypes of non-multiallelic sites as necessary
+            update_best_genotypes(new_record, self.records, is_multiallelic)
+
         # TODO: optionally permit ./. instead of rejecting
         # I think that was an issue with one caller, maybe handle in preproc
-        null_GTs = [(0, 0), (None, None), (0, ), (None, )]
-        for record in self.records:
-            for sample in record.record.samples:
-                gt = record.record.samples[sample]['GT']
-
-                # Skip samples without a call
-                if gt in null_GTs:
-                    continue
-
-                # Otherwise call the sample in the new record
-                new_record.samples[sample]['GT'] = (0, 1)
-
-                # If call sources are already provided, add them
-                if call_sources:
-                    for source in sourcelist:
-                        # Get the sample's current source call and the
-                        # record's source call for that sample
-                        call = new_record.samples[sample].get(source)
-                        src_call = record.record.samples[sample].get(source)
-
-                        # If sample was already called by the source, or if
-                        # it was called by the source in the current record,
-                        # call it in the new record
-                        call = call or src_call
-                        new_record.samples[sample][source] = call
-                # Otherwise add the record's ALGORITHMS
-                else:
-                    for source in record.record.info['ALGORITHMS']:
-                        new_record.samples[sample][source] = 1
+        else:
+            null_GTs = [(0, 0), (None, None), (0, ), (None, )]
+            for record in self.records:
+                for sample in record.record.samples:
+                    gt = record.record.samples[sample]['GT']
+    
+                    # Skip samples without a call
+                    if gt in null_GTs:
+                        continue
+    
+                    # Otherwise call the sample in the new record
+                    new_record.samples[sample]['GT'] = (0, 1)
 
         return new_record
 
@@ -448,3 +448,63 @@ class SVRecordCluster:
         self._rmmstd = np.sqrt(SS)
 
         return self._rmmstd
+
+
+def choose_best_genotype(sample, records):
+    """
+    Return record where sample has best non-reference genotype, if available
+
+    Parameters
+    ----------
+    sample : str
+    records : list of pysam.VariantRecord
+
+    Returns
+    -------
+    best_record : pysam.VariantRecord
+    """
+
+    best_GT = (0, 0)
+    best_GQ = 0 
+    best_record = None
+
+    # Pick best non-reference genotype
+    for record in records:
+        if record.samples[sample]['GQ'] > best_GQ:
+            if ((best_GT != (0, 0) and record.samples[sample]['GT'] != (0, 0)) or
+                    best_GT == (0, 0)):
+                best_GT = record.samples[sample]['GT']
+                best_GQ = record.samples[sample]['GQ']
+                best_record = record
+
+    return best_record
+
+
+def update_best_genotypes(new_record, records, is_multiallelic=False):
+    """
+    For each sample in record, update GT and other formats with best genotype
+
+    Parameters
+    ----------
+    new_record : pysam.VariantRecord
+    records : list of SVRecord
+    is_multiallelic : bool
+    """
+    records = [r.record for r in records]
+
+    for sample in new_record.samples:
+        best_record = choose_best_genotype(sample, records)
+        for key in best_record.format.keys():
+            if key in new_record.header.formats.keys():
+                # If any record is multiallelic, replace non-multiallelic
+                # genotypes with multiallelic equivalents
+                if key == 'GT' and is_multiallelic:
+                    GT = best_record.samples[sample][key]
+                    if GT == (0, 1):
+                        new_record.samples[sample][key] = (0, 2)
+                    elif GT == (1, 1):
+                        new_record.samples[sample][key] = (2, 2)
+                    else:
+                        new_record.samples[sample][key] = GT
+                else:
+                    new_record.samples[sample][key] = best_record.samples[sample][key]
