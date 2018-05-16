@@ -433,6 +433,8 @@ class ComplexSV:
                     self.cluster_type = 'CANDIDATE_INSERTION'
                 else:
                     self.cluster_type = 'STRAND_MISMATCH_INS'
+            elif idx == 3:
+                self.cluster_type = 'MULTIPLE_RESOLVED_INSERTIONS'
 
         elif sum(class_counts) == 0:
             self.cluster_type = 'ERROR_CNV_ONLY'
