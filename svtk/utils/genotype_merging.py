@@ -40,7 +40,50 @@ def choose_best_genotype(sample, records):
     return best_record
 
 
-def update_best_genotypes(new_record, records, is_multiallelic=False):
+def check_multiallelic(records):
+    """
+    Returns true if any record is multiallelic
+
+    Parameters
+    ----------
+    records : list of pysam.VariantRecord
+    """
+    for record in records:
+        if record.alts[0] == '<CN0>':
+            return True
+        #  for sample in record.samples:
+            #  GT = record.samples[sample]['GT']
+            #  if GT[0] > 1 or GT[1] > 1:
+                #  return True
+
+    return False
+
+
+def make_multiallelic_alts(records):
+    """
+    Make list of alts corresponding to record with highest observed copy number
+
+    Parameters
+    ----------
+    records : list of pysam.VariantRecord
+
+    Returns
+    -------
+    alts : tuple of str
+    """
+    
+    max_CN = 2
+
+    for record in records:
+        if record.record.alts[0] == '<CN0>':
+            CN = int(record.record.alts[-1].strip('<CN>'))
+            if CN > max_CN:
+                max_CN = CN
+
+    return tuple(['<CN0>'] + ['<CN%d>' % i for i in range(1, max_CN + 1)])
+
+
+def update_best_genotypes(new_record, records, preserve_multiallelic=False):
     """
     For each sample in record, update GT and other formats with best genotype
 
@@ -48,9 +91,17 @@ def update_best_genotypes(new_record, records, is_multiallelic=False):
     ----------
     new_record : pysam.VariantRecord
     records : list of SVRecord
-    is_multiallelic : bool
+    preserve_multiallelic : bool
+        If any record is multiallelic, make all genotypes multiallelic
     """
-    records = [r.record for r in records]
+
+    if preserve_multiallelic:
+        is_multiallelic = check_multiallelic(records)
+    else:
+        is_multiallelic = False
+
+    if is_multiallelic:
+        new_record.alts = make_multiallelic_alts(records)
 
     for sample in new_record.samples:
         best_record = choose_best_genotype(sample, records)
