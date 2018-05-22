@@ -101,7 +101,7 @@ GENCODE_INFO = [
     '##INFO=<ID=DUP_PARTIAL,Number=.,Type=String,Description="Gene(s) which are partially overlapped by an SV\'s duplication, such that an unaltered copy is preserved.">',
     '##INFO=<ID=INV_SPAN,Number=.,Type=String,Description="Gene(s) which are entirely spanned by an SV\'s inversion.">',
     '##INFO=<ID=NEAREST_TSS,Number=.,Type=String,Description="Nearest transcription start site to intragenic variants.">',
-    '##INFO=<ID=INTRAGENIC,Number=0,Type=Flag,Description="SV does not overlap coding sequence.">'
+    '##INFO=<ID=INTERGENIC,Number=0,Type=Flag,Description="SV does not overlap coding sequence.">'
 ]
 
 NONCODING_INFO = [
@@ -158,7 +158,7 @@ def annotate_vcf(vcf, gencode, noncoding, annotated_vcf):
                 record.info[info] = genelist
 
         if 'NEAREST_TSS' in record.info:
-            record.info['INTRAGENIC'] = True
+            record.info['INTERGENIC'] = True
 
         fout.write(record)
 
