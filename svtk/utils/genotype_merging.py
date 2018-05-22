@@ -109,13 +109,17 @@ def update_best_genotypes(new_record, records, preserve_multiallelic=False):
             if key in new_record.header.formats.keys():
                 # If any record is multiallelic, replace non-multiallelic
                 # genotypes with multiallelic equivalents
-                if key == 'GT' and is_multiallelic:
+                if key == 'GT':
                     GT = best_record.samples[sample][key]
-                    if GT == (0, 1):
-                        new_record.samples[sample][key] = (0, 2)
-                    elif GT == (1, 1):
-                        new_record.samples[sample][key] = (2, 2)
+                    if is_multiallelic:
+                        if GT == (0, 1):
+                            new_record.samples[sample][key] = (0, 2)
+                        elif GT == (1, 1):
+                            new_record.samples[sample][key] = (2, 2)
+                        else:
+                            new_record.samples[sample][key] = GT
                     else:
+                        GT = tuple([min(x, 1) for x in GT])
                         new_record.samples[sample][key] = GT
                 else:
                     new_record.samples[sample][key] = best_record.samples[sample][key]
