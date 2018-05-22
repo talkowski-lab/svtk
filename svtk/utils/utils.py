@@ -177,7 +177,10 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
                 svtype = record.info['SVTYPE']
 
             if include_strands:
-                strands = record.info.get('STRANDS')
+                try:
+                    strands = record.info.get('STRANDS', None)
+                except ValueError:
+                    strands = None
                 strands = '.' if strands is None else strands
             if include_samples:
                 samples = ','.join(get_called_samples(record))
