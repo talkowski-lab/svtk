@@ -455,15 +455,7 @@ class ComplexSV:
 
     def make_record(self):
         self.vcf_record = self.records[0].copy()
-        called_samples = set(svu.get_called_samples(self.vcf_record))
-
-        # Take union of called samples
-        for record in itertools.islice(self.records, 1, None):
-            cs = svu.get_called_samples(record)
-            for sample in cs:
-                if sample not in called_samples:
-                    self.vcf_record.samples[sample]['GT'] = (0, 1)
-                    called_samples.add(sample)
+        svu.update_best_genotypes(self.vcf_record, self.records, preserve_multiallelic=False)
 
 
 def make_inversion_intervals(FF, RR, cnvs, cpx_type):
