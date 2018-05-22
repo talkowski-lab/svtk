@@ -38,8 +38,12 @@ def annotate_noncoding(sv, noncoding):
     # For now, any overlap gets annotated
     noncoding_hits = annotate_intersection(sv, noncoding, filetype='bed')
     noncoding_hits = noncoding_hits.drop_duplicates()
-    noncoding_hits['effect'] = 'NONCODING'
+   
+    noncoding_hits.loc[noncoding_hits.hit_type == 'SPAN', 'effect'] = 'NONCODING_SPAN'
+    noncoding_hits.loc[noncoding_hits.hit_type != 'SPAN', 'effect'] = 'NONCODING_BREAKPOINT'
+
     noncoding_cols = 'name svtype gene_name effect'.split()
+
     effects = noncoding_hits[noncoding_cols]
 
     return effects
@@ -101,7 +105,8 @@ GENCODE_INFO = [
 ]
 
 NONCODING_INFO = [
-    '##INFO=<ID=NONCODING,Number=.,Type=String,Description="Classes of noncoding elements disrupted by SV.">',
+    '##INFO=<ID=NONCODING_SPAN,Number=.,Type=String,Description="Classes of noncoding elements spanned by SV.">',
+    '##INFO=<ID=NONCODING_BREAKPOINT,Number=.,Type=String,Description="Classes of noncoding elements disrupted by SV breakpoint.">',
 ]
 
 
@@ -132,7 +137,11 @@ def annotate_vcf(vcf, gencode, noncoding, annotated_vcf):
     fout = pysam.VariantFile(annotated_vcf, 'w', header=header)
 
     # Annotate genic hits
-    sv = svu.vcf2bedtool(vcf.filename, split_bnd=True, split_cpx=True)
+    if isinstance(vcf.filename, bytes):
+        fname = vcf.filename.decode()
+    else:
+        fname = vcf.filename
+    sv = svu.vcf2bedtool(fname, split_bnd=True, split_cpx=True)
 
     effects = annotate(sv, gencode, noncoding)
     effects = effects.to_dict(orient='index')
