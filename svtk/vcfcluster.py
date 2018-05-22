@@ -136,6 +136,7 @@ class VCFCluster(GenomeSLINK):
         """
         clusters = super().cluster(frac=self.frac,
                                    match_strands=self.match_strands)
+        
         for records in clusters:
             cluster = SVRecordCluster(records)
 

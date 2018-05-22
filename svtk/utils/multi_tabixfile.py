@@ -46,7 +46,8 @@ class _TabixRow:
             self.tup = tuple(row)
             self.base_type = tuple
         else:
-            raise Exception('Invalid type for tabix row: %s' % type(row))
+            t = type(row).__name__
+            raise Exception('Invalid type for tabix row: {0}'.format(t))
 
     def __lt__(self, other):
         if self.tup[0] == other.tup[0]:
@@ -77,7 +78,7 @@ class _SortableTabixIterator:
         return _TabixRow(next(self.iterator))
 
 
-class TabixIterator:
+class _TabixIterator:
     def __init__(self, iterator):
         """
         Helper class to convert _TabixRow objects back to original parsed type
@@ -131,7 +132,7 @@ class MultiTabixFile:
         for tbx in self.tabixfiles:
             iterators.append(_SortableTabixIterator(tbx.fetch(*args, **kwargs)))
 
-        return TabixIterator(heapq.merge(*iterators))
+        return _TabixIterator(heapq.merge(*iterators))
 
     def close(self):
         for tbx in self.tabixfiles:
