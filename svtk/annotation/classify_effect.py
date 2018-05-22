@@ -176,7 +176,8 @@ def classify_effect(hits):
 
         return classify_disrupt(element_hit, svtype)
 
-    effects['effect'] = effects.apply(_apply_classify, axis=1)
+    if effects.shape[0] > 0:
+        effects['effect'] = effects.apply(_apply_classify, axis=1)
 
     # only necessary when testing
     effects = effects.drop('element_hit', axis=1)
