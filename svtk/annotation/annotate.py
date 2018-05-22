@@ -44,7 +44,7 @@ def annotate_noncoding(sv, noncoding):
 
     noncoding_cols = 'name svtype gene_name effect'.split()
 
-    effects = noncoding_hits[noncoding_cols]
+    effects = noncoding_hits[noncoding_cols].drop_duplicates()
 
     return effects
 
