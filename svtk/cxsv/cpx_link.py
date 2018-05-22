@@ -162,6 +162,8 @@ class ComplexSV:
         members = [r.id for r in self.records]
         self.vcf_record.info['MEMBERS'] = tuple(sorted(members))
 
+        svu.update_best_genotypes(self.vcf_record, self.records)
+
     @property
     def record_ids(self):
         return [r.id for r in self.records]
