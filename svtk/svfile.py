@@ -361,26 +361,9 @@ class SVRecordCluster:
 
         # Update with called samples
         if preserve_genotypes:
-            # Check if any clustered records are multiallelic
-            is_multiallelic = False
-            for record in self.records:
-                if record.record.alts[0] == '<CN0>':
-                    is_multiallelic = True
-
-            if is_multiallelic:
-                # If multiallelic, set new record alts to max of clustered
-                # records
-                max_CN = 2
-                for record in self.records:
-                    if record.record.alts[0] == '<CN0>':
-                        CN = int(record.record.alts[-1].strip('<CN>'))
-                        if CN > max_CN:
-                            max_CN = CN
-                new_record.alts = tuple(['<CN0>'] + 
-                                        ['<CN%d>' % i for i in range(1, max_CN + 1)])
-
             # then overwrite genotypes of non-multiallelic sites as necessary
-            update_best_genotypes(new_record, self.records, is_multiallelic)
+            records = [r.record for r in self.records]
+            update_best_genotypes(new_record, records, preserve_multiallelic=True)
 
         # TODO: optionally permit ./. instead of rejecting
         # I think that was an issue with one caller, maybe handle in preproc
