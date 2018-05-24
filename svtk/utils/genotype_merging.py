@@ -27,6 +27,12 @@ def choose_best_genotype(sample, records):
     best_GQ = 0 
     best_record = None
 
+    if not any(['GQ' in record.samples[sample].keys() for record in records]):
+        for record in records:
+            if record.samples[sample]['GT'] != (0, 0):
+                return record
+        return record
+
     # Pick best non-reference genotype
     for record in records:
         if record.samples[sample]['GQ'] > best_GQ:
