@@ -14,7 +14,7 @@ def classify_del(disrupt_dict):
     All deletion hits are DISRUPTING
     """
     regions = list(disrupt_dict.keys())
-    if 'exon' in regions:
+    if 'CDS' in regions:
         return 'LOF'
     if 'UTR' in regions:
         return 'UTR'
@@ -33,9 +33,9 @@ def classify_dup(disrupt_dict):
     Classify genic effect of a duplication.
     """
     elements = disrupt_dict.keys()
-    if 'exon' in elements:
+    if 'CDS' in elements:
         # duplication internal to exon
-        if 'BOTH-INSIDE' in disrupt_dict['exon']:
+        if 'BOTH-INSIDE' in disrupt_dict['CDS']:
             return 'LOF'
 
         # duplication internal to gene, disrupting exon, is LoF
@@ -76,10 +76,10 @@ def classify_inv(disrupt_dict):
     element.
     """
     elements = disrupt_dict.keys()
-    if 'exon' in elements:
+    if 'CDS' in elements:
         # breakpoint disrupts exon -> LoF
-        if ('BOTH-INSIDE' in disrupt_dict['exon'] or
-                'ONE-INSIDE' in disrupt_dict['exon']):
+        if ('BOTH-INSIDE' in disrupt_dict['CDS'] or
+                'ONE-INSIDE' in disrupt_dict['CDS']):
             return 'LOF'
 
         # if breakpoint spans exon but gene is disrupted -> LoF
@@ -122,7 +122,7 @@ def classify_bnd(disrupt_dict):
 
     elements = disrupt_dict.keys()
 
-    if 'exon' in elements:
+    if 'CDS' in elements:
         return 'LOF'
     if 'transcript' in elements:
         return 'LOF'
