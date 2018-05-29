@@ -100,6 +100,7 @@ GENCODE_INFO = [
     '##INFO=<ID=INTRONIC,Number=.,Type=String,Description="Gene(s) where the SV was found to lie entirely within an intron.">',
     '##INFO=<ID=DUP_PARTIAL,Number=.,Type=String,Description="Gene(s) which are partially overlapped by an SV\'s duplication, such that an unaltered copy is preserved.">',
     '##INFO=<ID=INV_SPAN,Number=.,Type=String,Description="Gene(s) which are entirely spanned by an SV\'s inversion.">',
+    '##INFO=<ID=UTR,Number=.,Type=String,Description="Gene(s) for which the SV is predicted to disrupt a UTR.">',
     '##INFO=<ID=NEAREST_TSS,Number=.,Type=String,Description="Nearest transcription start site to intragenic variants.">',
     '##INFO=<ID=INTERGENIC,Number=0,Type=Flag,Description="SV does not overlap coding sequence.">'
 ]
