@@ -13,7 +13,8 @@ import os
 import tempfile
 import pkg_resources
 import subprocess as sp
-import svtk.utils as svu
+import pandas as pd
+from .utils import get_called_samples
 
 
 def _record_to_bed(record):
@@ -24,7 +25,7 @@ def _record_to_bed(record):
                             start=record.pos,
                             end=record.stop,
                             name=record.id,
-                            samples=','.join(svu.get_called_samples(record)),
+                            samples=','.join(get_called_samples(record)),
                             svtype=record.info['SVTYPE'])
     else:
         return ''
@@ -46,7 +47,9 @@ def _make_rdtest_bed(variants):
     bed = tempfile.NamedTemporaryFile(dir=os.getcwd())
 
     for variant in variants:
-        bed.write(_record_to_bed(variants))
+        bed_entry = _record_to_bed(variant)
+        bed.write(bed_entry.encode('utf-8'))
+        bed.flush()
 
     return bed
 
@@ -99,14 +102,19 @@ def call_rdtest(variants, bincov_file, medianfile, famfile, whitelist):
 
     sp.run(['Rscript', RdTest,
             '-b', bed.name,
-            '-o', output_dir.name,
+            '-o', output_dir.name + '/',
             '-n', 'tmp',
             '-c', bincov_file,
             '-m', medianfile,
             '-f', famfile,
-            '-w', whitelist_filename,
-            flags])
+            '-w', whitelist_filename])
 
     metrics = pd.read_table(os.path.join(output_dir.name, 'tmp.metrics'))
 
     return metrics
+
+
+def filter_rdtest(variants, cutoffs):
+    """
+    Run RdTest on variants, return only those which met RF cutoffs
+    """
