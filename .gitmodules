@@ -1,0 +1,3 @@
+[submodule "scripts/RdTest"]
+	path = svtk/RdTest
+	url = git@github.com:talkowski-lab/RdTest.git
