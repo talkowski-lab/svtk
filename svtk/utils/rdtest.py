@@ -54,7 +54,8 @@ def _make_rdtest_bed(variants):
     return bed
 
 
-def call_rdtest(variants, bincov_file, medianfile, famfile, whitelist):
+def call_rdtest(variants, bincov_file, medianfile, famfile, whitelist,
+                quiet=False):
     """
     Utility wrapper around a basic RdTest call
 
@@ -66,6 +67,8 @@ def call_rdtest(variants, bincov_file, medianfile, famfile, whitelist):
     famfile : str
     whitelist : str or list of str
         Filepath to sample whitelist or list of whitelisted sample IDs
+    quiet : bool
+        Suppress RdTest stdout/stderr
 
     Returns
     -------
@@ -100,6 +103,14 @@ def call_rdtest(variants, bincov_file, medianfile, famfile, whitelist):
 
     RdTest = pkg_resources.resource_filename('svtk', 'RdTest/RdTest.R')
 
+    if quiet:
+        FNULL = open(os.devnull, 'w')
+        stdout = FNULL
+        stderr = FNULL
+    else:
+        stdout = None
+        stderr = None
+
     sp.run(['Rscript', RdTest,
             '-b', bed.name,
             '-o', output_dir.name + '/',
@@ -107,7 +118,9 @@ def call_rdtest(variants, bincov_file, medianfile, famfile, whitelist):
             '-c', bincov_file,
             '-m', medianfile,
             '-f', famfile,
-            '-w', whitelist_filename])
+            '-w', whitelist_filename],
+           stdout=stdout,
+           stderr=stderr)
 
     metrics = pd.read_table(os.path.join(output_dir.name, 'tmp.metrics'))
 
