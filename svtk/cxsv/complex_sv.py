@@ -8,6 +8,11 @@
 Resolve clustered records into a complex SV
 """
 
+import numpy as np
+import svtk.utils as svu
+from .cpx_inv import classify_complex_inversion
+from .cpx_tloc import classify_simple_translocation, classify_insertion
+
 
 class ComplexSV:
     def __init__(self, records, cytobands):
@@ -119,6 +124,13 @@ class ComplexSV:
             elif self.cpx_type == 'DUP3/INS5':
                 source_start, source_end = RR.stop, FF.stop
                 sink_start, sink_end = FF.pos, RR.pos
+
+            # first check for overlap with MEI
+            is_mei = check_mei_overlap(self.vcf_record.chrom, source_start,
+                                       source_end, self.mei_bed)
+
+            # then check for RdTest support
+            is_dup = check_rdtest(self.vcf_record, source_start, source_end)
 
             self.vcf_record.pos = sink_start
             self.vcf_record.stop = sink_end
@@ -423,3 +435,29 @@ def make_inversion_intervals(FF, RR, cnvs, cpx_type):
     return intervals
 
 
+def check_mei_overlap(chrom, start, end, mei_bed):
+    """
+    Check if putative insertion is covered by MEIs
+    """
+
+    bedline = '{0}\t{1}\t{2}\n'.format(chrom, start, end)
+    bed = pbt.BedTool(bedline, from_string=True)
+
+    cov_bed = bed.coverage(mei_bed).saveas()
+    i = next(cov_bed.intervals)
+    cov = float(i.fields[6])
+
+    return cov >= 0.5
+
+
+def check_rdtest(record, start, end, rdtest):
+    """
+    Check if putative insertion has depth support
+    """
+   
+    rdtest_record = record.copy()
+    rdtest_record.pos = start
+    rdtest_record.stop = end
+    rdtest_record.info['SVTYPE'] = 'DUP'
+
+    metrics = rdtest.test([record])
