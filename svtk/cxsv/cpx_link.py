@@ -14,8 +14,6 @@ import numpy as np
 import scipy.sparse as sps
 import natsort
 import svtk.utils as svu
-from .cpx_inv import classify_complex_inversion
-from .cpx_tloc import classify_simple_translocation, classify_insertion
 
 
 def samples_overlap(recA, recB, upper_thresh=0.8, lower_thresh=0.5):
