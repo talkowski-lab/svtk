@@ -54,6 +54,19 @@ def _make_rdtest_bed(variants):
     return bed
 
 
+class RdTest:
+    def __init__(self, bincov_file, medianfile, famfile, whitelist):
+        self.bincov_file = bincov_file
+        self.medianfile = medianfile
+        self.famfile = famfile
+        self.whitelist = whitelist
+
+    def test(self, records, quiet=True):
+        metrics = call_rdtest(records, self.bincov_file, self.medianfile,
+                              self.famfile, self.whitelist, quiet)
+        return metrics
+
+
 def call_rdtest(variants, bincov_file, medianfile, famfile, whitelist,
                 quiet=False):
     """
