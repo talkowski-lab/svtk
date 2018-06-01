@@ -13,6 +13,8 @@ import os
 import tempfile
 import pkg_resources
 import subprocess as sp
+from collections import namedtuple
+import numpy as np
 import pandas as pd
 from .utils import get_called_samples
 
@@ -55,15 +57,54 @@ def _make_rdtest_bed(variants):
 
 
 class RdTest:
-    def __init__(self, bincov_file, medianfile, famfile, whitelist):
+    def __init__(self, bincov_file, medianfile, famfile, whitelist,
+                 cutoffs=None, cutoff_type='pesr'):
         self.bincov_file = bincov_file
         self.medianfile = medianfile
         self.famfile = famfile
         self.whitelist = whitelist
+        self.cutoffs = cutoffs
+
+    def get_cutoffs(self, cutoff_type):
+        if cutoff_type == 'pesr_lt1kb':
+            cutoffs = self.cutoffs.loc[self.cutoffs.algtype == 'PESR']
+            cutoffs = self.cutoffs.loc[self.cutoffs.max_svsize == 1000]
+        if cutoff_type == 'pesr_gt1kb':
+            cutoffs = self.cutoffs.loc[self.cutoffs.algtype == 'PESR']
+            cutoffs = self.cutoffs.loc[self.cutoffs.min_svsize == 1000]
+        elif cutoff_type == 'depth':
+            cutoffs = self.cutoffs.loc[self.cutoffs.algtype == 'Depth']
+        else:
+            msg = ('cutoff_type must be pesr_lt1kb, pesr_gt1kb, or depth, '
+                   'not {0}')
+            msg = msg.format(cutoff_type)
+            raise Exception(msg)
+
+        min_Median_Separation = cutoffs.loc[cutoffs.metric == 'RD_Median_Separation', 'cutoff'].iloc[0]
+        min_log_pval = cutoffs.loc[cutoffs.metric == 'RD_log_pval', 'cutoff'].iloc[0]
+        min_log_2ndMaxP = cutoffs.loc[cutoffs.metric == 'RD_log_2ndMaxP', 'cutoff'].iloc[0]
+
+        Cutoffs = namedtuple('Cutoffs', ['min_Median_Separation',
+                                         'min_log_pval', 'min_log_2ndMaxP'])
+        return Cutoffs(min_Median_Separation, min_log_pval, min_log_2ndMaxP)
+
+    def test_record(self, record, cutoff_type='pesr_gt1kb'):
+        if self.cutoffs is None:
+            raise Exception('Record testing not available without cutoffs')
+        metrics = call_rdtest([record], self.bincov_file, self.medianfile,
+                              self.famfile, self.whitelist, quiet=True)
+        metrics = metrics.iloc[0]
+
+        cutoffs = self.get_cutoffs(cutoff_type)
+
+        return (metrics.Median_Separation >= cutoffs.min_Median_Separation and
+                -np.log10(metrics.P) >= cutoffs.min_log_pval and
+                -np.log10(metrics['2ndMaxP']) >= cutoffs.min_log_2ndMaxP)
 
     def test(self, records, quiet=True):
         metrics = call_rdtest(records, self.bincov_file, self.medianfile,
-                              self.famfile, self.whitelist, quiet)
+                              self.famfile, self.whitelist, quiet=True)
+
         return metrics
 
 
