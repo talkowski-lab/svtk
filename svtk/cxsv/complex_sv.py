@@ -460,4 +460,7 @@ def check_rdtest(record, start, end, rdtest):
     rdtest_record.stop = end
     rdtest_record.info['SVTYPE'] = 'DUP'
 
-    metrics = rdtest.test([record])
+    if end - start < 1000:
+        return rdtest.test_record(record, cutoff_type='pesr_lt1kb')
+    else:
+        return rdtest.test_record(record, cutoff_type='pesr_gt1kb')
