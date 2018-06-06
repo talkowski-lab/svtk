@@ -13,6 +13,8 @@ import os
 import tempfile
 import pkg_resources
 import subprocess as sp
+from collections import namedtuple
+import numpy as np
 import pandas as pd
 from .utils import get_called_samples
 
@@ -54,6 +56,58 @@ def _make_rdtest_bed(variants):
     return bed
 
 
+class RdTest:
+    def __init__(self, bincov_file, medianfile, famfile, whitelist,
+                 cutoffs=None):
+        self.bincov_file = bincov_file
+        self.medianfile = medianfile
+        self.famfile = famfile
+        self.whitelist = whitelist
+        self.cutoffs = cutoffs
+
+    def get_cutoffs(self, cutoff_type):
+        if cutoff_type == 'pesr_lt1kb':
+            cutoffs = self.cutoffs.loc[self.cutoffs.algtype == 'PESR']
+            cutoffs = self.cutoffs.loc[self.cutoffs.max_svsize == 1000]
+        elif cutoff_type == 'pesr_gt1kb':
+            cutoffs = self.cutoffs.loc[self.cutoffs.algtype == 'PESR']
+            cutoffs = self.cutoffs.loc[self.cutoffs.min_svsize == 1000]
+        elif cutoff_type == 'depth':
+            cutoffs = self.cutoffs.loc[self.cutoffs.algtype == 'Depth']
+        else:
+            msg = ('cutoff_type must be pesr_lt1kb, pesr_gt1kb, or depth, '
+                   'not {0}')
+            msg = msg.format(cutoff_type)
+            raise Exception(msg)
+
+        min_Median_Separation = cutoffs.loc[cutoffs.metric == 'RD_Median_Separation', 'cutoff'].iloc[0]
+        min_log_pval = cutoffs.loc[cutoffs.metric == 'RD_log_pval', 'cutoff'].iloc[0]
+        min_log_2ndMaxP = cutoffs.loc[cutoffs.metric == 'RD_log_2ndMaxP', 'cutoff'].iloc[0]
+
+        Cutoffs = namedtuple('Cutoffs', ['min_Median_Separation',
+                                         'min_log_pval', 'min_log_2ndMaxP'])
+        return Cutoffs(min_Median_Separation, min_log_pval, min_log_2ndMaxP)
+
+    def test_record(self, record, cutoff_type='pesr_gt1kb'):
+        if self.cutoffs is None:
+            raise Exception('Record testing not available without cutoffs')
+        metrics = call_rdtest([record], self.bincov_file, self.medianfile,
+                              self.famfile, self.whitelist, quiet=True)
+        metrics = metrics.iloc[0]
+
+        cutoffs = self.get_cutoffs(cutoff_type)
+
+        return (metrics.Median_Separation >= cutoffs.min_Median_Separation and
+                -np.log10(metrics.P) >= cutoffs.min_log_pval and
+                -np.log10(metrics['2ndMaxP']) >= cutoffs.min_log_2ndMaxP)
+
+    def test(self, records, quiet=True):
+        metrics = call_rdtest(records, self.bincov_file, self.medianfile,
+                              self.famfile, self.whitelist, quiet=True)
+
+        return metrics
+
+
 def call_rdtest(variants, bincov_file, medianfile, famfile, whitelist,
                 quiet=False):
     """
@@ -90,12 +144,20 @@ def call_rdtest(variants, bincov_file, medianfile, famfile, whitelist,
     elif isinstance(whitelist, list):
         whitelist_file = tempfile.NamedTemporaryFile(dir=os.getcwd())
         for sample in whitelist:
-            whitelist_file.write(sample + '\n')
+            entry = sample + '\n'
+            whitelist_file.write(entry.encode('utf-8'))
+        whitelist_file.flush()
         whitelist_filename = whitelist_file.name
     else:
         msg = 'Invalid type for whitelist: {0}\n'.format(str(type(whitelist)))
         msg += 'Must be str or list of str'
         raise Exception(msg)
+
+    for variant in variants:
+        if variant.info['SVTYPE'] not in 'DEL DUP'.split():
+            msg = 'Invalid svtype {0} for RdTest in record {1}'
+            msg = msg.format(variant.info['SVTYPE'], variant.id)
+            raise Exception(msg)
 
     output_dir = tempfile.TemporaryDirectory(dir=os.getcwd())
 
