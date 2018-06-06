@@ -9,13 +9,14 @@ Resolve clustered records into a complex SV
 """
 
 import numpy as np
+import pybedtools as pbt
 import svtk.utils as svu
 from .cpx_inv import classify_complex_inversion
 from .cpx_tloc import classify_simple_translocation, classify_insertion
 
 
 class ComplexSV:
-    def __init__(self, records, cytobands):
+    def __init__(self, records, cytobands, mei_bed, rdtest):
         """
         Parameters
         ----------
@@ -23,10 +24,14 @@ class ComplexSV:
             Clustered records to resolve
         cytobands : pysam.TabixFile
             Cytoband bed file (to classify interchromosomal)
+        mei_bed : pybedtools.BedTool
+        rdtest : svtk.utils.RdTest
         """
 
         self.records = records
         self.cytobands = cytobands
+        self.mei_bed = mei_bed
+        self.rdtest = rdtest
 
         self.inversions = [r for r in records if r.info['SVTYPE'] == 'INV']
         self.tlocs = [r for r in records if r.chrom != r.info['CHR2']]
@@ -95,11 +100,6 @@ class ComplexSV:
         else:
             self.svtype = 'CPX'
 
-        # Setting alts removes END, so do it up front
-        self.vcf_record.alts = ('<{0}>'.format(self.svtype), )
-        self.vcf_record.info['SVTYPE'] = self.svtype
-        self.vcf_record.info['CPX_TYPE'] = self.cpx_type
-
         # Overall variant start/end
         if self.svtype in ['INV', 'CPX', 'UNR']:
             self.vcf_record.pos = min(FF.pos, RR.pos)
@@ -130,7 +130,16 @@ class ComplexSV:
                                        source_end, self.mei_bed)
 
             # then check for RdTest support
-            is_dup = check_rdtest(self.vcf_record, source_start, source_end)
+            is_dup = check_rdtest(self.vcf_record, source_start, source_end,
+                                  self.rdtest)
+
+            if is_mei:
+                self.cpx_type = 'MEI_' + self.cpx_type.split('/')[1]
+            elif is_dup:
+                self.svtype = 'CPX'
+                self.cpx_type = 'INV_' + self.cpx_type.split('/')[0]
+            else:
+                self.cpx_type = self.cpx_type.split('/')[1]
 
             self.vcf_record.pos = sink_start
             self.vcf_record.stop = sink_end
@@ -142,6 +151,12 @@ class ComplexSV:
             source = interval.format(self.vcf_record.chrom,
                                      source_start, source_end)
             self.vcf_record.info['SOURCE'] = source
+
+        # Setting alts removes END, so do it up front
+        self.vcf_record.alts = ('<{0}>'.format(self.svtype), )
+        self.vcf_record.info['SVTYPE'] = self.svtype
+        self.vcf_record.info['CPX_TYPE'] = self.cpx_type
+
 
     def resolve_translocation(self):
         # Force to ++/-- or +-/-+ ordering
@@ -461,6 +476,6 @@ def check_rdtest(record, start, end, rdtest):
     rdtest_record.info['SVTYPE'] = 'DUP'
 
     if end - start < 1000:
-        return rdtest.test_record(record, cutoff_type='pesr_lt1kb')
+        return rdtest.test_record(rdtest_record, cutoff_type='pesr_lt1kb')
     else:
-        return rdtest.test_record(record, cutoff_type='pesr_gt1kb')
+        return rdtest.test_record(rdtest_record, cutoff_type='pesr_gt1kb')
