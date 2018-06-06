@@ -58,7 +58,7 @@ def _make_rdtest_bed(variants):
 
 class RdTest:
     def __init__(self, bincov_file, medianfile, famfile, whitelist,
-                 cutoffs=None, cutoff_type='pesr'):
+                 cutoffs=None):
         self.bincov_file = bincov_file
         self.medianfile = medianfile
         self.famfile = famfile
@@ -69,7 +69,7 @@ class RdTest:
         if cutoff_type == 'pesr_lt1kb':
             cutoffs = self.cutoffs.loc[self.cutoffs.algtype == 'PESR']
             cutoffs = self.cutoffs.loc[self.cutoffs.max_svsize == 1000]
-        if cutoff_type == 'pesr_gt1kb':
+        elif cutoff_type == 'pesr_gt1kb':
             cutoffs = self.cutoffs.loc[self.cutoffs.algtype == 'PESR']
             cutoffs = self.cutoffs.loc[self.cutoffs.min_svsize == 1000]
         elif cutoff_type == 'depth':
@@ -144,12 +144,20 @@ def call_rdtest(variants, bincov_file, medianfile, famfile, whitelist,
     elif isinstance(whitelist, list):
         whitelist_file = tempfile.NamedTemporaryFile(dir=os.getcwd())
         for sample in whitelist:
-            whitelist_file.write(sample + '\n')
+            entry = sample + '\n'
+            whitelist_file.write(entry.encode('utf-8'))
+        whitelist_file.flush()
         whitelist_filename = whitelist_file.name
     else:
         msg = 'Invalid type for whitelist: {0}\n'.format(str(type(whitelist)))
         msg += 'Must be str or list of str'
         raise Exception(msg)
+
+    for variant in variants:
+        if variant.info['SVTYPE'] not in 'DEL DUP'.split():
+            msg = 'Invalid svtype {0} for RdTest in record {1}'
+            msg = msg.format(variant.info['SVTYPE'], variant.id)
+            raise Exception(msg)
 
     output_dir = tempfile.TemporaryDirectory(dir=os.getcwd())
 
