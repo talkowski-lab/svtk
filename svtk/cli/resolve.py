@@ -123,9 +123,9 @@ def resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed, rdtest,
     for cluster in clusters:
         # Try finding opposite strand support for single enders
         if len(cluster) == 1 and cluster[0].info['SVTYPE'] == 'INV':
-            opp = rescan_single_ender(cluster[0], disc_pairs)
+            rec, opp = rescan_single_ender(cluster[0], disc_pairs)
             if opp is not None:
-                cluster = cluster + deque([opp])
+                cluster = deque([rec, opp])
 
         # if cxsv overlap pulled in unrelated insertions, keep them separate
         if all([r.info['SVTYPE'] == 'INS' for r in cluster]):

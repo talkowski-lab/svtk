@@ -27,6 +27,11 @@ class DiscPair(GSNode):
     def is_inversion(self):
         return (self.chrA == self.chrB) and (self.strandA == self.strandB)
 
+    def __str__(self):
+        e = '{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\n'
+        return e.format(self.chrA, self.posA, self.strandA,
+                        self.chrB, self.posB, self.strandB, self.sample)
+
 
 def match_cluster(record, cluster, dist=300):
     """
@@ -121,10 +126,10 @@ def rescan_single_ender(record, pe, window=500, dist=300, min_support=4,
 
     # If no clusters, fail site, otherwise choose largest cluster
     if len(clusters) == 0:
-        return None
+        return record, None
     else:
         cluster = max(clusters, key=len)
-
+    
     # Select clustered pairs which support the opposite strand as the record
     missing_strand = '+' if record.info['STRANDS'] == '--' else '-'
     supporting_pairs = [p for p in cluster if p.strandA == missing_strand]
@@ -137,9 +142,15 @@ def rescan_single_ender(record, pe, window=500, dist=300, min_support=4,
     # If enough samples were found to have support, make new variant record
     n_supported_samples = sum(sample_support[s] >= min_support for s in called)
     if n_supported_samples / len(called) >= min_frac_samples:
-        return make_new_record(supporting_pairs, record)
+        opp_strand = make_new_record(supporting_pairs, record)
+
+        same_strand_pairs = [p for p in cluster if p.strandA != missing_strand]
+        same_strand = make_new_record(same_strand_pairs, record)
+        same_strand.id = record.id
+
+        return same_strand, opp_strand
     else:
-        return None
+        return record, None
 
 
 def make_new_record(pairs, old_record):
