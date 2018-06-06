@@ -33,18 +33,30 @@ class ComplexSV:
         self.mei_bed = mei_bed
         self.rdtest = rdtest
 
-        self.inversions = [r for r in records if r.info['SVTYPE'] == 'INV']
-        self.tlocs = [r for r in records if r.chrom != r.info['CHR2']]
-        self.breakends = [r for r in records if (r.chrom == r.info['CHR2']) and
-                                                (r.info['SVTYPE'] == 'BND')]
-        self.insertions = [r for r in records if r.info['SVTYPE'] == 'INS']
-
-        cnvtypes = 'DEL DUP'.split()
-        self.cnvs = [r for r in records if r.info['SVTYPE'] in cnvtypes]
+        self.organize_records()
 
         self.make_record()
         self.resolve()
         self.clean_record()
+
+    def organize_records(self):
+        self.inversions = [r for r in self.records if r.info['SVTYPE'] == 'INV']
+        self.tlocs = [r for r in self.records if r.chrom != r.info['CHR2']]
+        self.breakends = [r for r in self.records if (r.chrom == r.info['CHR2']) and
+                                                (r.info['SVTYPE'] == 'BND')]
+        self.insertions = [r for r in self.records if r.info['SVTYPE'] == 'INS']
+
+        cnvtypes = 'DEL DUP'.split()
+        self.cnvs = [r for r in self.records if r.info['SVTYPE'] in cnvtypes]
+
+    def remove_SR_only_breakpoints(self):
+        def _is_SR_only(record):
+            return record.info.get('EVIDENCE', None) == ('SR', )
+
+        if 'EVIDENCE' in self.records[0].header.info.keys():
+            self.records = [r for r in self.records if not _is_SR_only(record)]
+        else:
+            pass
 
     def resolve(self):
         self.set_cluster_type()
@@ -58,7 +70,19 @@ class ComplexSV:
         elif self.cluster_type == 'RESOLVED_INSERTION':
             self.report_simple_insertion()
         else:
-            self.set_unresolved()
+            self.remove_SR_only_breakpoints()
+            self.organize_records()
+            self.set_cluster_type()
+            if self.cluster_type == 'CANDIDATE_INVERSION':
+                self.resolve_inversion()
+            elif self.cluster_type == 'CANDIDATE_TRANSLOCATION':
+                self.resolve_translocation()
+            elif self.cluster_type == 'CANDIDATE_INSERTION':
+                self.resolve_insertion()
+            elif self.cluster_type == 'RESOLVED_INSERTION':
+                self.report_simple_insertion()
+            else:
+                self.set_unresolved()
 
     def clean_record(self):
         """
@@ -137,7 +161,7 @@ class ComplexSV:
                 self.cpx_type = 'MEI_' + self.cpx_type.split('/')[1]
             elif is_dup:
                 self.svtype = 'CPX'
-                self.cpx_type = 'INV_' + self.cpx_type.split('/')[0]
+                self.cpx_type = 'INV_DISPERSED_DUP'
             else:
                 self.cpx_type = self.cpx_type.split('/')[1]
 
