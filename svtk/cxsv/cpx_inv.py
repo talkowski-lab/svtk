@@ -13,7 +13,7 @@ import numpy as np
 import svtk.utils as svu
 
 
-def breakpoint_ordering(FF, RR, mh_buffer=20):
+def breakpoint_ordering(FF, RR, mh_buffer=10):
     """
     Match paired breakpoints to known coordinate orderings.
 
@@ -66,7 +66,7 @@ def breakpoint_ordering(FF, RR, mh_buffer=20):
         return 'UNK'
 
 
-def breakpoints_match(FF, RR, svtype, mh_buffer=20):
+def breakpoints_match(FF, RR, svtype, mh_buffer=10):
     """
     Test if the coordinate ordering matches the class predicted by CNV overlap.
 
@@ -335,7 +335,7 @@ def classify_0_cnv(FF, RR, min_bkpt_cnv_size=300):
     """
 
     # Identify breakpoint ordering
-    order = breakpoint_ordering(FF, RR, mh_buffer=20)
+    order = breakpoint_ordering(FF, RR, mh_buffer=10)
 
     # Check for flanking deletions around a "simple" inversion
     if order == 'SIMPLE/DEL':
@@ -411,7 +411,7 @@ def classify_complex_inversion(FF, RR, cnvs):
     else:
         return 'MULT_CNVS', pass_raw_cnvs
 
-    if breakpoints_match(FF, RR, svtype, mh_buffer=20):
+    if breakpoints_match(FF, RR, svtype, mh_buffer=10):
         return svtype, pass_raw_cnvs
     else:
         return 'COMPLEX_INS', pass_raw_cnvs
