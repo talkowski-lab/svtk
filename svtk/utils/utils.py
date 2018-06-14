@@ -249,6 +249,30 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
                     start, end = coords.split('-')
                     yield entry.format(**locals())
 
+            elif (record.info.get('SVTYPE', None) == 'CPX' and
+                  ('INS' in record.info.get('CPX_TYPE', None) or
+                   'DISPERSED_DUP' in record.info.get('CPX_TYPE', None))):
+                if annotate_ins:
+                    svtype = 'DEL'
+                end = record.stop
+
+                # We permit start > end in insertions in cases of
+                # microdup/microhomology
+                # Reorder start/end so bedtools doesn't break
+                start, end = sorted([start, end])
+                yield entry.format(**locals())
+
+                if split_cpx:
+                    if record.info.get('CPX_TYPE', None) == 'INV_DISPERSED_DUP':
+                        svtype = 'DUP'
+                    else:
+                        svtype = 'INS'
+                    source = record.info.get('SOURCE')
+                    region = source.split('_')[1]
+                    chrom, coords = region.split(':')
+                    start, end = coords.split('-')
+                    yield entry.format(**locals())
+
             else:
                 end = record.stop
                 yield entry.format(**locals())

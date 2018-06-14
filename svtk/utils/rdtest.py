@@ -97,9 +97,13 @@ class RdTest:
 
         cutoffs = self.get_cutoffs(cutoff_type)
 
-        return (metrics.Median_Separation >= cutoffs.min_Median_Separation and
-                -np.log10(metrics.P) >= cutoffs.min_log_pval and
-                -np.log10(metrics['2ndMaxP']) >= cutoffs.min_log_2ndMaxP)
+        # if separation is a string, coverage failure
+        if isinstance(metrics.Median_Separation, str):
+            return False
+        else:
+            return (metrics.Median_Separation >= cutoffs.min_Median_Separation and
+                    -np.log10(metrics.P) >= cutoffs.min_log_pval and
+                    -np.log10(metrics['2ndMaxP']) >= cutoffs.min_log_2ndMaxP)
 
     def test(self, records, quiet=True):
         metrics = call_rdtest(records, self.bincov_file, self.medianfile,
