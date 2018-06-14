@@ -16,7 +16,7 @@ from .cpx_tloc import classify_simple_translocation, classify_insertion
 
 
 class ComplexSV:
-    def __init__(self, records, cytobands, mei_bed, rdtest):
+    def __init__(self, records, cytobands, mei_bed):
         """
         Parameters
         ----------
@@ -25,13 +25,12 @@ class ComplexSV:
         cytobands : pysam.TabixFile
             Cytoband bed file (to classify interchromosomal)
         mei_bed : pybedtools.BedTool
-        rdtest : svtk.utils.RdTest
         """
 
         self.records = records
         self.cytobands = cytobands
         self.mei_bed = mei_bed
-        self.rdtest = rdtest
+        #  self.rdtest = rdtest
 
         self.organize_records()
 
@@ -154,16 +153,16 @@ class ComplexSV:
                                        source_end, self.mei_bed)
 
             # then check for RdTest support
-            is_dup = check_rdtest(self.vcf_record, source_start, source_end,
-                                  self.rdtest)
+            #  is_dup = check_rdtest(self.vcf_record, source_start, source_end,
+                                  #  self.rdtest)
 
             if is_mei:
                 self.cpx_type = 'MEI_' + self.cpx_type.split('/')[1]
-            elif is_dup:
-                self.svtype = 'CPX'
-                self.cpx_type = 'INV_DISPERSED_DUP'
-            else:
-                self.cpx_type = self.cpx_type.split('/')[1]
+            #  elif is_dup:
+                #  self.svtype = 'CPX'
+                #  self.cpx_type = 'INV_DISPERSED_DUP'
+            #  else:
+                #  self.cpx_type = self.cpx_type.split('/')[1]
 
             self.vcf_record.pos = sink_start
             self.vcf_record.stop = sink_end

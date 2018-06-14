@@ -87,7 +87,7 @@ def _merge_records(vcf, cpx_records, cpx_record_ids):
                 yield record
 
 
-def resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed, rdtest,
+def resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed,
                        variant_prefix='CPX_'):
     """
     Resolve complex SV from CNV intervals and BCA breakpoints.
@@ -100,7 +100,6 @@ def resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed, rdtest,
     cytobands : pysam.TabixFile
     disc_pairs : pysam.TabixFile
     mei_bed : pybedtools.BedTool
-    rdtest : svtk.utils.RdTest
     variant_prefix : str
         Prefix to assign to resolved variants
 
@@ -130,7 +129,7 @@ def resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed, rdtest,
         # if cxsv overlap pulled in unrelated insertions, keep them separate
         if all([r.info['SVTYPE'] == 'INS' for r in cluster]):
             for record in cluster:
-                cpx = ComplexSV([record], cytobands, mei_bed, rdtest)
+                cpx = ComplexSV([record], cytobands, mei_bed)
                 cpx_record_ids = cpx_record_ids.union(cpx.record_ids)
     
                 cpx.vcf_record.id = variant_prefix + str(resolved_idx)
@@ -138,7 +137,7 @@ def resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed, rdtest,
                 resolved_idx += 1
 
         else:
-            cpx = ComplexSV(cluster, cytobands, mei_bed, rdtest)
+            cpx = ComplexSV(cluster, cytobands, mei_bed)
             cpx_record_ids = cpx_record_ids.union(cpx.record_ids)
     
             if cpx.svtype == 'UNR':
@@ -193,11 +192,11 @@ def main(argv):
     parser.add_argument('--cytobands', help='Cytoband file. Required to '
                         'correctly classify interchromosomal events.',
                         required=True)
-    parser.add_argument('--bincov', help='Bincov file.', required=True)
-    parser.add_argument('--medianfile', help='Medianfile', required=True)
-    parser.add_argument('--famfile', help='Fam file', required=True)
-    parser.add_argument('--cutoffs', help='Random forest cutoffs',
-                        required=True)
+    #  parser.add_argument('--bincov', help='Bincov file.', required=True)
+    #  parser.add_argument('--medianfile', help='Medianfile', required=True)
+    #  parser.add_argument('--famfile', help='Fam file', required=True)
+    #  parser.add_argument('--cutoffs', help='Random forest cutoffs',
+                        #  required=True)
     parser.add_argument('-u', '--unresolved', type=argparse.FileType('w'),
                         help='Unresolved complex breakpoints and CNV.')
     parser.add_argument('-p', '--prefix', default='CPX_',
@@ -222,9 +221,9 @@ def main(argv):
     cytobands = pysam.TabixFile(args.cytobands)
 
     mei_bed = pbt.BedTool(args.mei_bed)
-    cutoffs = pd.read_table(args.cutoffs)
-    rdtest = svu.RdTest(args.bincov, args.medianfile, args.famfile, 
-                        list(vcf.header.samples), cutoffs)
+    #  cutoffs = pd.read_table(args.cutoffs)
+    #  rdtest = svu.RdTest(args.bincov, args.medianfile, args.famfile, 
+                        #  list(vcf.header.samples), cutoffs)
 
     if args.discfile is not None:
         disc_pairs = pysam.TabixFile(args.discfile)
@@ -236,7 +235,7 @@ def main(argv):
         disc_pairs = svu.MultiTabixFile(tabixfiles)
 
     for record in resolve_complex_sv(vcf, cytobands, disc_pairs, 
-                                     mei_bed, rdtest, args.prefix):
+                                     mei_bed, args.prefix):
         if record.info['UNRESOLVED']:
             unresolved_f.write(record)
         else:
