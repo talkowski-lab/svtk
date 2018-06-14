@@ -97,6 +97,9 @@ def main(argv):
     parser.add_argument('-t', '--svtypes', default='DEL,DUP,INV,BND',
                         help='Comma delimited list of svtypes to cluster '
                         '[DEL,DUP,INV,BND]')
+    parser.add_argument('-o', '--sample-overlap', type=float, default=0.0,
+                        help='Minimum sample overlap for two variants to be '
+                        'clustered together.')
     parser.add_argument('--preserve-ids', action='store_true', default=False,
                         help='Include list of IDs of constituent records in '
                         'each cluster.')
