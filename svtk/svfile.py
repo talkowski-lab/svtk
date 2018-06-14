@@ -10,7 +10,7 @@ Wrap the pysam API to permit clustering of standardized SV VCF records.
 
 import numpy as np
 from collections import defaultdict
-from .utils import recip, make_bnd_alt, update_best_genotypes
+from .utils import recip, make_bnd_alt, update_best_genotypes, samples_overlap, get_called_samples
 from .genomeslink import GSNode
 
 
@@ -114,7 +114,8 @@ class SVRecord(GSNode):
 
         super().__init__(chrA, posA, chrB, posB, name)
 
-    def clusters_with(self, other, dist, frac=0.0, match_strands=False):
+    def clusters_with(self, other, dist, frac=0.0, match_strands=False,
+                      sample_overlap=0.0):
         """
         Check if two SV cluster with each other.
 
@@ -144,8 +145,16 @@ class SVRecord(GSNode):
             if self.record.info['STRANDS'] != other.record.info['STRANDS']:
                 return False
 
-        return(super().clusters_with(other, dist) and
-               self.overlaps(other, frac))
+        clusters = (super().clusters_with(other, dist) and
+                    self.overlaps(other, frac))
+
+        # Only compute sample overlap if a minimum sample overlap is required
+        if sample_overlap > 0:
+            samplesA = get_called_samples(self.record)
+            samplesB = get_called_samples(other.record)
+            clusters = clusters and samples_overlap(samplesA, samplesB, sample_overlap, sample_overlap)
+
+        return clusters
 
     def overlaps(self, other, frac=0.0):
         """

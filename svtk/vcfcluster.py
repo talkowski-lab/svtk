@@ -27,7 +27,7 @@ class VCFCluster(GenomeSLINK):
                  dist=500, frac=0.0,
                  match_strands=True, preserve_ids=False,
                  region=None, blacklist=None, svtypes=None,
-                 preserve_genotypes=False):
+                 preserve_genotypes=False, sample_overlap=0.0):
         """
         Clustering of VCF records.
 
@@ -67,6 +67,8 @@ class VCFCluster(GenomeSLINK):
             SV classes to be clustered. Records with an svtype not present in
             this list will be removed prior to clustering. If no list is
             specified, all svtypes will be clustered.
+        sample_overlap : float, optional
+            Minimum fraction of samples to overlap to cluster variants
         """
 
         # Wrap VCFs as SVFiles
@@ -96,6 +98,7 @@ class VCFCluster(GenomeSLINK):
         self.svtypes = svtypes
         self.preserve_ids = preserve_ids
         self.preserve_genotypes = preserve_genotypes
+        self.sample_overlap = sample_overlap
 
         # Build VCF header for new record construction
         self.samples = sorted(samples)
@@ -135,7 +138,8 @@ class VCFCluster(GenomeSLINK):
         record : SVRecord
         """
         clusters = super().cluster(frac=self.frac,
-                                   match_strands=self.match_strands)
+                                   match_strands=self.match_strands,
+                                   sample_overlap=self.sample_overlap)
         
         for records in clusters:
             cluster = SVRecordCluster(records)
