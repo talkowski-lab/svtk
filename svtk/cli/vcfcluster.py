@@ -65,7 +65,8 @@ def parse_filepaths(filepaths):
     return vcfs
 
 
-def main(argv):
+def make_argparse():
+    """Build argument parser"""
     parser = argparse.ArgumentParser(
         description=__doc__,
         prog='svtk vcfcluster',
@@ -102,6 +103,12 @@ def main(argv):
                         'each cluster.')
     #  parser.add_argument('--cluster-bed', type=argparse.FileType('w'),
     #                      help='Bed of constituent calls in each cluster')
+
+    return parser
+
+
+def main(argv):
+    parser = make_argparse()
 
     # Print help if no arguments specified
     if len(argv) == 0:

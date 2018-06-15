@@ -64,7 +64,7 @@ def count_svtypes(vcf):
     return counts
 
 
-def main(argv):
+def make_argparse():
     parser = argparse.ArgumentParser(
         description=__doc__,
         prog='svtk count-svtypes',
@@ -78,6 +78,12 @@ def main(argv):
                         help='Sum variant counts across samples')
     parser.add_argument('fout', type=argparse.FileType('w'), nargs='?',
                         default=sys.stdout, help='Output file [stdout]')
+
+    return parser
+
+
+def main(argv):
+    parser = make_argparse()
 
     # Print help if no arguments specified
     if len(argv) == 0:

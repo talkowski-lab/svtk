@@ -143,7 +143,7 @@ def collapse_sample_calls(cluster):
     return list(variants)
 
 
-def main(argv):
+def make_argparse():
     parser = argparse.ArgumentParser(
         description=__doc__,
         prog='svtk bedcluster',
@@ -168,6 +168,12 @@ def main(argv):
                         help='Temporary directory [/tmp]')
     parser.add_argument('-s', '--intersection', default=None,
                         help='Pre-computed self-intersection of bed.')
+
+    return parser
+
+
+def main(argv):
+    parser = make_argparse()
 
     # Print help if no arguments specified
     if len(argv) == 0:

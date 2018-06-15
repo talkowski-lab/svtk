@@ -140,9 +140,7 @@ def binCov(bam, chr, binsize, mode='nucleotide', overlap=0.05,
     return coverage
 
 
-# Main function
-def main(argv):
-    # Add arguments
+def make_argparse():
     parser = argparse.ArgumentParser(
         description=__doc__,
         prog='svtk bincov')
@@ -172,6 +170,14 @@ def main(argv):
                         action='store_true',
                         help='Using a bedtools version pre-2.24.0')
     parser.set_defaults(presubbed=False)
+
+    return parser
+
+
+# Main function
+def main(argv):
+    # Add arguments
+    parser = make_argparse()
 
     # Print help if no arguments specified
     if len(argv) == 0:

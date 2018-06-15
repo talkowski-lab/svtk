@@ -50,7 +50,7 @@ import pybedtools as pbt
 import svtk.annotation as anno
 
 
-def main(argv):
+def make_argparse():
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -60,6 +60,12 @@ def main(argv):
     parser.add_argument('--noncoding', help='Noncoding elements (bed). '
                         'Columns = chr,start,end,element_class,element_name')
     parser.add_argument('annotated_vcf', help='Annotated variants.')
+
+    return parser
+
+
+def main(argv):
+    parser = make_argparse()
 
     # Print help if no arguments specified
     if len(argv) == 0:
