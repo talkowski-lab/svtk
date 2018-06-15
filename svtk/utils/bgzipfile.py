@@ -13,9 +13,15 @@ import subprocess
 
 
 class BgzipFile:
-    def __init__(self, filename, bgzip=True):
+    """
+    Opens a writable bgzipped file
+
+    Parameters
+    ----------
+    filename : str
+    """
+    def __init__(self, filename):
         self.filename = filename
-        self.bgzip = bgzip
 
     def __enter__(self):
         # Open output file
@@ -24,15 +30,14 @@ class BgzipFile:
         else:
             self.file = open(self.filename, 'wb')
 
-        if self.bgzip:
-            if not self.filename.endswith('gz'):
-                msg = 'Bgzipped filename "{0}" does not end with .gz'
-                raise Exception(msg.format(self.filename))
+        if not self.filename.endswith('gz'):
+            msg = 'Bgzipped filename "{0}" does not end with .gz'
+            raise Exception(msg.format(self.filename))
 
-            self.pipe = subprocess.Popen(['bgzip', '-c'],
-                                         stdin=subprocess.PIPE,
-                                         stdout=self.file)
-            self.file = self.pipe.stdin
+        self.pipe = subprocess.Popen(['bgzip', '-c'],
+                                     stdin=subprocess.PIPE,
+                                     stdout=self.file)
+        self.file = self.pipe.stdin
 
         return self.file
 
