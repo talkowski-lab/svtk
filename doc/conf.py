@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# svtools documentation build configuration file, created by
+# svtk documentation build configuration file, created by
 # sphinx-quickstart on Wed Apr 26 08:34:10 2017.
 #
 # This file is execfile()d with the current directory set to its
@@ -44,7 +44,8 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.coverage',
     'sphinx.ext.githubpages',
-    'sphinx.ext.napoleon']
+    'sphinx.ext.napoleon',
+    'sphinxarg.ext']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -59,7 +60,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'svtools'
+project = 'svtk'
 copyright = '2017, Matthew Stone'
 author = 'Matthew Stone'
 
@@ -115,7 +116,7 @@ html_static_path = ['_static']
 # -- Options for HTMLHelp output ------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'svtoolsdoc'
+htmlhelp_basename = 'svtkdoc'
 
 
 # -- Options for LaTeX output ---------------------------------------------
@@ -142,7 +143,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'svtools.tex', 'svtools Documentation',
+    (master_doc, 'svtk.tex', 'svtk Documentation',
      'Matthew Stone', 'manual'),
 ]
 
@@ -152,7 +153,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'svtools', 'svtools Documentation',
+    (master_doc, 'svtk', 'svtk Documentation',
      [author], 1)
 ]
 
@@ -163,8 +164,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'svtools', 'svtools Documentation',
-     author, 'svtools', 'One line description of project.',
+    (master_doc, 'svtk', 'svtk Documentation',
+     author, 'svtk', 'One line description of project.',
      'Miscellaneous'),
 ]
 
