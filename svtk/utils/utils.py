@@ -20,7 +20,20 @@ def is_smaller_chrom(chrA, chrB):
     """
     Test if chrA is naturally less than chrB
 
+    i.e. numeric chromosomes are compared numerically, and always precede X/Y.
+
+    Works with chromosome names formatted as 1 or chr1
+
     Returns True if chrA == chrB so comparison will default to position
+
+    Parameters
+    ----------
+    chrA : str
+    chrB : str
+
+    Returns
+    -------
+    is_smaller : bool
     """
 
     if chrA.startswith('chr'):
@@ -44,6 +57,18 @@ def is_smaller_chrom(chrA, chrB):
 def recip(startA, endA, startB, endB, frac):
     """
     Test if two intervals share a specified reciprocal overlap.
+
+    Parameters
+    ----------
+    startA : int
+    endA : int
+    startB : int
+    endB : int
+    frac : float
+
+    Returns
+    -------
+    recip : bool
     """
 
     if frac == 0:
@@ -67,6 +92,19 @@ def recip(startA, endA, startB, endB, frac):
 def make_bnd_alt(chrom, pos, strands):
     """
     Make ALT for BND record in accordance with VCF specification.
+
+    e.g., for chromosome 22, position 1000, strands ++, returns N]22:1000]
+
+    Parameters
+    ----------
+    chrom : str
+    pos : int
+    strands : str
+       one of ++,+-,-+,-- 
+
+    Returns
+    -------
+    alt : str
     """
 
     p = '{0}:{1}'.format(chrom, pos)
@@ -79,13 +117,15 @@ def make_bnd_alt(chrom, pos, strands):
         fmt = ']{0}]N'
     elif strands == '--':
         fmt = '[{0}[N'
+    else:
+        raise Exception('Invalid strands: {0}'.format(strands))
 
     return fmt.format(p)
 
 
 def get_called_samples(record, include_null=False):
     """
-    Return list of samples with variant call
+    Given a variant record, return list of samples with variant call
 
     Parameters
     ----------
@@ -247,7 +287,14 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
 
 
 def set_null(record, sample):
-    """Remove sample call from a VariantRecord"""
+    """
+    Remove sample call from a VariantRecord. Operates on the Record in place.
+
+    Parameters
+    ----------
+    record : pysam.VariantRecord
+    sample : str
+    """
     dat = record.samples[sample].items()
 
     # Set genotype to no-call
@@ -287,10 +334,12 @@ def samples_overlap(samplesA, samplesB, upper_thresh=0.8, lower_thresh=0.5):
     least 80% of its samples appear in the other set, while the set with lesser
     overlap must have at least 50% of its samples appear in the other set.
 
-    Arguments
-    ---------
-    samplesA : list of str OR pysam.VariantRecord
-    samplesB : list of str OR pysam.VariantRecord
+    Parameters
+    ----------
+    samplesA : pysam.VariantRecord OR list of str
+    samplesB : pysam.VariantRecord OR list of str
+    upper_thresh : float
+    lower_thresh : float
     """
 
     if isinstance(samplesA, pysam.VariantRecord):
