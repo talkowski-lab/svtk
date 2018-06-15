@@ -5,6 +5,16 @@ svtk.utils - Utility function and classes for working with SV in Python
 Introduction
 ============
 
+The svtk.utils module includes a variety of utility functions and classes that
+are used throughout the other components of SVTK and are intended for general
+purpose use in SV analysis.
+
+SVTK relies heavily on pysam and the utils module is frequently imported in
+tandem::
+
+   import pysam
+   import svtk.utils as svu
+
 API
 ===
 
@@ -49,17 +59,3 @@ Miscellaneous helpers
 ---------------------
 
 .. autofunction:: svtk.utils.make_bnd_alt
-
-
-Tabix files
------------
-
-:class:`~pysam.TabixFile` opens tabular files that have been
-indexed with tabix_.
-
-.. autoclass:: pysam.TabixFile
-   :members:
-
-To iterate over tabix files, use :func:`~pysam.tabix_iterator`:
-
-.. autofunction:: pysam.tabix_iterator
