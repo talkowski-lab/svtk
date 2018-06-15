@@ -38,9 +38,13 @@ def annotate_noncoding(sv, noncoding):
     # For now, any overlap gets annotated
     noncoding_hits = annotate_intersection(sv, noncoding, filetype='bed')
     noncoding_hits = noncoding_hits.drop_duplicates()
-    noncoding_hits['effect'] = 'NONCODING'
+   
+    noncoding_hits.loc[noncoding_hits.hit_type == 'SPAN', 'effect'] = 'NONCODING_SPAN'
+    noncoding_hits.loc[noncoding_hits.hit_type != 'SPAN', 'effect'] = 'NONCODING_BREAKPOINT'
+
     noncoding_cols = 'name svtype gene_name effect'.split()
-    effects = noncoding_hits[noncoding_cols]
+
+    effects = noncoding_hits[noncoding_cols].drop_duplicates()
 
     return effects
 
@@ -96,12 +100,14 @@ GENCODE_INFO = [
     '##INFO=<ID=INTRONIC,Number=.,Type=String,Description="Gene(s) where the SV was found to lie entirely within an intron.">',
     '##INFO=<ID=DUP_PARTIAL,Number=.,Type=String,Description="Gene(s) which are partially overlapped by an SV\'s duplication, such that an unaltered copy is preserved.">',
     '##INFO=<ID=INV_SPAN,Number=.,Type=String,Description="Gene(s) which are entirely spanned by an SV\'s inversion.">',
+    '##INFO=<ID=UTR,Number=.,Type=String,Description="Gene(s) for which the SV is predicted to disrupt a UTR.">',
     '##INFO=<ID=NEAREST_TSS,Number=.,Type=String,Description="Nearest transcription start site to intragenic variants.">',
-    '##INFO=<ID=INTRAGENIC,Number=0,Type=Flag,Description="SV does not overlap coding sequence.">'
+    '##INFO=<ID=INTERGENIC,Number=0,Type=Flag,Description="SV does not overlap coding sequence.">'
 ]
 
 NONCODING_INFO = [
-    '##INFO=<ID=NONCODING,Number=.,Type=String,Description="Classes of noncoding elements disrupted by SV.">',
+    '##INFO=<ID=NONCODING_SPAN,Number=.,Type=String,Description="Classes of noncoding elements spanned by SV.">',
+    '##INFO=<ID=NONCODING_BREAKPOINT,Number=.,Type=String,Description="Classes of noncoding elements disrupted by SV breakpoint.">',
 ]
 
 
@@ -132,7 +138,11 @@ def annotate_vcf(vcf, gencode, noncoding, annotated_vcf):
     fout = pysam.VariantFile(annotated_vcf, 'w', header=header)
 
     # Annotate genic hits
-    sv = svu.vcf2bedtool(vcf.filename, split_bnd=True, split_cpx=True)
+    if isinstance(vcf.filename, bytes):
+        fname = vcf.filename.decode()
+    else:
+        fname = vcf.filename
+    sv = svu.vcf2bedtool(fname, split_bnd=True, split_cpx=True)
 
     effects = annotate(sv, gencode, noncoding)
     effects = effects.to_dict(orient='index')
@@ -149,7 +159,7 @@ def annotate_vcf(vcf, gencode, noncoding, annotated_vcf):
                 record.info[info] = genelist
 
         if 'NEAREST_TSS' in record.info:
-            record.info['INTRAGENIC'] = True
+            record.info['INTERGENIC'] = True
 
         fout.write(record)
 

@@ -16,11 +16,11 @@ from .pesr_test import PESRTest, PESRTestRunner
 
 
 class SRTest(PESRTest):
-    def __init__(self, countfile, window=50):
+    def __init__(self, countfile, window=50, medians=None):
         self.countfile = countfile
         self.window = window
 
-        super().__init__()
+        super().__init__(medians)
 
     def test_record(self, record, called, background):
         # Test SR support at all coordinates within window of start/end
@@ -37,7 +37,9 @@ class SRTest(PESRTest):
 
         # Clean up columns
         results['name'] = record.id
-        cols = 'name coord pos log_pval called background'.split()
+        results['bg_frac'] = results.called / (results.background + results.called)
+        results['bg_frac'] = results.bg_frac.fillna(0)
+        cols = 'name coord pos log_pval called background bg_frac'.split()
 
         return results[cols]
 
@@ -65,6 +67,7 @@ class SRTest(PESRTest):
 
         # Load split counts.
         counts = self.load_counts(chrom, pos, strand)
+        counts = self.normalize_counts(counts)
 
         return super().test(counts, called, background)
 
@@ -77,12 +80,11 @@ class SRTest(PESRTest):
         else:
             lines = []
         #  counts = io.StringIO('\n'.join([l for l in lines]))
-        counts = [l for l in lines]
 
         cols = 'chrom pos clip count sample'.split()
         #  dtypes = dict(chrom=str, pos=int, clip=str, count=int, sample=str)
 
-        counts = pd.DataFrame.from_records(counts, columns=cols)
+        counts = pd.DataFrame.from_records([l[:5] for l in lines], columns=cols)
         counts['count'] = counts['count'].astype(int)
 
         # Restrict to splits in orientation of interest
@@ -132,7 +134,7 @@ class SRTest(PESRTest):
 
 class SRTestRunner(PESRTestRunner):
     def __init__(self, vcf, countfile, fout, n_background=160, window=100,
-                 whitelist=None, blacklist=None):
+                 whitelist=None, blacklist=None, medians=None, log=False):
         """
         vcf : pysam.VariantFile
         countfile : pysam.TabixFile
@@ -142,10 +144,10 @@ class SRTestRunner(PESRTestRunner):
         whitelist : list of str
         blacklist : list of str
         """
-        self.srtest = SRTest(countfile, window)
+        self.srtest = SRTest(countfile, window, medians=medians)
         self.fout = fout
 
-        super().__init__(vcf, n_background, whitelist, blacklist)
+        super().__init__(vcf, n_background, whitelist, blacklist, log)
 
     def test_record(self, record):
         called, background = self.choose_background(record)

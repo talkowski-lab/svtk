@@ -84,6 +84,12 @@ class VCFStandardizer:
         for record in self.raw_vcf:
             if record.chrom not in self.std_vcf.header.contigs:
                 continue
+
+            if 'CHR2' in record.info:
+                chr2 = record.info.get('CHR2', None)
+                if chr2 not in self.std_vcf.header.contigs:
+                    continue
+
             # Filter on chr2 if a breakend
             if '[' in record.alts[0] or ']' in record.alts[0]:
                 chr2, end = parse_bnd_pos(record.alts[0])
@@ -126,6 +132,10 @@ class VCFStandardizer:
             if 0 < std_rec.info['SVLEN'] < self.min_size:
                 continue
 
+            # Exclude insertions of unknown SVLEN
+            if std_rec.info['SVTYPE'] == 'INS' and std_rec.info['SVLEN'] == -1:
+                continue
+
             # Exclude sites with no called samples unless requested otherwise
             if not any_called(std_rec) and not self.include_reference_sites:
                 continue
@@ -157,7 +167,12 @@ class VCFStandardizer:
         # Construct a new record and copy basic VCF fields
         std_rec = self.std_vcf.new_record()
         std_rec.chrom = raw_rec.chrom
-        std_rec.pos = raw_rec.pos
+
+        # pysam/htslib require non-negative pos
+        if raw_rec.pos == 0:
+            std_rec.pos = 1
+        else:
+            std_rec.pos = raw_rec.pos
         std_rec.id = raw_rec.id
         std_rec.ref = raw_rec.ref
         std_rec.alts = raw_rec.alts

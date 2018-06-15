@@ -9,7 +9,8 @@ Wrap the pysam API to permit clustering of standardized SV VCF records.
 """
 
 import numpy as np
-from .utils import recip, make_bnd_alt
+from collections import defaultdict
+from .utils import recip, make_bnd_alt, update_best_genotypes, samples_overlap, get_called_samples
 from .genomeslink import GSNode
 
 
@@ -113,7 +114,8 @@ class SVRecord(GSNode):
 
         super().__init__(chrA, posA, chrB, posB, name)
 
-    def clusters_with(self, other, dist, frac=0.0, match_strands=False):
+    def clusters_with(self, other, dist, frac=0.0, match_strands=False,
+                      sample_overlap=0.0):
         """
         Check if two SV cluster with each other.
 
@@ -131,18 +133,28 @@ class SVRecord(GSNode):
         if self.svtype != other.svtype:
             return False
 
-        # Require INS subclass to match
+        # If both records have an INS subclass specified, require it to match
+        # Otherwise, permit clustering if one or both don't have subclass
         if self.svtype == 'INS':
             if self.record.alts[0] != other.record.alts[0]:
-                return False
+                if self.record.alts[0] != '<INS>' and self.record.alts[0] != '<INS>':
+                    return False
 
         # If strands are required to match and don't, skip remaining calcs
         if match_strands:
             if self.record.info['STRANDS'] != other.record.info['STRANDS']:
                 return False
 
-        return(super().clusters_with(other, dist) and
-               self.overlaps(other, frac))
+        clusters = (super().clusters_with(other, dist) and
+                    self.overlaps(other, frac))
+
+        # Only compute sample overlap if a minimum sample overlap is required
+        if sample_overlap > 0:
+            samplesA = get_called_samples(self.record)
+            samplesB = get_called_samples(other.record)
+            clusters = clusters and samples_overlap(samplesA, samplesB, sample_overlap, sample_overlap)
+
+        return clusters
 
     def overlaps(self, other, frac=0.0):
         """
@@ -246,14 +258,22 @@ class SVRecordCluster:
         POS, END, CIPOS, CIEND = self.merge_pos()
         new_record.pos = POS
         new_record.stop = END
-        new_record.info['CIPOS'] = CIPOS
-        new_record.info['CIEND'] = CIEND
+        #  new_record.info['CIPOS'] = CIPOS
+        #  new_record.info['CIEND'] = CIEND
 
         # Assign alts, updating translocation alt based on merged coordinates
         if new_record.info['SVTYPE'] == 'BND':
             strands = new_record.info['STRANDS']
             alt = make_bnd_alt(base_record.chrB, END, strands)
             new_record.alts = (alt, )
+            new_record.stop = END
+        if new_record.info['SVTYPE'] == 'INS':
+            alts = set()
+            for record in self.records:
+                alts = alts.union(record.record.alts)
+            if len(alts) > 1:
+                alts = tuple(a for a in alts if a != '<INS>')
+            new_record.alts = alts
             new_record.stop = END
         else:
             new_record.alts = base_record.record.alts
@@ -278,15 +298,46 @@ class SVRecordCluster:
         new_record.filter.add('PASS')
 
         # Report cluster RMSSTD
-        new_record.info['RMSSTD'] = self.rmsstd
+        #  new_record.info['RMSSTD'] = self.rmsstd
 
         # List of aggregate sources
         new_record.info['ALGORITHMS'] = self.sources()
 
         return new_record
 
+    def merge_record_infos(self, new_record, header):
+        """
+        Aggregate INFO fields in child records
+        """
+        PROTECTED_INFOS = ('SVTYPE CHR2 END STRANDS SVLEN ALGORITHMS CIPOS '
+                           'CIEND RMSSTD MEMBERS').split()
+        records = [r.record for r in self.records]
+        infos = defaultdict(list)
+        
+        for record in records:
+            for info, value in record.info.items():
+                if info not in PROTECTED_INFOS:
+                    infos[info].append(value)
+
+        for info, values in infos.items():
+            if header.info[info].type == 'Flag':
+                new_record.info[info] = True
+            elif header.info[info].type == 'String':
+                if header.info[info].number == '.':
+                    new_record.info[info] = sorted(set([v for vlist in values for v in vlist]))
+                elif header.info[info].number == 1:
+                    new_record.info[info] = ','.join(sorted(set([v for vlist in values for v in vlist])))
+                else:
+                    new_record.info[info] = [','.join(vlist) for vlist in zip(values)]
+
+            # TODO merge numeric INFO
+            else:
+                pass
+
+        return new_record
+
     def merge_record_formats(self, new_record, sourcelist,
-                             call_sources=False):
+                             preserve_genotypes=False):
         """
         Aggregate sample genotype data across records.
 
@@ -303,11 +354,6 @@ class SVRecordCluster:
             Record to populate with FORMAT data
         sourcelist : list of str
             List of all sources to add a FORMAT field for
-        call_sources : bool, optional
-            If True, each record is already annotated with FORMAT data
-            indicating the supporting source algorithms for each sample.
-            If False, use each record's ALGORITHMS key to derive a supporting
-            algorithm for all samples called in the record.
 
         Returns
         -------
@@ -323,37 +369,25 @@ class SVRecordCluster:
                 new_record.samples[sample][source] = 0
 
         # Update with called samples
+        if preserve_genotypes:
+            # then overwrite genotypes of non-multiallelic sites as necessary
+            records = [r.record for r in self.records]
+            update_best_genotypes(new_record, records, preserve_multiallelic=True)
+
         # TODO: optionally permit ./. instead of rejecting
         # I think that was an issue with one caller, maybe handle in preproc
-        null_GTs = [(0, 0), (None, None), (0, ), (None, )]
-        for record in self.records:
-            for sample in record.record.samples:
-                gt = record.record.samples[sample]['GT']
-
-                # Skip samples without a call
-                if gt in null_GTs:
-                    continue
-
-                # Otherwise call the sample in the new record
-                new_record.samples[sample]['GT'] = (0, 1)
-
-                # If call sources are already provided, add them
-                if call_sources:
-                    for source in sourcelist:
-                        # Get the sample's current source call and the
-                        # record's source call for that sample
-                        call = new_record.samples[sample].get(source)
-                        src_call = record.record.samples[sample].get(source)
-
-                        # If sample was already called by the source, or if
-                        # it was called by the source in the current record,
-                        # call it in the new record
-                        call = call or src_call
-                        new_record.samples[sample][source] = call
-                # Otherwise add the record's ALGORITHMS
-                else:
-                    for source in record.record.info['ALGORITHMS']:
-                        new_record.samples[sample][source] = 1
+        else:
+            null_GTs = [(0, 0), (None, None), (0, ), (None, )]
+            for record in self.records:
+                for sample in record.record.samples:
+                    gt = record.record.samples[sample]['GT']
+    
+                    # Skip samples without a call
+                    if gt in null_GTs:
+                        continue
+    
+                    # Otherwise call the sample in the new record
+                    new_record.samples[sample]['GT'] = (0, 1)
 
         return new_record
 

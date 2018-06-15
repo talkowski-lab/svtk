@@ -18,7 +18,7 @@ import heapq
 import re
 import pkg_resources
 from pysam import VariantFile
-from svtk.svfile import SVFile, SVRecordCluster
+from svtk.svfile import SVFile, SVRecordCluster, SVRecord
 from svtk.genomeslink import GenomeSLINK
 
 
@@ -26,7 +26,8 @@ class VCFCluster(GenomeSLINK):
     def __init__(self, vcfs,
                  dist=500, frac=0.0,
                  match_strands=True, preserve_ids=False,
-                 region=None, blacklist=None, svtypes=None):
+                 region=None, blacklist=None, svtypes=None,
+                 preserve_genotypes=False, sample_overlap=0.0):
         """
         Clustering of VCF records.
 
@@ -53,6 +54,8 @@ class VCFCluster(GenomeSLINK):
             Two records must share strandedness in order to be linked.
         preserve_ids : bool, optional
             Keep list of constituent record IDs for each cluster.
+        preserve_genotypes : bool, optional
+            Report best non-reference genotype for each sample.
         region : str, optional
             Genomic region to fetch for clustering. If None, all regions
             present will be clustered.
@@ -64,9 +67,12 @@ class VCFCluster(GenomeSLINK):
             SV classes to be clustered. Records with an svtype not present in
             this list will be removed prior to clustering. If no list is
             specified, all svtypes will be clustered.
+        sample_overlap : float, optional
+            Minimum fraction of samples to overlap to cluster variants
         """
 
         # Wrap VCFs as SVFiles
+        self.vcfs = vcfs
         svfiles = [SVFile(vcf) for vcf in vcfs]
 
         # Fetch region of interest
@@ -91,6 +97,8 @@ class VCFCluster(GenomeSLINK):
         self.match_strands = match_strands
         self.svtypes = svtypes
         self.preserve_ids = preserve_ids
+        self.preserve_genotypes = preserve_genotypes
+        self.sample_overlap = sample_overlap
 
         # Build VCF header for new record construction
         self.samples = sorted(samples)
@@ -130,16 +138,23 @@ class VCFCluster(GenomeSLINK):
         record : SVRecord
         """
         clusters = super().cluster(frac=self.frac,
-                                   match_strands=self.match_strands)
+                                   match_strands=self.match_strands,
+                                   sample_overlap=self.sample_overlap)
+        
         for records in clusters:
             cluster = SVRecordCluster(records)
 
             if merge:
                 record = self.header.new_record()
                 record = cluster.merge_record_data(record)
-                record = cluster.merge_record_formats(record, self.sources)
+                record = cluster.merge_record_formats(record, self.sources,
+                                                      self.preserve_genotypes)
+                record = cluster.merge_record_infos(record, self.header)
                 if self.preserve_ids:
                     record.info['MEMBERS'] = [r.record.id for r in records]
+
+                if SVRecord(record).is_in(self.blacklist):
+                    continue
                 yield record
             else:
                 yield cluster
@@ -165,6 +180,32 @@ class VCFCluster(GenomeSLINK):
         for sample in self.samples:
             header.add_sample(sample)
 
+        # Add contigs
+        contigs = []
+        for vcf in self.vcfs:
+            for contig in vcf.header.contigs.values():
+                tup = (contig.name, contig.length)
+                if tup not in contigs:
+                    contigs.append(tup)
+
+        contig_line = '##contig=<ID={0},length={1}>'
+        for contig in contigs:
+            header.add_line(contig_line.format(*contig))
+
+        # Add INFO
+        infos = []
+        for vcf in self.vcfs:
+            for tag, info in vcf.header.info.items():
+                if tag in header.info.keys():
+                    continue
+                tup = (info.name, info.number, info.type, info.description)
+                if tup not in infos:
+                    infos.append(tup)
+        
+        info_line = '##INFO=<ID={0},Number={1},Type={2},Description="{3}">'
+        for info in infos:
+            header.add_line(info_line.format(*info))
+        
         # Add source
         sourcelist = sorted(set(self.sources))
         header.add_line('##source={0}'.format(','.join(sourcelist)))

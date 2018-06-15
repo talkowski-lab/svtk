@@ -8,6 +8,8 @@
 
 """
 
+import sys
+import datetime
 import numpy as np
 import scipy.stats as ss
 import pandas as pd
@@ -15,8 +17,8 @@ import svtk.utils as svu
 
 
 class PESRTest:
-    def __init__(self):
-        pass
+    def __init__(self, medians=None):
+        self.medians = medians
 
     def test(self, counts, samples, background):
         """
@@ -66,6 +68,17 @@ class PESRTest:
 
         return result
 
+    def normalize_counts(self, counts, target_cov=60):
+        if self.medians is None:
+            return counts
+
+        counts = pd.merge(counts, self.medians, on='sample', how='left')
+        counts['norm_count'] = counts['count'] * target_cov / counts['median_cov']
+        counts['count'] = counts['norm_count'].round()
+        counts.drop(['norm_count', 'median_cov'], axis=1, inplace=True)
+        
+        return counts
+
     def null_score(self, null_val=0.0):
         """Null score if no clipped reads observed"""
         score = pd.Series([null_val] * 3,
@@ -76,7 +89,8 @@ class PESRTest:
 
 
 class PESRTestRunner:
-    def __init__(self, vcf, n_background=160, whitelist=None, blacklist=None):
+    def __init__(self, vcf, n_background=160, whitelist=None, blacklist=None,
+                 log=False):
         self.vcf = vcf
 
         self.samples = list(vcf.header.samples)
@@ -85,9 +99,29 @@ class PESRTestRunner:
         self.whitelist = whitelist if whitelist else self.samples
         self.blacklist = blacklist if blacklist else []
 
+        self.log = log
+
     def run(self):
-        for record in self.vcf:
+        if self.log:
+            start = datetime.datetime.now()
+
+        for i, record in enumerate(self.vcf):
+            t0 = datetime.datetime.now()
             self.test_record(record)
+            t1 = datetime.datetime.now()
+
+            if self.log:
+                n_records = i + 1
+                var_time = (t1 - t0).total_seconds()
+                total_time = (t1 - start).total_seconds()
+                hours, remainder = divmod(total_time, 3600)
+                minutes, seconds = divmod(remainder, 60)
+
+                msg = ('%d variants processed. '
+                       'Time to process last variant: %0.2f seconds. '
+                       'Total time elapsed: %d hours, %d minutes, %0.2f seconds.')
+                msg = msg % (n_records, var_time, int(hours), int(minutes), seconds)
+                sys.stderr.write(msg + '\n')
 
     def test_record(self, record):
         called, background = self.choose_background(record)

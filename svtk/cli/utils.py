@@ -11,6 +11,7 @@ Convert a VCF to a BED.
 import argparse
 import sys
 import pysam
+import pybedtools as pbt
 import svtk.utils as svu
 
 
@@ -75,3 +76,50 @@ def vcf2bed(argv):
             bt.saveas(args.bed, trackline=header)
         else:
             bt.saveas(args.bed)
+
+
+def remote_tabix(argv):
+    parser = argparse.ArgumentParser(
+        description="Tabix into a remotely hosted file",
+        prog='svtk remote_tabix',
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument('url')
+    parser.add_argument('index')
+    parser.add_argument('region', nargs='?', default=None)
+    parser.add_argument('-R', '--regions', default=None,
+                        help='fetch all regions in bed file')
+    parser.add_argument('--header', help='include header', action='store_true',
+                        default=False)
+
+    # Print help if no arguments specified
+    if len(argv) == 0:
+        parser.print_help()
+        sys.exit(1)
+    args = parser.parse_args(argv)
+
+    # Create tabix file
+    tbx = pysam.TabixFile(args.url, index=args.index)
+
+    # Print header if requested
+    if args.header:
+        sys.stdout.write('\n'.join(tbx.header) + '\n')
+
+    # Fetch and output region of interest
+    if args.region is not None:
+        if args.regions is not None:
+            raise Exception("Must specify only one of region or regions file.")
+
+        f = tbx.fetch(region=args.region)
+        for line in f:
+            sys.stdout.write(line + '\n')
+
+    elif args.regions is not None:
+        bed = pbt.BedTool(args.regions).merge()
+        for i in bed.intervals:
+            f = tbx.fetch(i.chrom, i.start, i.end)
+            for line in f:
+                sys.stdout.write(line + '\n')
+
+    else:
+        raise Exception('Must specify one of region or regions file.')
+

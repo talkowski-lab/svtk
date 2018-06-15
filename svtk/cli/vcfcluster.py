@@ -98,9 +98,16 @@ def make_argparse():
     parser.add_argument('-t', '--svtypes', default='DEL,DUP,INV,BND',
                         help='Comma delimited list of svtypes to cluster '
                         '[DEL,DUP,INV,BND]')
+    parser.add_argument('-o', '--sample-overlap', type=float, default=0.0,
+                        help='Minimum sample overlap for two variants to be '
+                        'clustered together.')
     parser.add_argument('--preserve-ids', action='store_true', default=False,
                         help='Include list of IDs of constituent records in '
                         'each cluster.')
+    parser.add_argument('--preserve-genotypes', action='store_true',
+                        default=False,
+                        help='In a set of clustered variants, report best '
+                        '(highest GQ) non-reference genotype when available.')
     #  parser.add_argument('--cluster-bed', type=argparse.FileType('w'),
     #                      help='Bed of constituent calls in each cluster')
 
@@ -124,7 +131,8 @@ def main(argv):
 
     svc = VCFCluster(vcfs, dist=args.dist, blacklist=args.blacklist,
                      frac=args.frac, svtypes=svtypes, region=args.region,
-                     preserve_ids=args.preserve_ids)
+                     preserve_ids=args.preserve_ids,
+                     preserve_genotypes=args.preserve_genotypes)
 
     # Open new file
     if args.fout in '- stdout'.split():
