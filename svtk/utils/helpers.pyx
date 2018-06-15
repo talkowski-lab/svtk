@@ -8,6 +8,21 @@ cdef inline float float_max(float a, float b): return a if a >= b else b
 cdef inline float float_min(float a, float b): return a if a <= b else b
 
 cpdef bint is_excluded(AlignedSegment read):
+    """
+    Flag if read should be excluded from general SV analyses
+
+    True if read is unmapped, has an unmapped mate, is a secondary or 
+    supplementary alignment, or is a duplicate
+    (Equivalent to samtools flag 3342)
+
+    Parameters
+    ----------
+    read : pysam.AlignedSegment
+
+    Returns
+    -------
+    excluded : bool
+    """
     cdef bint exclude = (read.is_unmapped or
                          read.mate_is_unmapped or
                          read.is_secondary or
@@ -16,11 +31,39 @@ cpdef bint is_excluded(AlignedSegment read):
     return exclude
 
 cpdef bint is_soft_clipped(AlignedSegment read):
+    """
+    True if alignment begins or ends with a soft clip
+    
+    Parameters
+    ----------
+    read : pysam.AlignedSegment
+
+    Returns
+    -------
+    excluded : bool
+    """
     return (((read.cigartuples[0][0] == 4) & (read.cigartuples[-1][0] == 0)) |
             ((read.cigartuples[-1][0] == 4) & (read.cigartuples[0][0] == 0)))
 
 cpdef float reciprocal_overlap(int startA, int endA, int startB, int endB):
-    """Calculate fraction of reciprocal overlap between two intervals"""
+    """
+    Calculate fraction of reciprocal overlap between two intervals
+   
+    Parameters
+    ----------
+    startA : int
+        Start of first interval
+    endA : int
+        End of first interval
+    startB : int
+        Start of second interval
+    endB : int
+        End of second interval
+
+    Returns
+    -------
+    frac : float
+    """
 
     cdef float fracA = overlap_frac(startA, endA, startB, endB)
     cdef float fracB = overlap_frac(startB, endB, startA, endA)
@@ -31,7 +74,24 @@ cpdef float reciprocal_overlap(int startA, int endA, int startB, int endB):
     return recip_overlap
 
 cpdef float overlap_frac(int startA, int endA, int startB, int endB):
-    """Calculate fraction of A overlapped by B"""
+    """
+    Calculate fraction of A overlapped by B
+
+    Parameters
+    ----------
+    startA : int
+        Start of first interval
+    endA : int
+        End of first interval
+    startB : int
+        Start of second interval
+    endB : int
+        End of second interval
+
+    Returns
+    -------
+    frac : float
+    """
 
     # Check for no overlap
     if startA > endB or startB > endA:
