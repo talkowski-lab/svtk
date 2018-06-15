@@ -169,7 +169,7 @@ def resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed,
         yield record
 
 
-def main(argv):
+def make_argparse():
     parser = argparse.ArgumentParser(
         description=__doc__,
         prog='svtk link-cpx',
@@ -201,6 +201,12 @@ def main(argv):
                         help='Unresolved complex breakpoints and CNV.')
     parser.add_argument('-p', '--prefix', default='CPX_',
                         help='Variant prefix [CPX_]')
+
+    return parser
+
+
+def main(argv):
+    parser = make_argparse()
 
     if len(argv) == 0:
         parser.print_help()

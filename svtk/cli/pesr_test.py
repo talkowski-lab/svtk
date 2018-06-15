@@ -15,7 +15,7 @@ import pandas as pd
 from svtk.pesr import SRTestRunner, PETestRunner, PETest, SRTest
 
 
-def sr_test(argv):
+def make_sr_test_argparse():
     parser = argparse.ArgumentParser(
         description="Calculate enrichment of clipped reads at SV breakpoints.",
         prog='svtk sr-test',
@@ -48,6 +48,12 @@ def sr_test(argv):
                        'Same format as RdTest, one column per sample.')
     parser.add_argument('--log', action='store_true', default=False,
                         help='Print progress log to stderr.')
+
+    return parser
+
+
+def sr_test(argv):
+    parser = make_sr_test_argparse()
 
     # Print help if no arguments specified
     if len(argv) == 0:
@@ -89,7 +95,7 @@ def sr_test(argv):
     runner.run()
 
 
-def pe_test(argv):
+def make_pe_test_argparse():
     parser = argparse.ArgumentParser(
         description="Calculate enrichment of discordant pairs at SV breakpoints.",
         prog='svtk pe-test',
@@ -120,6 +126,12 @@ def pe_test(argv):
                        'Same format as RdTest, one column per sample.')
     parser.add_argument('--log', action='store_true', default=False,
                         help='Print progress log to stderr.')
+
+    return parser
+
+
+def pe_test(argv):
+    parser = make_pe_test_argparse()
 
     if len(argv) == 0:
         parser.print_help()
@@ -164,7 +176,7 @@ def pe_test(argv):
     runner.run()
 
 
-def count_pe(argv):
+def make_count_pe_argparse():
     parser = argparse.ArgumentParser(
         description="Count discordant pairs supporting a SV breakpoints.",
         prog='svtk count-pe',
@@ -190,6 +202,12 @@ def count_pe(argv):
                        '(optional). If provided, each sample\'s split '
                        'counts will be normalized accordingly. '
                        'Same format as RdTest, one column per sample.')
+
+    return parser
+
+
+def count_pe(argv):
+    parser = make_count_pe_argparse()
 
     if len(argv) == 0:
         parser.print_help()
@@ -240,7 +258,7 @@ def count_pe(argv):
         counts[cols].to_csv(fout, header=False, index=False, sep='\t', na_rep='NA')
 
 
-def count_sr(argv):
+def make_count_sr_argparse():
     parser = argparse.ArgumentParser(
         description="Count clipped reads at SV breakpoints. Unwindowed.",
         prog='svtk count-sr',
@@ -264,6 +282,13 @@ def count_sr(argv):
                        '(optional). If provided, each sample\'s split '
                        'counts will be normalized accordingly. '
                        'Same format as RdTest, one column per sample.')
+
+    return parser
+
+
+def count_sr(argv):
+    parser = make_count_sr_argparse()
+
     # Print help if no arguments specified
     if len(argv) == 0:
         parser.print_help()

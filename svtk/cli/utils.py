@@ -15,7 +15,7 @@ import pybedtools as pbt
 import svtk.utils as svu
 
 
-def vcf2bed(argv):
+def make_vcf2bed_argparse():
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -37,6 +37,12 @@ def vcf2bed(argv):
                         help='Report two entries in bed file for each BND.')
     parser.add_argument('--no-header', dest='header', action='store_false',
                         default=True, help='Suppress header.')
+
+    return parser
+
+
+def vcf2bed(argv):
+    parser = make_vcf2bed_argparse()
 
     # Print help if no arguments specified
     if len(argv) == 0:
@@ -78,7 +84,7 @@ def vcf2bed(argv):
             bt.saveas(args.bed)
 
 
-def remote_tabix(argv):
+def make_remote_tabix_argparse():
     parser = argparse.ArgumentParser(
         description="Tabix into a remotely hosted file",
         prog='svtk remote_tabix',
@@ -90,6 +96,12 @@ def remote_tabix(argv):
                         help='fetch all regions in bed file')
     parser.add_argument('--header', help='include header', action='store_true',
                         default=False)
+
+    return parser
+
+
+def remote_tabix(argv):
+    parser = make_remote_tabix_argparse()
 
     # Print help if no arguments specified
     if len(argv) == 0:

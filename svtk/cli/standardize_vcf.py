@@ -24,7 +24,7 @@ from svtk.standardize import VCFStandardizer
 from pysam import VariantFile
 
 
-def main(argv):
+def make_argparse():
     parser = argparse.ArgumentParser(
         description=__doc__,
         prog='svtk standardize',
@@ -53,6 +53,12 @@ def main(argv):
                         help='Call sites with null genotypes (./.). Generally '
                         'useful when an algorithm has been run on a single '
                         'sample and has only reported variant sites.')
+
+    return parser
+
+
+def main(argv):
+    parser = make_argparse()
 
     # Print help if no arguments specified
     if len(argv) == 0:

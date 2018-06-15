@@ -244,7 +244,7 @@ def get_split_position(read):
         return None, 'MIDDLE'
 
 
-def main(argv):
+def make_argparse():
     parser = argparse.ArgumentParser(
         description=__doc__,
         prog='svtk collect-pesr',
@@ -265,6 +265,12 @@ def main(argv):
                         help='Tabix-formatted region to parse')
     parser.add_argument('-z', '--bgzip', default=False, action='store_true',
                         help='bgzip and tabix index output')
+
+    return parser
+
+
+def main(argv):
+    parser = make_argparse()
 
     # Print help if no arguments specified
     if len(argv) == 0:
