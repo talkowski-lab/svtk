@@ -53,7 +53,7 @@ class ComplexSV:
             return record.info.get('EVIDENCE', None) == ('SR', )
 
         if 'EVIDENCE' in self.records[0].header.info.keys():
-            self.records = [r for r in self.records if not _is_SR_only(record)]
+            self.records = [r for r in self.records if not _is_SR_only(r)]
         else:
             pass
 
