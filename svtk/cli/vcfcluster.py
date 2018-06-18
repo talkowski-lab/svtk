@@ -107,6 +107,9 @@ def main(argv):
                         default=False,
                         help='In a set of clustered variants, report best '
                         '(highest GQ) non-reference genotype when available.')
+    parser.add_argument('--preserve-header', action='store_true',
+                        default=False,
+                        help='Use header from clustering VCFs')
     #  parser.add_argument('--cluster-bed', type=argparse.FileType('w'),
     #                      help='Bed of constituent calls in each cluster')
 
@@ -125,7 +128,8 @@ def main(argv):
     svc = VCFCluster(vcfs, dist=args.dist, blacklist=args.blacklist,
                      frac=args.frac, svtypes=svtypes, region=args.region,
                      preserve_ids=args.preserve_ids,
-                     preserve_genotypes=args.preserve_genotypes)
+                     preserve_genotypes=args.preserve_genotypes,
+                     preserve_header=args.preserve_header)
 
     # Open new file
     if args.fout in '- stdout'.split():

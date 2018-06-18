@@ -27,7 +27,8 @@ class VCFCluster(GenomeSLINK):
                  dist=500, frac=0.0,
                  match_strands=True, preserve_ids=False,
                  region=None, blacklist=None, svtypes=None,
-                 preserve_genotypes=False, sample_overlap=0.0):
+                 preserve_genotypes=False, sample_overlap=0.0,
+                 preserve_header=False):
         """
         Clustering of VCF records.
 
@@ -99,6 +100,7 @@ class VCFCluster(GenomeSLINK):
         self.preserve_ids = preserve_ids
         self.preserve_genotypes = preserve_genotypes
         self.sample_overlap = sample_overlap
+        self.preserve_header = preserve_header
 
         # Build VCF header for new record construction
         self.samples = sorted(samples)
@@ -168,6 +170,19 @@ class VCFCluster(GenomeSLINK):
         pysam.VariantHeader
         """
 
+        if self.preserve_header:
+            header = self.vcfs[0].header
+            for sample in self.samples:
+                if sample not in header.samples:
+                    header.add_sample(sample)
+
+            if self.preserve_ids and 'MEMBERS' not in header.info.keys():
+                info = ('##INFO=<ID=MEMBERS,Number=.,Type=String,'
+                        'Description="IDs of cluster\'s constituent records.">')
+                header.add_line(info)
+
+            return header
+
         # Read stock template
         template = pkg_resources.resource_filename(
                         'svtk', 'data/vcfcluster_template.vcf')
@@ -206,6 +221,11 @@ class VCFCluster(GenomeSLINK):
         for info in infos:
             header.add_line(info_line.format(*info))
         
+        if self.preserve_ids and 'MEMBERS' not in header.info.keys():
+            info = ('##INFO=<ID=MEMBERS,Number=.,Type=String,'
+                    'Description="IDs of cluster\'s constituent records.">')
+            header.add_line(info)
+
         # Add source
         sourcelist = sorted(set(self.sources))
         header.add_line('##source={0}'.format(','.join(sourcelist)))

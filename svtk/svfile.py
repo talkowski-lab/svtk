@@ -365,11 +365,15 @@ class SVRecordCluster:
         for sample in new_record.samples:
             new_record.samples[sample]['GT'] = (0, 0)
 
-            for source in sourcelist:
-                new_record.samples[sample][source] = 0
+            #  for source in sourcelist:
+                #  new_record.samples[sample][source] = 0
 
         # Update with called samples
         if preserve_genotypes:
+            for fmt in new_record.format.keys():
+                if fmt != 'GT':
+                    del new_record.format[fmt]
+
             # then overwrite genotypes of non-multiallelic sites as necessary
             records = [r.record for r in self.records]
             update_best_genotypes(new_record, records, preserve_multiallelic=True)

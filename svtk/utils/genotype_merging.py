@@ -35,7 +35,7 @@ def choose_best_genotype(sample, records):
 
     # Pick best non-reference genotype
     for record in records:
-        if record.samples[sample]['GQ'] > best_GQ:
+        if record.samples[sample]['GQ'] >= best_GQ:
             # if record is non-reference , use it
             # or if it's a higher GQ for a reference call, use it
             if record.samples[sample]['GT'] != (0, 0) or best_GT == (0, 0):
@@ -80,13 +80,18 @@ def make_multiallelic_alts(records):
     
     max_CN = 2
 
+    is_bca = records[0].info['SVTYPE'] not in 'DEL DUP'.split()
+
     for record in records:
-        if record.record.alts[0] == '<CN0>':
-            CN = int(record.record.alts[-1].strip('<CN>'))
+        if record.alts[0] == '<CN0>':
+            CN = int(record.alts[-1].strip('<CN>'))
             if CN > max_CN:
                 max_CN = CN
 
-    return tuple(['<CN0>'] + ['<CN%d>' % i for i in range(1, max_CN + 1)])
+    if is_bca:
+        return tuple(['<CN1>'] + ['<CN%d>' % i for i in range(1, max_CN + 1)])
+    else:
+        return tuple(['<CN0>'] + ['<CN%d>' % i for i in range(1, max_CN + 1)])
 
 
 def update_best_genotypes(new_record, records, preserve_multiallelic=False):
