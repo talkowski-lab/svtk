@@ -237,7 +237,10 @@ def count_pe(argv):
         counts = counts.reset_index()
         counts['name'] = record.id
         cols = 'name sample count'.split()
-        counts[cols].to_csv(fout, header=False, index=False, sep='\t', na_rep='NA')
+
+        for row in counts[cols].as_matrix():
+            fout.write('\t'.join([str(x) for x in row]) + '\n')
+        #  counts[cols].to_csv(fout, header=False, index=False, sep='\t', na_rep='NA')
 
 
 def count_sr(argv):
@@ -316,4 +319,7 @@ def count_sr(argv):
             counts = counts.reset_index()
             counts['name'] = record.id
             counts['coord'] = coord
-            counts[header].to_csv(fout, header=False, index=False, sep='\t', na_rep='NA')
+
+            for row in counts[header].as_matrix():
+                fout.write('\t'.join([str(x) for x in row]) + '\n')
+            #  counts[header].to_csv(fout, header=False, index=False, sep='\t', na_rep='NA')
