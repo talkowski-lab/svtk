@@ -1,0 +1,559 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>svtk.pesr package &mdash; svtk 0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> svtk
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../cli.html">SVTK CLI - Command line tools for processing and analyzing structural variants</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../utils.html">svtk.utils - Utility function and classes for working with SV in Python</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">svtk</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>svtk.pesr package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/docs/svtk.pesr.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="svtk-pesr-package">
+<h1>svtk.pesr package<a class="headerlink" href="#svtk-pesr-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-svtk.pesr.breakpoint">
+<span id="svtk-pesr-breakpoint-module"></span><h2>svtk.pesr.breakpoint module<a class="headerlink" href="#module-svtk.pesr.breakpoint" title="Permalink to this headline">¶</a></h2>
+<p>Wrapper for breakpoints stored in VCF records</p>
+<dl class="class">
+<dt id="svtk.pesr.breakpoint.Breakpoint">
+<em class="property">class </em><code class="descclassname">svtk.pesr.breakpoint.</code><code class="descname">Breakpoint</code><span class="sig-paren">(</span><em>chrA</em>, <em>posA</em>, <em>chrB</em>, <em>posB</em>, <em>name</em>, <em>samples</em>, <em>strands</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.pesr.breakpoint.Breakpoint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="svtk.pesr.breakpoint.Breakpoint.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>chrA</em>, <em>posA</em>, <em>chrB</em>, <em>posB</em>, <em>name</em>, <em>samples</em>, <em>strands</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.pesr.breakpoint.Breakpoint.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="attribute">
+<dt id="svtk.pesr.breakpoint.Breakpoint.chrA">
+<code class="descname">chrA</code><a class="headerlink" href="#svtk.pesr.breakpoint.Breakpoint.chrA" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>str</em></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="svtk.pesr.breakpoint.Breakpoint.posA">
+<code class="descname">posA</code><a class="headerlink" href="#svtk.pesr.breakpoint.Breakpoint.posA" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>int</em></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="svtk.pesr.breakpoint.Breakpoint.chrB">
+<code class="descname">chrB</code><a class="headerlink" href="#svtk.pesr.breakpoint.Breakpoint.chrB" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>str</em></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="svtk.pesr.breakpoint.Breakpoint.posB">
+<code class="descname">posB</code><a class="headerlink" href="#svtk.pesr.breakpoint.Breakpoint.posB" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>str</em></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="svtk.pesr.breakpoint.Breakpoint.name">
+<code class="descname">name</code><a class="headerlink" href="#svtk.pesr.breakpoint.Breakpoint.name" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>str</em></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="svtk.pesr.breakpoint.Breakpoint.samples">
+<code class="descname">samples</code><a class="headerlink" href="#svtk.pesr.breakpoint.Breakpoint.samples" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>list of str</em></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="svtk.pesr.breakpoint.Breakpoint.strands">
+<code class="descname">strands</code><a class="headerlink" href="#svtk.pesr.breakpoint.Breakpoint.strands" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>str</em> – +-,-+,++,–</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="svtk.pesr.breakpoint.Breakpoint.background">
+<code class="descname">background</code><a class="headerlink" href="#svtk.pesr.breakpoint.Breakpoint.background" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>list of str</em></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="svtk.pesr.breakpoint.Breakpoint.split_counts">
+<code class="descname">split_counts</code><a class="headerlink" href="#svtk.pesr.breakpoint.Breakpoint.split_counts" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>pd.DataFrame</em></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="method">
+<dt id="svtk.pesr.breakpoint.Breakpoint.choose_background">
+<code class="descname">choose_background</code><span class="sig-paren">(</span><em>samples</em>, <em>n_background</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.pesr.breakpoint.Breakpoint.choose_background" title="Permalink to this definition">¶</a></dt>
+<dd><p>Choose background samples</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>samples</strong> (<em>list of str</em>) – All available samples</li>
+<li><strong>n_background</strong> (<em>int</em>) – Max number of background samples</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="svtk.pesr.breakpoint.Breakpoint.from_bed">
+<em class="property">classmethod </em><code class="descname">from_bed</code><span class="sig-paren">(</span><em>chrom</em>, <em>start</em>, <em>end</em>, <em>name</em>, <em>samples</em>, <em>svtype</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.pesr.breakpoint.Breakpoint.from_bed" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="classmethod">
+<dt id="svtk.pesr.breakpoint.Breakpoint.from_vcf">
+<em class="property">classmethod </em><code class="descname">from_vcf</code><span class="sig-paren">(</span><em>record</em>, <em>whitelist=None</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.pesr.breakpoint.Breakpoint.from_vcf" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>record</strong> (<em>pysam.VariantRecord</em>) – </td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-svtk.pesr.pe_test">
+<span id="svtk-pesr-pe-test-module"></span><h2>svtk.pesr.pe_test module<a class="headerlink" href="#module-svtk.pesr.pe_test" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="svtk.pesr.pe_test.PETest">
+<em class="property">class </em><code class="descclassname">svtk.pesr.pe_test.</code><code class="descname">PETest</code><span class="sig-paren">(</span><em>discfile</em>, <em>window_in=50</em>, <em>window_out=500</em>, <em>medians=None</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.pesr.pe_test.PETest" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#svtk.pesr.pesr_test.PESRTest" title="svtk.pesr.pesr_test.PESRTest"><code class="xref py py-class docutils literal notranslate"><span class="pre">svtk.pesr.pesr_test.PESRTest</span></code></a></p>
+<dl class="method">
+<dt id="svtk.pesr.pe_test.PETest.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>discfile</em>, <em>window_in=50</em>, <em>window_out=500</em>, <em>medians=None</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.pesr.pe_test.PETest.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="svtk.pesr.pe_test.PETest.load_counts">
+<code class="descname">load_counts</code><span class="sig-paren">(</span><em>record</em>, <em>window_in</em>, <em>window_out</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.pesr.pe_test.PETest.load_counts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load pandas DataFrame from tabixfile</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="svtk.pesr.pe_test.PETest.test">
+<code class="descname">test</code><span class="sig-paren">(</span><em>record</em>, <em>window_in</em>, <em>window_out</em>, <em>called</em>, <em>background</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.pesr.pe_test.PETest.test" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test enrichment of discordant reads in a set of samples.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>record</strong> (<em>pysam.VariantFile</em>) – </li>
+<li><strong>window_in</strong> (<em>int</em>) – </li>
+<li><strong>window_out</strong> (<em>int</em>) – </li>
+<li><strong>called</strong> (<em>list of str</em>) – List of called samples to test</li>
+<li><strong>background</strong> (<em>list of str</em>) – List of samples to use as background</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>called_median</strong> (<em>float</em>)</li>
+<li><strong>background_median</strong> (<em>float</em>)</li>
+<li><strong>log_pval</strong> (<em>float</em>) – Negative log10 p-value</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="svtk.pesr.pe_test.PETest.test_record">
+<code class="descname">test_record</code><span class="sig-paren">(</span><em>record</em>, <em>called</em>, <em>background</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.pesr.pe_test.PETest.test_record" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="svtk.pesr.pe_test.PETestRunner">
+<em class="property">class </em><code class="descclassname">svtk.pesr.pe_test.</code><code class="descname">PETestRunner</code><span class="sig-paren">(</span><em>vcf</em>, <em>discfile</em>, <em>fout</em>, <em>n_background=160</em>, <em>window_in=50</em>, <em>window_out=500</em>, <em>whitelist=None</em>, <em>blacklist=None</em>, <em>medians=None</em>, <em>log=False</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.pesr.pe_test.PETestRunner" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#svtk.pesr.pesr_test.PESRTestRunner" title="svtk.pesr.pesr_test.PESRTestRunner"><code class="xref py py-class docutils literal notranslate"><span class="pre">svtk.pesr.pesr_test.PESRTestRunner</span></code></a></p>
+<dl class="method">
+<dt id="svtk.pesr.pe_test.PETestRunner.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>vcf</em>, <em>discfile</em>, <em>fout</em>, <em>n_background=160</em>, <em>window_in=50</em>, <em>window_out=500</em>, <em>whitelist=None</em>, <em>blacklist=None</em>, <em>medians=None</em>, <em>log=False</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.pesr.pe_test.PETestRunner.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>vcf : pysam.VariantFile
+discfile : pysam.TabixFile</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="svtk.pesr.pe_test.PETestRunner.test_record">
+<code class="descname">test_record</code><span class="sig-paren">(</span><em>record</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.pesr.pe_test.PETestRunner.test_record" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-svtk.pesr.pesr_test">
+<span id="svtk-pesr-pesr-test-module"></span><h2>svtk.pesr.pesr_test module<a class="headerlink" href="#module-svtk.pesr.pesr_test" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="svtk.pesr.pesr_test.PESRTest">
+<em class="property">class </em><code class="descclassname">svtk.pesr.pesr_test.</code><code class="descname">PESRTest</code><span class="sig-paren">(</span><em>medians=None</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.pesr.pesr_test.PESRTest" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="svtk.pesr.pesr_test.PESRTest.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>medians=None</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.pesr.pesr_test.PESRTest.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="svtk.pesr.pesr_test.PESRTest.normalize_counts">
+<code class="descname">normalize_counts</code><span class="sig-paren">(</span><em>counts</em>, <em>target_cov=60</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.pesr.pesr_test.PESRTest.normalize_counts" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="svtk.pesr.pesr_test.PESRTest.null_score">
+<code class="descname">null_score</code><span class="sig-paren">(</span><em>null_val=0.0</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.pesr.pesr_test.PESRTest.null_score" title="Permalink to this definition">¶</a></dt>
+<dd><p>Null score if no clipped reads observed</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="svtk.pesr.pesr_test.PESRTest.test">
+<code class="descname">test</code><span class="sig-paren">(</span><em>counts</em>, <em>samples</em>, <em>background</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.pesr.pesr_test.PESRTest.test" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test enrichment of clipped reads in a set of samples at a given coord.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>chrom</strong> (<em>str</em>) – </li>
+<li><strong>pos</strong> (<em>int</em>) – </li>
+<li><strong>strand</strong> (<em>str</em>) – </li>
+<li><strong>samples</strong> (<em>list of str</em>) – List of called samples to test</li>
+<li><strong>background</strong> (<em>list of str</em>) – List of samples to use as background</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>called_median</strong> (<em>float</em>)</li>
+<li><strong>background_median</strong> (<em>float</em>)</li>
+<li><strong>log_pval</strong> (<em>float</em>) – Negative log10 p-value</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="svtk.pesr.pesr_test.PESRTestRunner">
+<em class="property">class </em><code class="descclassname">svtk.pesr.pesr_test.</code><code class="descname">PESRTestRunner</code><span class="sig-paren">(</span><em>vcf</em>, <em>n_background=160</em>, <em>whitelist=None</em>, <em>blacklist=None</em>, <em>log=False</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.pesr.pesr_test.PESRTestRunner" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="svtk.pesr.pesr_test.PESRTestRunner.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>vcf</em>, <em>n_background=160</em>, <em>whitelist=None</em>, <em>blacklist=None</em>, <em>log=False</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.pesr.pesr_test.PESRTestRunner.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="svtk.pesr.pesr_test.PESRTestRunner.choose_background">
+<code class="descname">choose_background</code><span class="sig-paren">(</span><em>record</em>, <em>whitelist=None</em>, <em>blacklist=None</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.pesr.pesr_test.PESRTestRunner.choose_background" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="svtk.pesr.pesr_test.PESRTestRunner.run">
+<code class="descname">run</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#svtk.pesr.pesr_test.PESRTestRunner.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="svtk.pesr.pesr_test.PESRTestRunner.test_record">
+<code class="descname">test_record</code><span class="sig-paren">(</span><em>record</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.pesr.pesr_test.PESRTestRunner.test_record" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-svtk.pesr.sr_test">
+<span id="svtk-pesr-sr-test-module"></span><h2>svtk.pesr.sr_test module<a class="headerlink" href="#module-svtk.pesr.sr_test" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="svtk.pesr.sr_test.SRTest">
+<em class="property">class </em><code class="descclassname">svtk.pesr.sr_test.</code><code class="descname">SRTest</code><span class="sig-paren">(</span><em>countfile</em>, <em>window=50</em>, <em>medians=None</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.pesr.sr_test.SRTest" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#svtk.pesr.pesr_test.PESRTest" title="svtk.pesr.pesr_test.PESRTest"><code class="xref py py-class docutils literal notranslate"><span class="pre">svtk.pesr.pesr_test.PESRTest</span></code></a></p>
+<dl class="method">
+<dt id="svtk.pesr.sr_test.SRTest.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>countfile</em>, <em>window=50</em>, <em>medians=None</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.pesr.sr_test.SRTest.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="svtk.pesr.sr_test.SRTest.load_counts">
+<code class="descname">load_counts</code><span class="sig-paren">(</span><em>chrom</em>, <em>pos</em>, <em>strand</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.pesr.sr_test.SRTest.load_counts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load pandas DataFrame from tabixfile</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="svtk.pesr.sr_test.SRTest.test">
+<code class="descname">test</code><span class="sig-paren">(</span><em>chrom</em>, <em>pos</em>, <em>strand</em>, <em>called</em>, <em>background</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.pesr.sr_test.SRTest.test" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test enrichment of clipped reads in a set of samples at a given coord.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>chrom</strong> (<em>str</em>) – </li>
+<li><strong>pos</strong> (<em>int</em>) – </li>
+<li><strong>strand</strong> (<em>str</em>) – </li>
+<li><strong>called</strong> (<em>list of str</em>) – List of called samples to test</li>
+<li><strong>background</strong> (<em>list of str</em>) – List of samples to use as background</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>called_median</strong> (<em>float</em>)</li>
+<li><strong>background_median</strong> (<em>float</em>)</li>
+<li><strong>log_pval</strong> (<em>float</em>) – Negative log10 p-value</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="svtk.pesr.sr_test.SRTest.test_record">
+<code class="descname">test_record</code><span class="sig-paren">(</span><em>record</em>, <em>called</em>, <em>background</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.pesr.sr_test.SRTest.test_record" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="svtk.pesr.sr_test.SRTestRunner">
+<em class="property">class </em><code class="descclassname">svtk.pesr.sr_test.</code><code class="descname">SRTestRunner</code><span class="sig-paren">(</span><em>vcf</em>, <em>countfile</em>, <em>fout</em>, <em>n_background=160</em>, <em>window=100</em>, <em>whitelist=None</em>, <em>blacklist=None</em>, <em>medians=None</em>, <em>log=False</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.pesr.sr_test.SRTestRunner" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#svtk.pesr.pesr_test.PESRTestRunner" title="svtk.pesr.pesr_test.PESRTestRunner"><code class="xref py py-class docutils literal notranslate"><span class="pre">svtk.pesr.pesr_test.PESRTestRunner</span></code></a></p>
+<dl class="method">
+<dt id="svtk.pesr.sr_test.SRTestRunner.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>vcf</em>, <em>countfile</em>, <em>fout</em>, <em>n_background=160</em>, <em>window=100</em>, <em>whitelist=None</em>, <em>blacklist=None</em>, <em>medians=None</em>, <em>log=False</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.pesr.sr_test.SRTestRunner.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>vcf : pysam.VariantFile
+countfile : pysam.TabixFile
+fout : writable file
+n_background : int
+window : int
+whitelist : list of str
+blacklist : list of str</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="svtk.pesr.sr_test.SRTestRunner.test_record">
+<code class="descname">test_record</code><span class="sig-paren">(</span><em>record</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.pesr.sr_test.SRTestRunner.test_record" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-svtk.pesr">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-svtk.pesr" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Matthew Stone.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'0.1',
+            LANGUAGE:'None',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

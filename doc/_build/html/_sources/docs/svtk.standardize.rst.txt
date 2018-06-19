@@ -1,0 +1,62 @@
+svtk.standardize package
+========================
+
+Submodules
+----------
+
+svtk.standardize.standardize module
+-----------------------------------
+
+.. automodule:: svtk.standardize.standardize
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+svtk.standardize.std\_delly module
+----------------------------------
+
+.. automodule:: svtk.standardize.std_delly
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+svtk.standardize.std\_lumpy module
+----------------------------------
+
+.. automodule:: svtk.standardize.std_lumpy
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+svtk.standardize.std\_manta module
+----------------------------------
+
+.. automodule:: svtk.standardize.std_manta
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+svtk.standardize.std\_melt module
+---------------------------------
+
+.. automodule:: svtk.standardize.std_melt
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+svtk.standardize.std\_wham module
+---------------------------------
+
+.. automodule:: svtk.standardize.std_wham
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: svtk.standardize
+    :members:
+    :undoc-members:
+    :show-inheritance:

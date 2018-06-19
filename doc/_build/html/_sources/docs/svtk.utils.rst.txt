@@ -1,0 +1,46 @@
+svtk.utils package
+==================
+
+Submodules
+----------
+
+svtk.utils.bgzipfile module
+---------------------------
+
+.. automodule:: svtk.utils.bgzipfile
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+svtk.utils.helpers module
+-------------------------
+
+.. automodule:: svtk.utils.helpers
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+svtk.utils.s3bam module
+-----------------------
+
+.. automodule:: svtk.utils.s3bam
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+svtk.utils.utils module
+-----------------------
+
+.. automodule:: svtk.utils.utils
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: svtk.utils
+    :members:
+    :undoc-members:
+    :show-inheritance:

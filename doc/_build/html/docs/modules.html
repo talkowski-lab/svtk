@@ -1,0 +1,292 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>svtk &mdash; svtk 0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> svtk
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../cli.html">SVTK CLI - Command line tools for processing and analyzing structural variants</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../utils.html">svtk.utils - Utility function and classes for working with SV in Python</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">svtk</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>svtk</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/docs/modules.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="svtk">
+<h1>svtk<a class="headerlink" href="#svtk" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="svtk.html">svtk package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="svtk.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="svtk.annotation.html">svtk.annotation package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="svtk.annotation.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="svtk.annotation.html#module-svtk.annotation.annotate">svtk.annotation.annotate module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="svtk.annotation.html#module-svtk.annotation.annotate_intersection">svtk.annotation.annotate_intersection module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="svtk.annotation.html#module-svtk.annotation.classify_effect">svtk.annotation.classify_effect module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="svtk.annotation.html#module-svtk.annotation.nearest_tss">svtk.annotation.nearest_tss module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="svtk.annotation.html#module-svtk.annotation">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="svtk.cli.html">svtk.cli package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="svtk.cli.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="svtk.cli.html#module-svtk.cli.annotate">svtk.cli.annotate module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="svtk.cli.html#module-svtk.cli.bedcluster">svtk.cli.bedcluster module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="svtk.cli.html#module-svtk.cli.bincov">svtk.cli.bincov module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="svtk.cli.html#module-svtk.cli.collect_pesr">svtk.cli.collect_pesr module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="svtk.cli.html#module-svtk.cli.count_svtypes">svtk.cli.count_svtypes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="svtk.cli.html#module-svtk.cli.pesr_test">svtk.cli.pesr_test module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="svtk.cli.html#module-svtk.cli.rdtest2vcf">svtk.cli.rdtest2vcf module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="svtk.cli.html#module-svtk.cli.resolve">svtk.cli.resolve module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="svtk.cli.html#module-svtk.cli.standardize_vcf">svtk.cli.standardize_vcf module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="svtk.cli.html#module-svtk.cli.utils">svtk.cli.utils module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="svtk.cli.html#module-svtk.cli.vcfcluster">svtk.cli.vcfcluster module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="svtk.cli.html#module-svtk.cli">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="svtk.cxsv.html">svtk.cxsv package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="svtk.cxsv.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="svtk.cxsv.html#module-svtk.cxsv.cpx_inv">svtk.cxsv.cpx_inv module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="svtk.cxsv.html#module-svtk.cxsv.cpx_link">svtk.cxsv.cpx_link module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="svtk.cxsv.html#module-svtk.cxsv.cpx_tloc">svtk.cxsv.cpx_tloc module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="svtk.cxsv.html#module-svtk.cxsv">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="svtk.pesr.html">svtk.pesr package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="svtk.pesr.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="svtk.pesr.html#module-svtk.pesr.breakpoint">svtk.pesr.breakpoint module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="svtk.pesr.html#module-svtk.pesr.pe_test">svtk.pesr.pe_test module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="svtk.pesr.html#module-svtk.pesr.pesr_test">svtk.pesr.pesr_test module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="svtk.pesr.html#module-svtk.pesr.sr_test">svtk.pesr.sr_test module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="svtk.pesr.html#module-svtk.pesr">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="svtk.standardize.html">svtk.standardize package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="svtk.standardize.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="svtk.standardize.html#module-svtk.standardize.standardize">svtk.standardize.standardize module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="svtk.standardize.html#module-svtk.standardize.std_delly">svtk.standardize.std_delly module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="svtk.standardize.html#module-svtk.standardize.std_lumpy">svtk.standardize.std_lumpy module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="svtk.standardize.html#module-svtk.standardize.std_manta">svtk.standardize.std_manta module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="svtk.standardize.html#module-svtk.standardize.std_melt">svtk.standardize.std_melt module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="svtk.standardize.html#module-svtk.standardize.std_wham">svtk.standardize.std_wham module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="svtk.standardize.html#module-svtk.standardize">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="svtk.utils.html">svtk.utils package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="svtk.utils.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="svtk.utils.html#module-svtk.utils.bgzipfile">svtk.utils.bgzipfile module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="svtk.utils.html#module-svtk.utils.helpers">svtk.utils.helpers module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="svtk.utils.html#module-svtk.utils.s3bam">svtk.utils.s3bam module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="svtk.utils.html#module-svtk.utils.utils">svtk.utils.utils module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="svtk.utils.html#module-svtk.utils">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="svtk.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="svtk.html#module-svtk.genomeslink">svtk.genomeslink module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="svtk.html#module-svtk.svfile">svtk.svfile module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="svtk.html#module-svtk.vcfcluster">svtk.vcfcluster module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="svtk.html#module-svtk">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Matthew Stone.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'0.1',
+            LANGUAGE:'None',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

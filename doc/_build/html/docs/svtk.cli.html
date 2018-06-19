@@ -1,0 +1,853 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>svtk.cli package &mdash; svtk 0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> svtk
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../cli.html">SVTK CLI - Command line tools for processing and analyzing structural variants</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../utils.html">svtk.utils - Utility function and classes for working with SV in Python</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">svtk</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>svtk.cli package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/docs/svtk.cli.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="svtk-cli-package">
+<h1>svtk.cli package<a class="headerlink" href="#svtk-cli-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-svtk.cli.annotate">
+<span id="svtk-cli-annotate-module"></span><h2>svtk.cli.annotate module<a class="headerlink" href="#module-svtk.cli.annotate" title="Permalink to this headline">¶</a></h2>
+<p>Annotate resolved SV with genic effects and noncoding hits.</p>
+<p>This tool permits the user to provide a GTF of Gencode gene annotations, a BED
+of noncoding elements, or both. The BED of noncoding elements must contain four
+columns: (chrom, start, end, element_class).</p>
+<p>The following classes of genic effects are annotated as new VCF INFO fields if
+the SV meets the defined criteria:</p>
+<blockquote>
+<div><ol class="arabic">
+<li><dl class="first docutils">
+<dt>LOF - Loss of function.</dt>
+<dd><ul class="first simple">
+<li>Deletions are annotated LOF if they overlap any exon.</li>
+<li>Duplications are annotated LOF if they reside entirely within</li>
+</ul>
+<p class="last">a gene boundary and overlap any exon.
+* Inversions are annotated LOF if reside entirely within an exon, if
+one breakpoint falls within an exon, if they reside entirely within a
+gene boundary and overlap an exon, or if only one breakpoint falls
+within a gene boundary.
+* Translocations are annotated LOF If they fall within a gene boundary.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>COPY_GAIN</dt>
+<dd><ul class="first simple">
+<li>Duplications are annotated COPY_GAIN if they span the entirety of a</li>
+</ul>
+<p class="last">gene boundary.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>INTRONIC</dt>
+<dd><ul class="first simple">
+<li>Deletions, duplications, and inversions are annotated INTRONIC if</li>
+</ul>
+<p class="last">they are localized to an intron.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>DUP_PARTIAL</dt>
+<dd><ul class="first simple">
+<li>Duplications are annotated DUP_PARTIAL if they overlap the start or</li>
+</ul>
+<p class="last">end of a gene boundary but not its entirety, such that a whole copy of
+the gene is preserved.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>INV_SPAN</dt>
+<dd><ul class="first simple">
+<li>Inversions are annotated INV_SPAN if they overlap the entirety of a</li>
+</ul>
+<p class="last">gene boundary without disrupting it.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>NEAREST_TSS</dt>
+<dd><ul class="first simple">
+<li>Intragenic events are annotated with the nearest transcription start</li>
+</ul>
+<p class="last">site.</p>
+</dd>
+</dl>
+</li>
+</ol>
+</div></blockquote>
+<p>An SV is annotated with a new NONCODING INFO field containing all classes of
+noncoding elements which the variant overlaps.</p>
+<dl class="function">
+<dt id="svtk.cli.annotate.main">
+<code class="descclassname">svtk.cli.annotate.</code><code class="descname">main</code><span class="sig-paren">(</span><em>argv</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.annotate.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="svtk.cli.annotate.make_argparse">
+<code class="descclassname">svtk.cli.annotate.</code><code class="descname">make_argparse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.annotate.make_argparse" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-svtk.cli.bedcluster">
+<span id="svtk-cli-bedcluster-module"></span><h2>svtk.cli.bedcluster module<a class="headerlink" href="#module-svtk.cli.bedcluster" title="Permalink to this headline">¶</a></h2>
+<p>Cluster a bed of structural variants based on reciprocal overlap.</p>
+<p>Variants are clustered with the single-linkage algorithm, using a minimum
+reciprocal overlap to determine whether two variants are linked. If multiple
+variants from the same sample are clustered together, they are merged into a
+single spanning variant. Cluster compactness, calculated as the
+root-mean-square standard deviation, is reported for each cluster. Optionally,
+the median coordinates for each cluster are reported rather than the original
+individual coordinates.</p>
+<dl class="class">
+<dt id="svtk.cli.bedcluster.BedCall">
+<em class="property">class </em><code class="descclassname">svtk.cli.bedcluster.</code><code class="descname">BedCall</code><span class="sig-paren">(</span><em>chrom</em>, <em>start</em>, <em>end</em>, <em>name</em>, <em>sample</em>, <em>svtype</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.bedcluster.BedCall" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></p>
+<dl class="attribute">
+<dt id="svtk.cli.bedcluster.BedCall.chrom">
+<code class="descname">chrom</code><a class="headerlink" href="#svtk.cli.bedcluster.BedCall.chrom" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="svtk.cli.bedcluster.BedCall.end">
+<code class="descname">end</code><a class="headerlink" href="#svtk.cli.bedcluster.BedCall.end" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 2</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="svtk.cli.bedcluster.BedCall.name">
+<code class="descname">name</code><a class="headerlink" href="#svtk.cli.bedcluster.BedCall.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 3</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="svtk.cli.bedcluster.BedCall.sample">
+<code class="descname">sample</code><a class="headerlink" href="#svtk.cli.bedcluster.BedCall.sample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 4</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="svtk.cli.bedcluster.BedCall.start">
+<code class="descname">start</code><a class="headerlink" href="#svtk.cli.bedcluster.BedCall.start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="svtk.cli.bedcluster.BedCall.svtype">
+<code class="descname">svtype</code><a class="headerlink" href="#svtk.cli.bedcluster.BedCall.svtype" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 5</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="svtk.cli.bedcluster.bedcluster">
+<code class="descclassname">svtk.cli.bedcluster.</code><code class="descname">bedcluster</code><span class="sig-paren">(</span><em>bed</em>, <em>frac=0.8</em>, <em>intersection=None</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.bedcluster.bedcluster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Single linkage clustering of a bed file based on reciprocal overlap.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>bed</strong> (<em>pybedtools.BedTool</em>) – Columns: chr, start, end, name, sample, svtype.</li>
+<li><strong>frac</strong> (<em>float</em>) – Minimum reciprocal overlap for two variants to be linked together.</li>
+<li><strong>intersection</strong> (<em>pybedtools.BedTool</em><em>, </em><em>optional</em>) – <p>Pre-intersected bed. Sometimes necessary for large bed files.
+Columns: (chrA, startA, endA, nameA, sampleA, svtypeA,</p>
+<blockquote>
+<div>chrB, startB, endB, nameB, sampleB, svtypeB)</div></blockquote>
+</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>clusters</strong></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">list of deque of pybedtools.Interval</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="svtk.cli.bedcluster.collapse_sample_calls">
+<code class="descclassname">svtk.cli.bedcluster.</code><code class="descname">collapse_sample_calls</code><span class="sig-paren">(</span><em>cluster</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.bedcluster.collapse_sample_calls" title="Permalink to this definition">¶</a></dt>
+<dd><p>Merges multiple variants in same sample</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>cluster</strong> (<em>list of pybedtools.Interval</em>) – </td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>cluster</strong></td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">list of pybedtools.Interval</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="svtk.cli.bedcluster.main">
+<code class="descclassname">svtk.cli.bedcluster.</code><code class="descname">main</code><span class="sig-paren">(</span><em>argv</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.bedcluster.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="svtk.cli.bedcluster.make_argparse">
+<code class="descclassname">svtk.cli.bedcluster.</code><code class="descname">make_argparse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.bedcluster.make_argparse" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="svtk.cli.bedcluster.rmsstd">
+<code class="descclassname">svtk.cli.bedcluster.</code><code class="descname">rmsstd</code><span class="sig-paren">(</span><em>intervals</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.bedcluster.rmsstd" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-svtk.cli.bincov">
+<span id="svtk-cli-bincov-module"></span><h2>svtk.cli.bincov module<a class="headerlink" href="#module-svtk.cli.bincov" title="Permalink to this headline">¶</a></h2>
+<p>Calculates non-duplicate primary-aligned binned coverage
+of a chromosome from an input BAM file</p>
+<dl class="function">
+<dt id="svtk.cli.bincov.binCov">
+<code class="descclassname">svtk.cli.bincov.</code><code class="descname">binCov</code><span class="sig-paren">(</span><em>bam</em>, <em>chr</em>, <em>binsize</em>, <em>mode='nucleotide'</em>, <em>overlap=0.05</em>, <em>blacklist=None</em>, <em>presubbed=False</em>, <em>oldBT=False</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.bincov.binCov" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates non-duplicate, primary-aligned nucleotide or physical coverage
+in regular bin sizes on a specified chromosome from a coordinate-sorted
+bamfile</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>bam</strong> (<em>pysam.AlignmentFile</em>) – Input bam</li>
+<li><strong>chr</strong> (<em>string</em>) – Chromosome to evaluate</li>
+<li><strong>binsize</strong> (<em>int</em>) – Size of bins in bp</li>
+<li><strong>mode</strong> (<em>str</em>) – Evaluate ‘nucleotide’ or ‘physical’ coverage</li>
+<li><strong>overlap</strong> (<em>float</em>) – Maximum tolerated blacklist overlap before excluding bin</li>
+<li><strong>blacklist</strong> (<em>string</em>) – Path to blacklist BED file</li>
+<li><strong>presubbed</strong> (<em>boolean</em>) – Has the bam already been subsetted to the desired chromosome?</li>
+<li><strong>oldBT</strong> (<em>boolean</em>) – Are you using a version of bedtools pre-2.24.0?</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>coverage</strong> – chr, start, end, coverage</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">pybedtools.BedTool</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="svtk.cli.bincov.countable_read">
+<code class="descclassname">svtk.cli.bincov.</code><code class="descname">countable_read</code><span class="sig-paren">(</span><em>read</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.bincov.countable_read" title="Permalink to this definition">¶</a></dt>
+<dd><p>Requirements to include a read when computing coverage.</p>
+<p>Require non-duplicate primary read alignments.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="svtk.cli.bincov.filter_mappings">
+<code class="descclassname">svtk.cli.bincov.</code><code class="descname">filter_mappings</code><span class="sig-paren">(</span><em>bam</em>, <em>mode='nucleotide'</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.bincov.filter_mappings" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates bed intervals from a bam for a specific chromosome corresponding
+either to read coordinates or fragment coordinates</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>bam</strong> (<em>pysam.AlignmentFile</em>) – Input bam</li>
+<li><strong>mode</strong> (<em>str</em>) – ‘physical’ or ‘nucleotide’ (default: ‘physical’)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>mappings</strong> – Read or fragment intervals (depending on mode)</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">BedTool</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="svtk.cli.bincov.main">
+<code class="descclassname">svtk.cli.bincov.</code><code class="descname">main</code><span class="sig-paren">(</span><em>argv</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.bincov.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="svtk.cli.bincov.make_argparse">
+<code class="descclassname">svtk.cli.bincov.</code><code class="descname">make_argparse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.bincov.make_argparse" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-svtk.cli.collect_pesr">
+<span id="svtk-cli-collect-pesr-module"></span><h2>svtk.cli.collect_pesr module<a class="headerlink" href="#module-svtk.cli.collect_pesr" title="Permalink to this headline">¶</a></h2>
+<p>Collect split read and discordant pair data from a bam alignment.</p>
+<p>Split reads: The tool counts the number of reads soft-clipped in each direction
+(30S121M = left-clipped, 121M30S = right-clipped) at each position in the
+genome.  The position of a right-clipped read is shifted by the length of its
+alignment.</p>
+<p>Discordant pairs: The tool reduces discordant pairs to (chrA, posA, strandA,
+chrB, posB, strandB).</p>
+<p>Unmapped reads, reads with unmapped mates, secondary and supplementary
+alignments, and duplicates are excluded (SAM flag 3340).</p>
+<p>Collection can be performed on an S3-hosted bam. The tool will attempt to find
+a local copy of the bam index in the working directory, or the directory
+specified with <cite>–index-dir</cite>, otherwise the index will be downloaded.</p>
+<dl class="class">
+<dt id="svtk.cli.collect_pesr.PESRCollection">
+<em class="property">class </em><code class="descclassname">svtk.cli.collect_pesr.</code><code class="descname">PESRCollection</code><span class="sig-paren">(</span><em>bam</em>, <em>splitfile</em>, <em>discfile</em>, <em>sample='.'</em>, <em>max_split_dist=300</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.collect_pesr.PESRCollection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="svtk.cli.collect_pesr.PESRCollection.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>bam</em>, <em>splitfile</em>, <em>discfile</em>, <em>sample='.'</em>, <em>max_split_dist=300</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.collect_pesr.PESRCollection.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="svtk.cli.collect_pesr.PESRCollection.collect_pesr">
+<code class="descname">collect_pesr</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.collect_pesr.PESRCollection.collect_pesr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Collect PE and SR evidence from a BAM file.</p>
+<p>Excludes unmapped reads, reads with an unmapped mate, duplicate reads,
+and secondary or supplementary alignments. Reads are considered split
+if their CIGAR string contains a soft clip operation.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="svtk.cli.collect_pesr.PESRCollection.count_split">
+<code class="descname">count_split</code><span class="sig-paren">(</span><em>read</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.collect_pesr.PESRCollection.count_split" title="Permalink to this definition">¶</a></dt>
+<dd><p>Count splits at each position.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>read</strong> (<em>pysam.AlignedSegment</em>) – </td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="svtk.cli.collect_pesr.PESRCollection.flush_disc_pairs">
+<code class="descname">flush_disc_pairs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.collect_pesr.PESRCollection.flush_disc_pairs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write all logged discordant reads to file.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="svtk.cli.collect_pesr.PESRCollection.flush_split_counts">
+<code class="descname">flush_split_counts</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.collect_pesr.PESRCollection.flush_split_counts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write current split counts to disk and reset dictionaries</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="svtk.cli.collect_pesr.PESRCollection.report_disc">
+<code class="descname">report_disc</code><span class="sig-paren">(</span><em>read</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.collect_pesr.PESRCollection.report_disc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Report simplified discordant pair info.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>read</strong> (<em>pysam.AlignedSegment</em>) – </td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="svtk.cli.collect_pesr.PESRCollection.write_disc">
+<code class="descname">write_disc</code><span class="sig-paren">(</span><em>read</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.collect_pesr.PESRCollection.write_disc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write discordant pair to file.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="svtk.cli.collect_pesr.get_split_position">
+<code class="descclassname">svtk.cli.collect_pesr.</code><code class="descname">get_split_position</code><span class="sig-paren">(</span><em>read</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.collect_pesr.get_split_position" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate split coordinate based on read alignment and CIGAR operations.</p>
+<p>Support is only present for reads soft-clipped on one side, e.g. 100M51S,
+as the coordinate is calculated by shifting the alignment position by the
+length of the flanking match operation.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>read</strong> (<em>pysam.AlignedSegment</em>) – </td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><ul class="simple">
+<li><strong>pos</strong> (<em>int</em>) – Adjusted split read coordinate</li>
+<li><strong>side</strong> (<em>str [RIGHT,LEFT,MIDDLE]</em>) – Direction of soft clip</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="svtk.cli.collect_pesr.main">
+<code class="descclassname">svtk.cli.collect_pesr.</code><code class="descname">main</code><span class="sig-paren">(</span><em>argv</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.collect_pesr.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="svtk.cli.collect_pesr.make_argparse">
+<code class="descclassname">svtk.cli.collect_pesr.</code><code class="descname">make_argparse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.collect_pesr.make_argparse" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-svtk.cli.count_svtypes">
+<span id="svtk-cli-count-svtypes-module"></span><h2>svtk.cli.count_svtypes module<a class="headerlink" href="#module-svtk.cli.count_svtypes" title="Permalink to this headline">¶</a></h2>
+<p>Count the instances of each SVTYPE observed in each sample in a VCF.</p>
+<p>A record is only counted towards a sample’s total if the sample received a
+non-reference (0/0) or a non-null (./.) call. Records without an annotated
+SVTYPE in the INFO field are counted as “NO_SVTYPE”.</p>
+<p>Counts are reported in a three column table (sample, svtype, count).</p>
+<dl class="function">
+<dt id="svtk.cli.count_svtypes.count_svtypes">
+<code class="descclassname">svtk.cli.count_svtypes.</code><code class="descname">count_svtypes</code><span class="sig-paren">(</span><em>vcf</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.count_svtypes.count_svtypes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Count instances of each SVTYPE in each sample in a VCF.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>vcf</strong> (<em>pysam.VariantFile</em>) – </td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>counts</strong> – Columns: sample, svtype, count</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">pd.DataFrame</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="svtk.cli.count_svtypes.main">
+<code class="descclassname">svtk.cli.count_svtypes.</code><code class="descname">main</code><span class="sig-paren">(</span><em>argv</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.count_svtypes.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="svtk.cli.count_svtypes.make_argparse">
+<code class="descclassname">svtk.cli.count_svtypes.</code><code class="descname">make_argparse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.count_svtypes.make_argparse" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-svtk.cli.pesr_test">
+<span id="svtk-cli-pesr-test-module"></span><h2>svtk.cli.pesr_test module<a class="headerlink" href="#module-svtk.cli.pesr_test" title="Permalink to this headline">¶</a></h2>
+<p>Calculate enrichment of clipped reads or discordant pairs at SV breakpoints.</p>
+<dl class="function">
+<dt id="svtk.cli.pesr_test.count_pe">
+<code class="descclassname">svtk.cli.pesr_test.</code><code class="descname">count_pe</code><span class="sig-paren">(</span><em>argv</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.pesr_test.count_pe" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="svtk.cli.pesr_test.count_sr">
+<code class="descclassname">svtk.cli.pesr_test.</code><code class="descname">count_sr</code><span class="sig-paren">(</span><em>argv</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.pesr_test.count_sr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="svtk.cli.pesr_test.make_count_pe_argparse">
+<code class="descclassname">svtk.cli.pesr_test.</code><code class="descname">make_count_pe_argparse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.pesr_test.make_count_pe_argparse" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="svtk.cli.pesr_test.make_count_sr_argparse">
+<code class="descclassname">svtk.cli.pesr_test.</code><code class="descname">make_count_sr_argparse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.pesr_test.make_count_sr_argparse" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="svtk.cli.pesr_test.make_pe_test_argparse">
+<code class="descclassname">svtk.cli.pesr_test.</code><code class="descname">make_pe_test_argparse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.pesr_test.make_pe_test_argparse" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="svtk.cli.pesr_test.make_sr_test_argparse">
+<code class="descclassname">svtk.cli.pesr_test.</code><code class="descname">make_sr_test_argparse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.pesr_test.make_sr_test_argparse" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="svtk.cli.pesr_test.pe_test">
+<code class="descclassname">svtk.cli.pesr_test.</code><code class="descname">pe_test</code><span class="sig-paren">(</span><em>argv</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.pesr_test.pe_test" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="svtk.cli.pesr_test.sr_test">
+<code class="descclassname">svtk.cli.pesr_test.</code><code class="descname">sr_test</code><span class="sig-paren">(</span><em>argv</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.pesr_test.sr_test" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-svtk.cli.rdtest2vcf">
+<span id="svtk-cli-rdtest2vcf-module"></span><h2>svtk.cli.rdtest2vcf module<a class="headerlink" href="#module-svtk.cli.rdtest2vcf" title="Permalink to this headline">¶</a></h2>
+<p>Convert an RdTest-formatted bed to the standard VCF format.</p>
+<p>Each record corresponds to a single CNV interval and will have the following
+INFO fields, with specified constraints:</p>
+<blockquote>
+<div>SVTYPE:  SV type [DEL,DUP]
+CHR2:    Secondary chromosome; set to same as CHROM
+END:     SV end position
+STRANDS: Breakpoint strandedness [DEL:+-,DUP:-+]
+SVLEN:   SV length
+ALGORITHMS:  Tagged with “depth”</div></blockquote>
+<dl class="function">
+<dt id="svtk.cli.rdtest2vcf.RdtestParser">
+<code class="descclassname">svtk.cli.rdtest2vcf.</code><code class="descname">RdtestParser</code><span class="sig-paren">(</span><em>bed</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.rdtest2vcf.RdtestParser" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="svtk.cli.rdtest2vcf.main">
+<code class="descclassname">svtk.cli.rdtest2vcf.</code><code class="descname">main</code><span class="sig-paren">(</span><em>argv</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.rdtest2vcf.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="svtk.cli.rdtest2vcf.rdtest2vcf">
+<code class="descclassname">svtk.cli.rdtest2vcf.</code><code class="descname">rdtest2vcf</code><span class="sig-paren">(</span><em>bed</em>, <em>vcf</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.rdtest2vcf.rdtest2vcf" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-svtk.cli.resolve">
+<span id="svtk-cli-resolve-module"></span><h2>svtk.cli.resolve module<a class="headerlink" href="#module-svtk.cli.resolve" title="Permalink to this headline">¶</a></h2>
+<p>Resolve complex SV from inversion/translocation breakpoints and CNV intervals.</p>
+<dl class="function">
+<dt id="svtk.cli.resolve.main">
+<code class="descclassname">svtk.cli.resolve.</code><code class="descname">main</code><span class="sig-paren">(</span><em>argv</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.resolve.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="svtk.cli.resolve.make_argparse">
+<code class="descclassname">svtk.cli.resolve.</code><code class="descname">make_argparse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.resolve.make_argparse" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="svtk.cli.resolve.resolve_complex_sv">
+<code class="descclassname">svtk.cli.resolve.</code><code class="descname">resolve_complex_sv</code><span class="sig-paren">(</span><em>vcf</em>, <em>cytobands</em>, <em>disc_pairs</em>, <em>mei_bed</em>, <em>variant_prefix='CPX_'</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.resolve.resolve_complex_sv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resolve complex SV from CNV intervals and BCA breakpoints.</p>
+<p>Yields all resolved events, simple or complex, in sorted order.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>vcf</strong> (<em>pysam.VariantFile</em>) – </li>
+<li><strong>cytobands</strong> (<a class="reference internal" href="../utils.html#pysam.TabixFile" title="pysam.TabixFile"><em>pysam.TabixFile</em></a>) – </li>
+<li><strong>disc_pairs</strong> (<a class="reference internal" href="../utils.html#pysam.TabixFile" title="pysam.TabixFile"><em>pysam.TabixFile</em></a>) – </li>
+<li><strong>mei_bed</strong> (<em>pybedtools.BedTool</em>) – </li>
+<li><strong>variant_prefix</strong> (<em>str</em>) – Prefix to assign to resolved variants</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Yields:</th><td class="field-body"><p class="first last"><strong>sv</strong> (<em>pysam.VariantRecord</em>)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-svtk.cli.standardize_vcf">
+<span id="svtk-cli-standardize-vcf-module"></span><h2>svtk.cli.standardize_vcf module<a class="headerlink" href="#module-svtk.cli.standardize_vcf" title="Permalink to this headline">¶</a></h2>
+<p>Standardize a VCF of SV calls.</p>
+<p>Each record corresponds to a single SV breakpoint and will have the following
+INFO fields, with specified constraints:</p>
+<blockquote>
+<div>SVTYPE:  SV type [DEL,DUP,INV,BND]
+CHR2:    Secondary chromosome [Must be lexicographically greater than CHROM]
+END:     SV end position (or position on CHR2 in translocations)
+STRANDS: Breakpoint strandedness [++,+-,-+,–]
+SVLEN:   SV length (-1 if translocation)
+ALGORITHMS:  Source algorithm</div></blockquote>
+<dl class="function">
+<dt id="svtk.cli.standardize_vcf.main">
+<code class="descclassname">svtk.cli.standardize_vcf.</code><code class="descname">main</code><span class="sig-paren">(</span><em>argv</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.standardize_vcf.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="svtk.cli.standardize_vcf.make_argparse">
+<code class="descclassname">svtk.cli.standardize_vcf.</code><code class="descname">make_argparse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.standardize_vcf.make_argparse" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-svtk.cli.utils">
+<span id="svtk-cli-utils-module"></span><h2>svtk.cli.utils module<a class="headerlink" href="#module-svtk.cli.utils" title="Permalink to this headline">¶</a></h2>
+<p>Convert a VCF to a BED.</p>
+<dl class="function">
+<dt id="svtk.cli.utils.make_remote_tabix_argparse">
+<code class="descclassname">svtk.cli.utils.</code><code class="descname">make_remote_tabix_argparse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.utils.make_remote_tabix_argparse" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="svtk.cli.utils.make_vcf2bed_argparse">
+<code class="descclassname">svtk.cli.utils.</code><code class="descname">make_vcf2bed_argparse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.utils.make_vcf2bed_argparse" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="svtk.cli.utils.remote_tabix">
+<code class="descclassname">svtk.cli.utils.</code><code class="descname">remote_tabix</code><span class="sig-paren">(</span><em>argv</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.utils.remote_tabix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="svtk.cli.utils.vcf2bed">
+<code class="descclassname">svtk.cli.utils.</code><code class="descname">vcf2bed</code><span class="sig-paren">(</span><em>argv</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.utils.vcf2bed" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-svtk.cli.vcfcluster">
+<span id="svtk-cli-vcfcluster-module"></span><h2>svtk.cli.vcfcluster module<a class="headerlink" href="#module-svtk.cli.vcfcluster" title="Permalink to this headline">¶</a></h2>
+<p>Intersect SV called by PE/SR-based algorithms.</p>
+<p>Paired-end and split-read callers provide a reasonably precise estimation of
+an SV breakpoint. This program identifies variant calls that fall within
+the expected margin of error made by these programs and clusters them together.
+The cluster distance defaults to 500 bp but it is recommended to use the
+maximum individual clustering distance across the libraries being analyzed.
+(Generally median + 7 * MAD)</p>
+<dl class="function">
+<dt id="svtk.cli.vcfcluster.flatten_pos">
+<code class="descclassname">svtk.cli.vcfcluster.</code><code class="descname">flatten_pos</code><span class="sig-paren">(</span><em>records</em>, <em>name</em>, <em>fout</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.vcfcluster.flatten_pos" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="svtk.cli.vcfcluster.main">
+<code class="descclassname">svtk.cli.vcfcluster.</code><code class="descname">main</code><span class="sig-paren">(</span><em>argv</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.vcfcluster.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="svtk.cli.vcfcluster.make_argparse">
+<code class="descclassname">svtk.cli.vcfcluster.</code><code class="descname">make_argparse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.vcfcluster.make_argparse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Build argument parser</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="svtk.cli.vcfcluster.parse_filepaths">
+<code class="descclassname">svtk.cli.vcfcluster.</code><code class="descname">parse_filepaths</code><span class="sig-paren">(</span><em>filepaths</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cli.vcfcluster.parse_filepaths" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>filepaths</strong> (<em>list of str</em>) – List of paths to standardized VCFs</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>vcfs</strong></td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">list of pysam.VariantFile</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-svtk.cli">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-svtk.cli" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Matthew Stone.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'0.1',
+            LANGUAGE:'None',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

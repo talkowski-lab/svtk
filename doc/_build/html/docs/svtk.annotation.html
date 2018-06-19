@@ -1,0 +1,406 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>svtk.annotation package &mdash; svtk 0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> svtk
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../cli.html">SVTK CLI - Command line tools for processing and analyzing structural variants</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../utils.html">svtk.utils - Utility function and classes for working with SV in Python</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">svtk</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>svtk.annotation package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/docs/svtk.annotation.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="svtk-annotation-package">
+<h1>svtk.annotation package<a class="headerlink" href="#svtk-annotation-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-svtk.annotation.annotate">
+<span id="svtk-annotation-annotate-module"></span><h2>svtk.annotation.annotate module<a class="headerlink" href="#module-svtk.annotation.annotate" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="svtk.annotation.annotate.annotate">
+<code class="descclassname">svtk.annotation.annotate.</code><code class="descname">annotate</code><span class="sig-paren">(</span><em>sv</em>, <em>gencode</em>, <em>noncoding</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.annotation.annotate.annotate" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Gene disrupting if:</dt>
+<dd><ol class="first last arabic simple">
+<li>Breakpoint hits exon</li>
+<li>Inverted segment lies inside gene AND hits exon</li>
+<li>One end of inverted segment lies inside gene AND other does not</li>
+</ol>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li>Intragenic variants are annotated with the nearest TSS.</li>
+<li>Inversions which entirely span a gene are considered “no_effect” and</li>
+</ul>
+<p>excluded from annotation
+* Duplications which overlap the start OR end of a gene boundary
+without fully spanning the boundary are considered “no_effect” and
+excluded from annotation</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>sv</strong> (<em>pbt.BedTool</em>) – SV breakpoints and CNV intervals</li>
+<li><strong>gencode</strong> (<em>pbt.BedTool</em>) – Gencode annotations</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="svtk.annotation.annotate.annotate_gencode">
+<code class="descclassname">svtk.annotation.annotate.</code><code class="descname">annotate_gencode</code><span class="sig-paren">(</span><em>sv</em>, <em>gencode</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.annotation.annotate.annotate_gencode" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="svtk.annotation.annotate.annotate_noncoding">
+<code class="descclassname">svtk.annotation.annotate.</code><code class="descname">annotate_noncoding</code><span class="sig-paren">(</span><em>sv</em>, <em>noncoding</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.annotation.annotate.annotate_noncoding" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="svtk.annotation.annotate.annotate_vcf">
+<code class="descclassname">svtk.annotation.annotate.</code><code class="descname">annotate_vcf</code><span class="sig-paren">(</span><em>vcf</em>, <em>gencode</em>, <em>noncoding</em>, <em>annotated_vcf</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.annotation.annotate.annotate_vcf" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>vcf</strong> (<em>pysam.VariantFile</em>) – </li>
+<li><strong>gencode</strong> (<em>pbt.BedTool</em>) – Gencode gene annotations</li>
+<li><strong>noncoding</strong> (<em>pbt.BedTool</em>) – Noncoding elements</li>
+<li><strong>annotated_vcf</strong> (<em>str</em>) – Path to output VCF</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-svtk.annotation.annotate_intersection">
+<span id="svtk-annotation-annotate-intersection-module"></span><h2>svtk.annotation.annotate_intersection module<a class="headerlink" href="#module-svtk.annotation.annotate_intersection" title="Permalink to this headline">¶</a></h2>
+<p>Annotate a VCF of structural variants with a list of genomic elements.</p>
+<dl class="function">
+<dt id="svtk.annotation.annotate_intersection.annotate_intersection">
+<code class="descclassname">svtk.annotation.annotate_intersection.</code><code class="descname">annotate_intersection</code><span class="sig-paren">(</span><em>sv</em>, <em>elements</em>, <em>filetype='gtf'</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.annotation.annotate_intersection.annotate_intersection" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>sv</strong> (<em>pbt.BedTool</em>) – SV breakpoints and CNV intervals</li>
+<li><strong>gencode</strong> (<em>pbt.BedTool</em>) – Gencode annotations</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="svtk.annotation.annotate_intersection.disruption_type">
+<code class="descclassname">svtk.annotation.annotate_intersection.</code><code class="descname">disruption_type</code><span class="sig-paren">(</span><em>hit_type</em>, <em>svtype</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.annotation.annotate_intersection.disruption_type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="svtk.annotation.annotate_intersection.intersection_type">
+<code class="descclassname">svtk.annotation.annotate_intersection.</code><code class="descname">intersection_type</code><span class="sig-paren">(</span><em>variant</em>, <em>element</em>, <em>filetype='bed'</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.annotation.annotate_intersection.intersection_type" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>list of str</dt>
+<dd>chrom, start, end, ID</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="svtk.annotation.annotate_intersection.split_gencode_fields">
+<code class="descclassname">svtk.annotation.annotate_intersection.</code><code class="descname">split_gencode_fields</code><span class="sig-paren">(</span><em>field_str</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.annotation.annotate_intersection.split_gencode_fields" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-svtk.annotation.classify_effect">
+<span id="svtk-annotation-classify-effect-module"></span><h2>svtk.annotation.classify_effect module<a class="headerlink" href="#module-svtk.annotation.classify_effect" title="Permalink to this headline">¶</a></h2>
+<p>Classify predicted genic effect of SV.</p>
+<dl class="function">
+<dt id="svtk.annotation.classify_effect.classify_bnd">
+<code class="descclassname">svtk.annotation.classify_effect.</code><code class="descname">classify_bnd</code><span class="sig-paren">(</span><em>disrupt_dict</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.annotation.classify_effect.classify_bnd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Classify genic effect of a breakend.</p>
+<p>An interchromosomal breakpoint falling within a gene is LOF.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="svtk.annotation.classify_effect.classify_del">
+<code class="descclassname">svtk.annotation.classify_effect.</code><code class="descname">classify_del</code><span class="sig-paren">(</span><em>disrupt_dict</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.annotation.classify_effect.classify_del" title="Permalink to this definition">¶</a></dt>
+<dd><p>All deletion hits are DISRUPTING</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="svtk.annotation.classify_effect.classify_disrupt">
+<code class="descclassname">svtk.annotation.classify_effect.</code><code class="descname">classify_disrupt</code><span class="sig-paren">(</span><em>disrupt_dict</em>, <em>svtype</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.annotation.classify_effect.classify_disrupt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Exonic disruptions count as LOF.</p>
+<dl class="docutils">
+<dt>If exonic span or copy gain, check gene:</dt>
+<dd>gene disruptions count as LOF
+CDS copy_gain/span count as themselves</dd>
+<dt>If no exonic hit, check UTR:</dt>
+<dd>UTR disruption counts as UTR</dd>
+<dt>If no UTR, check promoter:</dt>
+<dd>disruption counts</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="svtk.annotation.classify_effect.classify_dup">
+<code class="descclassname">svtk.annotation.classify_effect.</code><code class="descname">classify_dup</code><span class="sig-paren">(</span><em>disrupt_dict</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.annotation.classify_effect.classify_dup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Classify genic effect of a duplication.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="svtk.annotation.classify_effect.classify_effect">
+<code class="descclassname">svtk.annotation.classify_effect.</code><code class="descname">classify_effect</code><span class="sig-paren">(</span><em>hits</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.annotation.classify_effect.classify_effect" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="svtk.annotation.classify_effect.classify_inv">
+<code class="descclassname">svtk.annotation.classify_effect.</code><code class="descname">classify_inv</code><span class="sig-paren">(</span><em>disrupt_dict</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.annotation.classify_effect.classify_inv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Classify genic effect of a inversion.</p>
+<p>Inversions are disruptive if one or both breakpoints falls within a genic
+element.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-svtk.annotation.nearest_tss">
+<span id="svtk-annotation-nearest-tss-module"></span><h2>svtk.annotation.nearest_tss module<a class="headerlink" href="#module-svtk.annotation.nearest_tss" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="svtk.annotation.nearest_tss.annotate_nearest_tss">
+<code class="descclassname">svtk.annotation.nearest_tss.</code><code class="descname">annotate_nearest_tss</code><span class="sig-paren">(</span><em>sv</em>, <em>gencode</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.annotation.nearest_tss.annotate_nearest_tss" title="Permalink to this definition">¶</a></dt>
+<dd><p>Annotate each variant record with its nearest TSS.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>sv</strong> (<em>pbt.BedTool</em>) – columns = (chrom, start, end, name, svtype, strands)</li>
+<li><strong>gencode</strong> (<em>pbt.BedTool</em>) – Gencode gene annotations (GTF)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>nearest_tss</strong> – Columns = (name, svtype, gene_name, effect)</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">pd.DataFrame</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-svtk.annotation">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-svtk.annotation" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Matthew Stone.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'0.1',
+            LANGUAGE:'None',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

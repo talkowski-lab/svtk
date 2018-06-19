@@ -1,0 +1,50 @@
+svtk package
+============
+
+Subpackages
+-----------
+
+.. toctree::
+
+    svtk.annotation
+    svtk.cli
+    svtk.cxsv
+    svtk.pesr
+    svtk.standardize
+    svtk.utils
+
+Submodules
+----------
+
+svtk.genomeslink module
+-----------------------
+
+.. automodule:: svtk.genomeslink
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+svtk.svfile module
+------------------
+
+.. automodule:: svtk.svfile
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+svtk.vcfcluster module
+----------------------
+
+.. automodule:: svtk.vcfcluster
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: svtk
+    :members:
+    :undoc-members:
+    :show-inheritance:

@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>SVTK: A toolkit for manipulating and analyzing structural variants &mdash; svtools 0.1 documentation</title>
+  <title>SVTK: A toolkit for manipulating and analyzing structural variants &mdash; svtk 0.1 documentation</title>
   
 
   
@@ -25,24 +25,18 @@
   
 
   
-  
     <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  
-
-  
-
-  
-        <link rel="index" title="Index"
-              href="genindex.html"/>
-        <link rel="search" title="Search" href="search.html"/>
-    <link rel="top" title="svtools 0.1 documentation" href="#"/> 
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="SVTK CLI - Command line tools for processing and analyzing structural variants" href="cli.html" /> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
 
 </head>
 
-<body class="wy-body-for-nav" role="document">
+<body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
@@ -54,7 +48,7 @@
           
 
           
-            <a href="#" class="icon icon-home"> svtools
+            <a href="#" class="icon icon-home"> svtk
           
 
           
@@ -88,12 +82,12 @@
               
             
             
-              <!-- Local TOC -->
-              <div class="local-toc"><ul>
-<li><a class="reference internal" href="#">SVTK: A toolkit for manipulating and analyzing structural variants</a></li>
-<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">SVTK CLI - Command line tools for processing and analyzing structural variants</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">svtk.utils - Utility function and classes for working with SV in Python</a></li>
 </ul>
-</div>
+
             
           
         </div>
@@ -103,17 +97,18 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+      <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="#">svtools</a>
+          <a href="#">svtk</a>
         
       </nav>
 
 
-      
       <div class="wy-nav-content">
+        
         <div class="rst-content">
+        
           
 
 
@@ -158,6 +153,32 @@
   <div class="section" id="svtk-a-toolkit-for-manipulating-and-analyzing-structural-variants">
 <h1>SVTK: A toolkit for manipulating and analyzing structural variants<a class="headerlink" href="#svtk-a-toolkit-for-manipulating-and-analyzing-structural-variants" title="Permalink to this headline">¶</a></h1>
 <div class="toctree-wrapper compound">
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">SVTK CLI - Command line tools for processing and analyzing structural variants</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#vcfcluster">vcfcluster</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#annotate">annotate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#bedcluster">bedcluster</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#bincov">bincov</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#collect-pesr">collect-pesr</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#count-svtypes">count-svtypes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#resolve">resolve</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#standardize">standardize</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#vcf2bed">vcf2bed</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#remote-tabix">remote_tabix</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#pe-test">pe-test</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#sr-test">sr-test</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#count-pe">count-pe</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#count-sr">count-sr</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">svtk.utils - Utility function and classes for working with SV in Python</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#api">API</a></li>
+</ul>
+</li>
+</ul>
 </div>
 </div>
 <div class="section" id="indices-and-tables">
@@ -171,11 +192,16 @@
 
 
            </div>
-           <div class="articleComments">
-            
-           </div>
+           
           </div>
           <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="cli.html" class="btn btn-neutral float-right" title="SVTK CLI - Command line tools for processing and analyzing structural variants" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+    </div>
   
 
   <hr/>
@@ -186,7 +212,7 @@
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -205,6 +231,7 @@
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'./',
             VERSION:'0.1',
+            LANGUAGE:'None',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,
@@ -222,14 +249,11 @@
     <script type="text/javascript" src="_static/js/theme.js"></script>
   
 
-  
-  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-   
+  </script> 
 
 </body>
 </html>

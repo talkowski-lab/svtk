@@ -1,0 +1,102 @@
+svtk.cli package
+================
+
+Submodules
+----------
+
+svtk.cli.annotate module
+------------------------
+
+.. automodule:: svtk.cli.annotate
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+svtk.cli.bedcluster module
+--------------------------
+
+.. automodule:: svtk.cli.bedcluster
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+svtk.cli.bincov module
+----------------------
+
+.. automodule:: svtk.cli.bincov
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+svtk.cli.collect\_pesr module
+-----------------------------
+
+.. automodule:: svtk.cli.collect_pesr
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+svtk.cli.count\_svtypes module
+------------------------------
+
+.. automodule:: svtk.cli.count_svtypes
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+svtk.cli.pesr\_test module
+--------------------------
+
+.. automodule:: svtk.cli.pesr_test
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+svtk.cli.rdtest2vcf module
+--------------------------
+
+.. automodule:: svtk.cli.rdtest2vcf
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+svtk.cli.resolve module
+-----------------------
+
+.. automodule:: svtk.cli.resolve
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+svtk.cli.standardize\_vcf module
+--------------------------------
+
+.. automodule:: svtk.cli.standardize_vcf
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+svtk.cli.utils module
+---------------------
+
+.. automodule:: svtk.cli.utils
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+svtk.cli.vcfcluster module
+--------------------------
+
+.. automodule:: svtk.cli.vcfcluster
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: svtk.cli
+    :members:
+    :undoc-members:
+    :show-inheritance:

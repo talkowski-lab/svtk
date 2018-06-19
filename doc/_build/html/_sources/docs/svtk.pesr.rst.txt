@@ -1,0 +1,46 @@
+svtk.pesr package
+=================
+
+Submodules
+----------
+
+svtk.pesr.breakpoint module
+---------------------------
+
+.. automodule:: svtk.pesr.breakpoint
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+svtk.pesr.pe\_test module
+-------------------------
+
+.. automodule:: svtk.pesr.pe_test
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+svtk.pesr.pesr\_test module
+---------------------------
+
+.. automodule:: svtk.pesr.pesr_test
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+svtk.pesr.sr\_test module
+-------------------------
+
+.. automodule:: svtk.pesr.sr_test
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: svtk.pesr
+    :members:
+    :undoc-members:
+    :show-inheritance:

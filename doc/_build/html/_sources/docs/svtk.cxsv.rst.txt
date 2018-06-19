@@ -1,0 +1,38 @@
+svtk.cxsv package
+=================
+
+Submodules
+----------
+
+svtk.cxsv.cpx\_inv module
+-------------------------
+
+.. automodule:: svtk.cxsv.cpx_inv
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+svtk.cxsv.cpx\_link module
+--------------------------
+
+.. automodule:: svtk.cxsv.cpx_link
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+svtk.cxsv.cpx\_tloc module
+--------------------------
+
+.. automodule:: svtk.cxsv.cpx_tloc
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: svtk.cxsv
+    :members:
+    :undoc-members:
+    :show-inheritance:

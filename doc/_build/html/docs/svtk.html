@@ -1,0 +1,804 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>svtk package &mdash; svtk 0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> svtk
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../cli.html">SVTK CLI - Command line tools for processing and analyzing structural variants</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../utils.html">svtk.utils - Utility function and classes for working with SV in Python</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">svtk</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>svtk package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/docs/svtk.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="svtk-package">
+<h1>svtk package<a class="headerlink" href="#svtk-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="svtk.annotation.html">svtk.annotation package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="svtk.annotation.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="svtk.annotation.html#module-svtk.annotation.annotate">svtk.annotation.annotate module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="svtk.annotation.html#module-svtk.annotation.annotate_intersection">svtk.annotation.annotate_intersection module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="svtk.annotation.html#module-svtk.annotation.classify_effect">svtk.annotation.classify_effect module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="svtk.annotation.html#module-svtk.annotation.nearest_tss">svtk.annotation.nearest_tss module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="svtk.annotation.html#module-svtk.annotation">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="svtk.cli.html">svtk.cli package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="svtk.cli.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="svtk.cli.html#module-svtk.cli.annotate">svtk.cli.annotate module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="svtk.cli.html#module-svtk.cli.bedcluster">svtk.cli.bedcluster module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="svtk.cli.html#module-svtk.cli.bincov">svtk.cli.bincov module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="svtk.cli.html#module-svtk.cli.collect_pesr">svtk.cli.collect_pesr module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="svtk.cli.html#module-svtk.cli.count_svtypes">svtk.cli.count_svtypes module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="svtk.cli.html#module-svtk.cli.pesr_test">svtk.cli.pesr_test module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="svtk.cli.html#module-svtk.cli.rdtest2vcf">svtk.cli.rdtest2vcf module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="svtk.cli.html#module-svtk.cli.resolve">svtk.cli.resolve module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="svtk.cli.html#module-svtk.cli.standardize_vcf">svtk.cli.standardize_vcf module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="svtk.cli.html#module-svtk.cli.utils">svtk.cli.utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="svtk.cli.html#module-svtk.cli.vcfcluster">svtk.cli.vcfcluster module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="svtk.cli.html#module-svtk.cli">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="svtk.cxsv.html">svtk.cxsv package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="svtk.cxsv.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="svtk.cxsv.html#module-svtk.cxsv.cpx_inv">svtk.cxsv.cpx_inv module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="svtk.cxsv.html#module-svtk.cxsv.cpx_link">svtk.cxsv.cpx_link module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="svtk.cxsv.html#module-svtk.cxsv.cpx_tloc">svtk.cxsv.cpx_tloc module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="svtk.cxsv.html#module-svtk.cxsv">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="svtk.pesr.html">svtk.pesr package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="svtk.pesr.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="svtk.pesr.html#module-svtk.pesr.breakpoint">svtk.pesr.breakpoint module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="svtk.pesr.html#module-svtk.pesr.pe_test">svtk.pesr.pe_test module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="svtk.pesr.html#module-svtk.pesr.pesr_test">svtk.pesr.pesr_test module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="svtk.pesr.html#module-svtk.pesr.sr_test">svtk.pesr.sr_test module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="svtk.pesr.html#module-svtk.pesr">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="svtk.standardize.html">svtk.standardize package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="svtk.standardize.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="svtk.standardize.html#module-svtk.standardize.standardize">svtk.standardize.standardize module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="svtk.standardize.html#module-svtk.standardize.std_delly">svtk.standardize.std_delly module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="svtk.standardize.html#module-svtk.standardize.std_lumpy">svtk.standardize.std_lumpy module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="svtk.standardize.html#module-svtk.standardize.std_manta">svtk.standardize.std_manta module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="svtk.standardize.html#module-svtk.standardize.std_melt">svtk.standardize.std_melt module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="svtk.standardize.html#module-svtk.standardize.std_wham">svtk.standardize.std_wham module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="svtk.standardize.html#module-svtk.standardize">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="svtk.utils.html">svtk.utils package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="svtk.utils.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="svtk.utils.html#module-svtk.utils.bgzipfile">svtk.utils.bgzipfile module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="svtk.utils.html#module-svtk.utils.helpers">svtk.utils.helpers module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="svtk.utils.html#module-svtk.utils.s3bam">svtk.utils.s3bam module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="svtk.utils.html#module-svtk.utils.utils">svtk.utils.utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="svtk.utils.html#module-svtk.utils">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-svtk.genomeslink">
+<span id="svtk-genomeslink-module"></span><h2>svtk.genomeslink module<a class="headerlink" href="#module-svtk.genomeslink" title="Permalink to this headline">¶</a></h2>
+<p>genomeslink.py</p>
+<p>Implementation of single-linkage clustering for genomic coordinates.</p>
+<p>Not actually an implementation of the SLINK algorithm.</p>
+<dl class="class">
+<dt id="svtk.genomeslink.GSNode">
+<em class="property">class </em><code class="descclassname">svtk.genomeslink.</code><code class="descname">GSNode</code><span class="sig-paren">(</span><em>chrA</em>, <em>posA</em>, <em>chrB</em>, <em>posB</em>, <em>name='.'</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.genomeslink.GSNode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="svtk.genomeslink.GSNode.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>chrA</em>, <em>posA</em>, <em>chrB</em>, <em>posB</em>, <em>name='.'</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.genomeslink.GSNode.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Node in graph-based single-linkage clustering of genomic coordinates.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="svtk.genomeslink.GSNode.clusters_with">
+<code class="descname">clusters_with</code><span class="sig-paren">(</span><em>other</em>, <em>dist</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.genomeslink.GSNode.clusters_with" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test if candidates meet cluster distance requirement on chrB, posB</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="svtk.genomeslink.GSNode.is_allowed_chrom">
+<code class="descname">is_allowed_chrom</code><span class="sig-paren">(</span><em>chroms='either'</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.genomeslink.GSNode.is_allowed_chrom" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whitelist chromosomes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>chroms</strong> (<em>str</em><em> or </em><em>list</em><em>, </em><em>optional</em>) – <ol class="arabic simple">
+<li>List of permitted chromosomes</li>
+</ol>
+<p>2) One of ‘GRCh’, ‘UCSC’, ‘either’. Allows the 22 autosomes and sex
+chromosomes in GRCh format (1, 2, … X, Y), UCSC format
+(chr1, chr2, … chrX, chrY), or either format.
+Defaults to ‘either’.</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>is_allowed_chrom</strong> – True if both reads are on whitelisted chromosomes.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="svtk.genomeslink.GSNode.is_clusterable_with">
+<code class="descname">is_clusterable_with</code><span class="sig-paren">(</span><em>other</em>, <em>dist</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.genomeslink.GSNode.is_clusterable_with" title="Permalink to this definition">¶</a></dt>
+<dd><p>Identify cluster candidates if chrA, posB meet cluster distance limit</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="svtk.genomeslink.GSNode.is_in">
+<code class="descname">is_in</code><span class="sig-paren">(</span><em>tabixfile</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.genomeslink.GSNode.is_in" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test if breakpoints of SV fall into any region in tabix-indexed bed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>tabixfile</strong> (<em>pysam.TabixFile</em>) – </td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>is_in</strong></td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="svtk.genomeslink.GSNode.secondary">
+<code class="descname">secondary</code><a class="headerlink" href="#svtk.genomeslink.GSNode.secondary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Filter function</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="svtk.genomeslink.GSNode.sort_positions">
+<code class="descname">sort_positions</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#svtk.genomeslink.GSNode.sort_positions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Force chrA, posA to be upstream of chrB, posB</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="svtk.genomeslink.GenomeSLINK">
+<em class="property">class </em><code class="descclassname">svtk.genomeslink.</code><code class="descname">GenomeSLINK</code><span class="sig-paren">(</span><em>nodes</em>, <em>dist</em>, <em>size=1</em>, <em>blacklist=None</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.genomeslink.GenomeSLINK" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="svtk.genomeslink.GenomeSLINK.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>nodes</em>, <em>dist</em>, <em>size=1</em>, <em>blacklist=None</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.genomeslink.GenomeSLINK.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Graph-based single-linkage clustering of genomic coordinates.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>nodes</strong> (<em>iterable of GSNode</em>) – GSNodes sorted by chrA, posA</li>
+<li><strong>dist</strong> (<em>int</em>) – Maximum clustering distance.</li>
+<li><strong>size</strong> (<em>int</em>) – Minimum cluster size. Recommended to use 1 for call/variant
+clustering, scale up for read pair clustering.</li>
+<li><strong>blacklist</strong> (<em>pysam.TabixFile</em><em>, </em><em>optional</em>) – Regions to exclude from clustering. Any node with a coordinate
+inside an excluding region is omitted. (NOTE: not overlap-based.)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="svtk.genomeslink.GenomeSLINK.cluster">
+<code class="descname">cluster</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.genomeslink.GenomeSLINK.cluster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform single linkage clustering on a candidate batch of GSNodes</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Yields:</th><td class="field-body"><em>list of GSNode</em> – A cluster of GSNodes</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="svtk.genomeslink.GenomeSLINK.cluster_candidates">
+<code class="descname">cluster_candidates</code><span class="sig-paren">(</span><em>candidates</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.genomeslink.GenomeSLINK.cluster_candidates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Batch of clustering</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="svtk.genomeslink.GenomeSLINK.filter_nodes">
+<code class="descname">filter_nodes</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#svtk.genomeslink.GenomeSLINK.filter_nodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Filter provided nodes. By default, remove nodes in blacklisted regions.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Yields:</th><td class="field-body"><strong>node</strong> (<em>GSNode</em>)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="svtk.genomeslink.GenomeSLINK.get_candidates">
+<code class="descname">get_candidates</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#svtk.genomeslink.GenomeSLINK.get_candidates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find batches of SVCalls eligible for clustering.</p>
+<p>Requires input sorted by chromosome and position of first read in each
+pair. Pairs are collected while the first read in the next pair in the
+parser is within the maximum clustering distance of the first read of
+the previous pair.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Yields:</th><td class="field-body"><strong>candidates</strong> (<em>deque of GSNode</em>)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-svtk.svfile">
+<span id="svtk-svfile-module"></span><h2>svtk.svfile module<a class="headerlink" href="#module-svtk.svfile" title="Permalink to this headline">¶</a></h2>
+<p>svfile.py</p>
+<p>Wrap the pysam API to permit clustering of standardized SV VCF records.</p>
+<dl class="class">
+<dt id="svtk.svfile.SVFile">
+<em class="property">class </em><code class="descclassname">svtk.svfile.</code><code class="descname">SVFile</code><span class="sig-paren">(</span><em>vcf</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.svfile.SVFile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="svtk.svfile.SVFile.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>vcf</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.svfile.SVFile.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wrapper for standardized VCF files.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>vcf</strong> (<em>pysam.VariantFile</em>) – </td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="svtk.svfile.SVFile.fetch">
+<code class="descname">fetch</code><span class="sig-paren">(</span><em>chrom</em>, <em>start=None</em>, <em>end=None</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.svfile.SVFile.fetch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch only calls from specified region of SVFile.</p>
+<p>Requires Tabix index. Updates SVFile in place.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>chrom</strong> (<em>str</em>) – </li>
+<li><strong>start</strong> (<em>int</em><em>, </em><em>optional</em>) – </li>
+<li><strong>end</strong> (<em>int</em><em>, </em><em>optional</em>) – Required if start specified</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="svtk.svfile.SVFile.next">
+<code class="descname">next</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#svtk.svfile.SVFile.next" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="svtk.svfile.SVRecord">
+<em class="property">class </em><code class="descclassname">svtk.svfile.</code><code class="descname">SVRecord</code><span class="sig-paren">(</span><em>record</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.svfile.SVRecord" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#svtk.genomeslink.GSNode" title="svtk.genomeslink.GSNode"><code class="xref py py-class docutils literal notranslate"><span class="pre">svtk.genomeslink.GSNode</span></code></a></p>
+<p>Clusterable VCF record.</p>
+<dl class="method">
+<dt id="svtk.svfile.SVRecord.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>record</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.svfile.SVRecord.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>record <span class="classifier-delimiter">:</span> <span class="classifier">pysam.VariantRecord</span></dt>
+<dd>Must specify ‘CHR2’ and ‘END’ in INFO</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="svtk.svfile.SVRecord.clusters_with">
+<code class="descname">clusters_with</code><span class="sig-paren">(</span><em>other</em>, <em>dist</em>, <em>frac=0.0</em>, <em>match_strands=False</em>, <em>sample_overlap=0.0</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.svfile.SVRecord.clusters_with" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if two SV cluster with each other.</p>
+<p>Default behavior is to check whether coordinates are within a specified
+window. Here the following additional criteria are required:
+1) SV types match
+2) SV regions share a minimum reciprocal overlap</p>
+<blockquote>
+<div><ul class="simple">
+<li>Not applicable to translocations</li>
+<li>Insertion “regions” are calculated as the insertion site plus the
+predicted length of the insertion.</li>
+</ul>
+</div></blockquote>
+<ol class="arabic simple" start="3">
+<li>Strands of each breakpoint match (optional)</li>
+</ol>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="svtk.svfile.SVRecord.is_tloc">
+<code class="descname">is_tloc</code><a class="headerlink" href="#svtk.svfile.SVRecord.is_tloc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="svtk.svfile.SVRecord.overlaps">
+<code class="descname">overlaps</code><span class="sig-paren">(</span><em>other</em>, <em>frac=0.0</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.svfile.SVRecord.overlaps" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if two records meet minimum reciprocal overlap.</p>
+<ol class="arabic simple">
+<li>DEL, DUP, INV - reciprocal overlap calculated between SV intervals</li>
+<li>INS - intervals are calculated as insertion site plus SVLEN</li>
+<li>BND - always true</li>
+</ol>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="svtk.svfile.SVRecord.svtype">
+<code class="descname">svtype</code><a class="headerlink" href="#svtk.svfile.SVRecord.svtype" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns: <strong>svtype</strong> – One of {DEL, DUP, INV, BND}
+:rtype: str</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="svtk.svfile.SVRecordCluster">
+<em class="property">class </em><code class="descclassname">svtk.svfile.</code><code class="descname">SVRecordCluster</code><span class="sig-paren">(</span><em>records</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.svfile.SVRecordCluster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="svtk.svfile.SVRecordCluster.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>records</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.svfile.SVRecordCluster.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="svtk.svfile.SVRecordCluster.merge_pos">
+<code class="descname">merge_pos</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#svtk.svfile.SVRecordCluster.merge_pos" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute aggregate POS/END of clustered SVRecords.</p>
+<p>Defaults to computing median of POS and END over constituent
+records. CIPOS/CIEND are calculated as (MIN - MEDIAN, MAX - MEDIAN)
+over POS and END.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><ul class="simple">
+<li><strong>POS</strong> (<em>int</em>)</li>
+<li><strong>END</strong> (<em>int</em>)</li>
+<li><strong>CIPOS</strong> (<em>list of int</em>)</li>
+<li><strong>CIEND</strong> (<em>list of int</em>)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="svtk.svfile.SVRecordCluster.merge_record_data">
+<code class="descname">merge_record_data</code><span class="sig-paren">(</span><em>new_record</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.svfile.SVRecordCluster.merge_record_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Aggregate metadata (coordinates, alts, and INFO) of clustered records.</p>
+<ul class="simple">
+<li>Original record IDs are preserved in a new INFO field</li>
+</ul>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>new_record</strong> (<em>pysam.VariantRecord</em>) – Blank record to fill with aggregated data</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>new_record</strong> – VCF record populated with aggregate cluster data</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">pysam.VariantRecord</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="svtk.svfile.SVRecordCluster.merge_record_formats">
+<code class="descname">merge_record_formats</code><span class="sig-paren">(</span><em>new_record</em>, <em>sourcelist</em>, <em>preserve_genotypes=False</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.svfile.SVRecordCluster.merge_record_formats" title="Permalink to this definition">¶</a></dt>
+<dd><p>Aggregate sample genotype data across records.</p>
+<ol class="arabic simple">
+<li>Set GT to 0/1 for samples called in any record, 0/0 otherwise.</li>
+<li>For each provided source, set a corresponding FORMAT field to 1
+for samples called by the source. If the FORMAT field is available
+in the record being merged, use per-sample data. If the FORMAT field
+is not available, use the record’s ALGORITHMS to determine
+support for all samples called in that record.</li>
+</ol>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>new_record</strong> (<em>pysam.VariantRecord</em>) – Record to populate with FORMAT data</li>
+<li><strong>sourcelist</strong> (<em>list of str</em>) – List of all sources to add a FORMAT field for</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>new_record</strong> – Populated record</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">pysam.VariantRecord</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="svtk.svfile.SVRecordCluster.merge_record_infos">
+<code class="descname">merge_record_infos</code><span class="sig-paren">(</span><em>new_record</em>, <em>header</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.svfile.SVRecordCluster.merge_record_infos" title="Permalink to this definition">¶</a></dt>
+<dd><p>Aggregate INFO fields in child records</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="svtk.svfile.SVRecordCluster.rmsstd">
+<code class="descname">rmsstd</code><a class="headerlink" href="#svtk.svfile.SVRecordCluster.rmsstd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Root-mean-square standard deviation of cluster coordinates</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="svtk.svfile.SVRecordCluster.sources">
+<code class="descname">sources</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#svtk.svfile.SVRecordCluster.sources" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return list of source algorithms in clustered records.</p>
+<p>By default, searches for an ALGORITHMS INFO field</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><strong>sources</strong></td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">list of str</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-svtk.vcfcluster">
+<span id="svtk-vcfcluster-module"></span><h2>svtk.vcfcluster module<a class="headerlink" href="#module-svtk.vcfcluster" title="Permalink to this headline">¶</a></h2>
+<p>Intersect SV called by PE/SR-based algorithms.</p>
+<p>Paired-end and split-read callers provide a reasonably precise estimation of
+an SV breakpoint. This program identifies variant calls that fall within
+the expected margin of error made by these programs and clusters them together.
+The cluster distance defaults to 500 bp but it is recommended to use the
+maximum individual clustering distance across the libraries being analyzed.
+(Generally median + 7 * MAD)</p>
+<dl class="class">
+<dt id="svtk.vcfcluster.VCFCluster">
+<em class="property">class </em><code class="descclassname">svtk.vcfcluster.</code><code class="descname">VCFCluster</code><span class="sig-paren">(</span><em>vcfs</em>, <em>dist=500</em>, <em>frac=0.0</em>, <em>match_strands=True</em>, <em>preserve_ids=False</em>, <em>region=None</em>, <em>blacklist=None</em>, <em>svtypes=None</em>, <em>preserve_genotypes=False</em>, <em>sample_overlap=0.0</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.vcfcluster.VCFCluster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#svtk.genomeslink.GenomeSLINK" title="svtk.genomeslink.GenomeSLINK"><code class="xref py py-class docutils literal notranslate"><span class="pre">svtk.genomeslink.GenomeSLINK</span></code></a></p>
+<dl class="method">
+<dt id="svtk.vcfcluster.VCFCluster.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>vcfs</em>, <em>dist=500</em>, <em>frac=0.0</em>, <em>match_strands=True</em>, <em>preserve_ids=False</em>, <em>region=None</em>, <em>blacklist=None</em>, <em>svtypes=None</em>, <em>preserve_genotypes=False</em>, <em>sample_overlap=0.0</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.vcfcluster.VCFCluster.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clustering of VCF records.</p>
+<p>Records are clustered with a graph-based single linkage algorithm.
+Records are linked in the graph if their breakpoints are within a
+specified distance (default 500 bp) and if they share a minimum
+reciprocal overlap (default 0.1; records of type BND are not subjected
+to the reciprocal overlap requirement).</p>
+<p>VCF files must be sorted.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>vcfs</strong> (<em>list of pysam.VariantFile</em>) – Standardized VCFs to cluster</li>
+<li><strong>header</strong> (<em>pysam.VariantHeader</em>) – VCF header to use when creating new records</li>
+<li><strong>dist</strong> (<em>int</em><em>, </em><em>optional</em>) – Clustering distance. The starts and ends of two records must both
+be within this distance in order for the records to be linked.</li>
+<li><strong>frac</strong> (<em>float</em><em>, </em><em>optional</em>) – Minimum reciprocal overlap for two records to be linked.</li>
+<li><strong>match_strands</strong> (<em>bool</em><em>, </em><em>optional</em>) – Two records must share strandedness in order to be linked.</li>
+<li><strong>preserve_ids</strong> (<em>bool</em><em>, </em><em>optional</em>) – Keep list of constituent record IDs for each cluster.</li>
+<li><strong>preserve_genotypes</strong> (<em>bool</em><em>, </em><em>optional</em>) – Report best non-reference genotype for each sample.</li>
+<li><strong>region</strong> (<em>str</em><em>, </em><em>optional</em>) – Genomic region to fetch for clustering. If None, all regions
+present will be clustered.
+(chrom) or (chrom:start-end)</li>
+<li><strong>blacklist</strong> (<em>pysam.TabixFile</em><em>, </em><em>optional</em>) – Blacklisted genomic regions. Records in these regions will be
+removed prior to clustering.</li>
+<li><strong>svtypes</strong> (<em>list of str</em><em>, </em><em>optional</em>) – SV classes to be clustered. Records with an svtype not present in
+this list will be removed prior to clustering. If no list is
+specified, all svtypes will be clustered.</li>
+<li><strong>sample_overlap</strong> (<em>float</em><em>, </em><em>optional</em>) – Minimum fraction of samples to overlap to cluster variants</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="svtk.vcfcluster.VCFCluster.cluster">
+<code class="descname">cluster</code><span class="sig-paren">(</span><em>merge=True</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.vcfcluster.VCFCluster.cluster" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Yields:</th><td class="field-body"><strong>record</strong> (<em>SVRecord</em>)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="svtk.vcfcluster.VCFCluster.filter_nodes">
+<code class="descname">filter_nodes</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#svtk.vcfcluster.VCFCluster.filter_nodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Filter records before clustering.</p>
+<p>In addition to default removal of records in blacklisted regions,
+filter records if:
+1) Record does not belong to one of the specified SV classes.
+2) Record is marked as SECONDARY
+3) Record is not on a whitelisted chromosome (default: 1-22,X,Y)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Yields:</th><td class="field-body"><strong>node</strong> (<em>svfile.SVRecord</em>)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="svtk.vcfcluster.VCFCluster.make_vcf_header">
+<code class="descname">make_vcf_header</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#svtk.vcfcluster.VCFCluster.make_vcf_header" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add samples and sources to VCF template header.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"></td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">pysam.VariantHeader</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="svtk.vcfcluster.parse_region">
+<code class="descclassname">svtk.vcfcluster.</code><code class="descname">parse_region</code><span class="sig-paren">(</span><em>region</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.vcfcluster.parse_region" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>region</strong> (<em>str</em>) – (chrom) or (chrom:start-end)</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><ul class="simple">
+<li><strong>chrom</strong> (<em>str</em>)</li>
+<li><strong>start</strong> (<em>int or None</em>)</li>
+<li><strong>end</strong> (<em>int or None</em>)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-svtk">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-svtk" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Matthew Stone.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'0.1',
+            LANGUAGE:'None',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

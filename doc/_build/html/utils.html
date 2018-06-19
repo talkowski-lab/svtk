@@ -1,0 +1,487 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>svtk.utils - Utility function and classes for working with SV in Python &mdash; svtk 0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="SVTK CLI - Command line tools for processing and analyzing structural variants" href="cli.html" /> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> svtk
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="cli.html">SVTK CLI - Command line tools for processing and analyzing structural variants</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">svtk.utils - Utility function and classes for working with SV in Python</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#api">API</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#converting-a-vcf-to-a-bedtool">Converting a VCF to a BedTool</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#manipulating-and-querying-the-samples-called-in-a-variantrecord">Manipulating and querying the samples called in a VariantRecord</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#chromosome-and-genomic-interval-comparisons-and-logic">Chromosome and genomic interval comparisons and logic</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#filtering-alignments">Filtering alignments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#writing-to-a-bgzipped-file">Writing to a bgzipped file</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#miscellaneous-helpers">Miscellaneous helpers</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">svtk</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>svtk.utils - Utility function and classes for working with SV in Python</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/utils.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="svtk-utils-utility-function-and-classes-for-working-with-sv-in-python">
+<h1>svtk.utils - Utility function and classes for working with SV in Python<a class="headerlink" href="#svtk-utils-utility-function-and-classes-for-working-with-sv-in-python" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>The svtk.utils module includes a variety of utility functions and classes that
+are used throughout the other components of SVTK and are intended for general
+purpose use in SV analysis.</p>
+<p>SVTK relies heavily on pysam and the utils module is frequently imported in
+tandem:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pysam</span>
+<span class="kn">import</span> <span class="nn">svtk.utils</span> <span class="k">as</span> <span class="nn">svu</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="api">
+<h2>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="converting-a-vcf-to-a-bedtool">
+<h3>Converting a VCF to a BedTool<a class="headerlink" href="#converting-a-vcf-to-a-bedtool" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="svtk.utils.vcf2bedtool">
+<code class="descclassname">svtk.utils.</code><code class="descname">vcf2bedtool</code><span class="sig-paren">(</span><em>vcf</em>, <em>split_bnd=True</em>, <em>include_samples=False</em>, <em>include_strands=True</em>, <em>split_cpx=False</em>, <em>include_infos=None</em>, <em>annotate_ins=True</em>, <em>report_alt=False</em>, <em>svtypes=None</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.utils.vcf2bedtool" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wrap VCF as a bedtool. Necessary as pybedtools does not support SV in VCF.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>vcf</strong> (<em>str</em><em> or </em><em>pysam.VariantFile</em>) – </li>
+<li><strong>split_bnd</strong> (<em>bool</em><em>, </em><em>optional</em>) – Provide two records for each BND, one per breakend</li>
+<li><strong>include_samples</strong> (<em>bool</em><em>, </em><em>optional</em>) – Provide comma-delimited list of called samples</li>
+<li><strong>include_strands</strong> (<em>bool</em><em>, </em><em>optional</em>) – Provide breakpoint strandedness</li>
+<li><strong>include_infos</strong> (<em>list of str</em><em>, </em><em>optional</em>) – INFO fields to add as columns in output. If “ALL” is present in the
+list, all INFO fields will be reported.</li>
+<li><strong>annotate_ins</strong> (<em>bool</em><em>, </em><em>optional</em>) – Rename SVTYPE of insertion records to DEL to annotate sink.</li>
+<li><strong>report_alt</strong> (<em>bool</em><em>, </em><em>optional</em>) – Report record’s ALT as SVTYPE in bed</li>
+<li><strong>svtypes</strong> (<em>list of str</em><em>, </em><em>optional</em>) – Whitelist of SV types to restrict generated bed to</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>bt</strong> – SV converted to Bedtool. Ends of BND records are assigned as pos + 1.
+Included columns: chrom, start, end, name, svtype, strands</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">pybedtools.BedTool</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="manipulating-and-querying-the-samples-called-in-a-variantrecord">
+<h3>Manipulating and querying the samples called in a VariantRecord<a class="headerlink" href="#manipulating-and-querying-the-samples-called-in-a-variantrecord" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="svtk.utils.get_called_samples">
+<code class="descclassname">svtk.utils.</code><code class="descname">get_called_samples</code><span class="sig-paren">(</span><em>record</em>, <em>include_null=False</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.utils.get_called_samples" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a variant record, return list of samples with variant call</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>record</strong> (<em>pysam.VariantRecord</em>) – </li>
+<li><strong>include_null</strong> (<em>bool</em>) – Include samples without an explicit reference (0/0) call (i.e. ./.)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>samples</strong> – Sorted list of sample IDs with a variant call</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">list of str</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="svtk.utils.samples_overlap">
+<code class="descclassname">svtk.utils.</code><code class="descname">samples_overlap</code><span class="sig-paren">(</span><em>samplesA</em>, <em>samplesB</em>, <em>upper_thresh=0.8</em>, <em>lower_thresh=0.5</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.utils.samples_overlap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test if two sets of samples are sufficiently similar.</p>
+<p>The two sets are tested to determine which fraction of their respective
+samples appears in the other set. The set with greater overlap must have at
+least 80% of its samples appear in the other set, while the set with lesser
+overlap must have at least 50% of its samples appear in the other set.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>samplesA</strong> (<em>pysam.VariantRecord OR list of str</em>) – </li>
+<li><strong>samplesB</strong> (<em>pysam.VariantRecord OR list of str</em>) – </li>
+<li><strong>upper_thresh</strong> (<em>float</em>) – </li>
+<li><strong>lower_thresh</strong> (<em>float</em>) – </li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="svtk.utils.set_null">
+<code class="descclassname">svtk.utils.</code><code class="descname">set_null</code><span class="sig-paren">(</span><em>record</em>, <em>sample</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.utils.set_null" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove sample call from a VariantRecord. Operates on the Record in place.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>record</strong> (<em>pysam.VariantRecord</em>) – </li>
+<li><strong>sample</strong> (<em>str</em>) – </li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="chromosome-and-genomic-interval-comparisons-and-logic">
+<h3>Chromosome and genomic interval comparisons and logic<a class="headerlink" href="#chromosome-and-genomic-interval-comparisons-and-logic" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="svtk.utils.is_smaller_chrom">
+<code class="descclassname">svtk.utils.</code><code class="descname">is_smaller_chrom</code><span class="sig-paren">(</span><em>chrA</em>, <em>chrB</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.utils.is_smaller_chrom" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test if chrA is naturally less than chrB</p>
+<p>i.e. numeric chromosomes are compared numerically, and always precede X/Y.</p>
+<p>Works with chromosome names formatted as 1 or chr1</p>
+<p>Returns True if chrA == chrB so comparison will default to position</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>chrA</strong> (<em>str</em>) – </li>
+<li><strong>chrB</strong> (<em>str</em>) – </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>is_smaller</strong></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">bool</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="svtk.utils.recip">
+<code class="descclassname">svtk.utils.</code><code class="descname">recip</code><span class="sig-paren">(</span><em>startA</em>, <em>endA</em>, <em>startB</em>, <em>endB</em>, <em>frac</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.utils.recip" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test if two intervals share a specified reciprocal overlap.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>startA</strong> (<em>int</em>) – </li>
+<li><strong>endA</strong> (<em>int</em>) – </li>
+<li><strong>startB</strong> (<em>int</em>) – </li>
+<li><strong>endB</strong> (<em>int</em>) – </li>
+<li><strong>frac</strong> (<em>float</em>) – </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>recip</strong></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">bool</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="svtk.utils.reciprocal_overlap">
+<code class="descclassname">svtk.utils.</code><code class="descname">reciprocal_overlap</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#svtk.utils.reciprocal_overlap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate fraction of reciprocal overlap between two intervals</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="svtk.utils.overlap_frac">
+<code class="descclassname">svtk.utils.</code><code class="descname">overlap_frac</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#svtk.utils.overlap_frac" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate fraction of A overlapped by B</p>
+</dd></dl>
+
+</div>
+<div class="section" id="filtering-alignments">
+<h3>Filtering alignments<a class="headerlink" href="#filtering-alignments" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="svtk.utils.is_excluded">
+<code class="descclassname">svtk.utils.</code><code class="descname">is_excluded</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#svtk.utils.is_excluded" title="Permalink to this definition">¶</a></dt>
+<dd><p>Flag if read should be excluded from general SV analyses</p>
+<p>True if read is unmapped, has an unmapped mate, is a secondary or
+supplementary alignment, or is a duplicate
+(Equivalent to samtools flag 3342)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="svtk.utils.is_soft_clipped">
+<code class="descclassname">svtk.utils.</code><code class="descname">is_soft_clipped</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#svtk.utils.is_soft_clipped" title="Permalink to this definition">¶</a></dt>
+<dd><p>True if alignment begins or ends with a soft clip</p>
+</dd></dl>
+
+</div>
+<div class="section" id="writing-to-a-bgzipped-file">
+<h3>Writing to a bgzipped file<a class="headerlink" href="#writing-to-a-bgzipped-file" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="svtk.utils.BgzipFile">
+<em class="property">class </em><code class="descclassname">svtk.utils.</code><code class="descname">BgzipFile</code><span class="sig-paren">(</span><em>filename</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.utils.BgzipFile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Opens a writable bgzipped file</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>filename</strong> (<em>str</em>) – </td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="miscellaneous-helpers">
+<h3>Miscellaneous helpers<a class="headerlink" href="#miscellaneous-helpers" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="svtk.utils.make_bnd_alt">
+<code class="descclassname">svtk.utils.</code><code class="descname">make_bnd_alt</code><span class="sig-paren">(</span><em>chrom</em>, <em>pos</em>, <em>strands</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.utils.make_bnd_alt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make ALT for BND record in accordance with VCF specification.</p>
+<p>e.g., for chromosome 22, position 1000, strands ++, returns N]22:1000]</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>chrom</strong> (<em>str</em>) – </li>
+<li><strong>pos</strong> (<em>int</em>) – </li>
+<li><strong>strands</strong> (<em>str</em>) – one of ++,+-,-+,–</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>alt</strong></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">str</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="cli.html" class="btn btn-neutral" title="SVTK CLI - Command line tools for processing and analyzing structural variants" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Matthew Stone.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.1',
+            LANGUAGE:'None',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,46 @@
+svtk.annotation package
+=======================
+
+Submodules
+----------
+
+svtk.annotation.annotate module
+-------------------------------
+
+.. automodule:: svtk.annotation.annotate
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+svtk.annotation.annotate\_intersection module
+---------------------------------------------
+
+.. automodule:: svtk.annotation.annotate_intersection
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+svtk.annotation.classify\_effect module
+---------------------------------------
+
+.. automodule:: svtk.annotation.classify_effect
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+svtk.annotation.nearest\_tss module
+-----------------------------------
+
+.. automodule:: svtk.annotation.nearest_tss
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: svtk.annotation
+    :members:
+    :undoc-members:
+    :show-inheritance:

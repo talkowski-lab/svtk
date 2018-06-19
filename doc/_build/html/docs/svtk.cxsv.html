@@ -1,0 +1,532 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>svtk.cxsv package &mdash; svtk 0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> svtk
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../cli.html">SVTK CLI - Command line tools for processing and analyzing structural variants</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../utils.html">svtk.utils - Utility function and classes for working with SV in Python</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">svtk</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>svtk.cxsv package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/docs/svtk.cxsv.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="svtk-cxsv-package">
+<h1>svtk.cxsv package<a class="headerlink" href="#svtk-cxsv-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-svtk.cxsv.cpx_inv">
+<span id="svtk-cxsv-cpx-inv-module"></span><h2>svtk.cxsv.cpx_inv module<a class="headerlink" href="#module-svtk.cxsv.cpx_inv" title="Permalink to this headline">¶</a></h2>
+<p>Classification of complex inversion events.</p>
+<dl class="function">
+<dt id="svtk.cxsv.cpx_inv.breakpoint_ordering">
+<code class="descclassname">svtk.cxsv.cpx_inv.</code><code class="descname">breakpoint_ordering</code><span class="sig-paren">(</span><em>FF</em>, <em>RR</em>, <em>mh_buffer=10</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cxsv.cpx_inv.breakpoint_ordering" title="Permalink to this definition">¶</a></dt>
+<dd><p>Match paired breakpoints to known coordinate orderings.</p>
+<p>e.g. in a simple inversion, FF_start &lt; RR_start &lt; FF_end &lt; RR_end.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>FF</strong> (<em>pysam.VariantRecord</em>) – </li>
+<li><strong>RR</strong> (<em>pysam.VariantRecord</em>) – </li>
+<li><strong>mh_buffer</strong> (<em>int</em><em>, </em><em>optional</em>) – Microhomology buffer. Add window to coordinates to permit fuzzy match.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>ordering</strong> – SIMPLE/DEL, DUP5/INS3, DUP3/INS5, dupINVdup, or UNK.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">str</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="svtk.cxsv.cpx_inv.breakpoints_match">
+<code class="descclassname">svtk.cxsv.cpx_inv.</code><code class="descname">breakpoints_match</code><span class="sig-paren">(</span><em>FF</em>, <em>RR</em>, <em>svtype</em>, <em>mh_buffer=10</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cxsv.cpx_inv.breakpoints_match" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test if the coordinate ordering matches the class predicted by CNV overlap.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>FF</strong> (<em>pysam.VariantRecord</em>) – </li>
+<li><strong>RR</strong> (<em>pysam.VariantRecord</em>) – </li>
+<li><strong>svtype</strong> (<em>str</em>) – <p>Class of complex SV predicted by CNV overlap.
+(delINV, INVdel, delINVdel, dupINV, dupINVdel, INVdup, delINVdup,</p>
+<blockquote>
+<div>dupINVdup)</div></blockquote>
+</li>
+<li><strong>mh_buffer</strong> (<em>int</em><em>, </em><em>optional</em>) – Microhomology buffer. Add window to coordinates to permit fuzzy match.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>ordering</strong> – SIMPLE/DEL, DUP5/INS3, DUP3/INS5, dupINVdup, or UNK</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">str</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="svtk.cxsv.cpx_inv.classify_0_cnv">
+<code class="descclassname">svtk.cxsv.cpx_inv.</code><code class="descname">classify_0_cnv</code><span class="sig-paren">(</span><em>FF</em>, <em>RR</em>, <em>min_bkpt_cnv_size=300</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cxsv.cpx_inv.classify_0_cnv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Classify the cxSV class of a pair of inv bkpts with no associated CNVs.</p>
+<p>Matches breakpoint ordering to a known class, then tests if breakpoint
+distances are sufficient to call a CNV that was missed by integration
+pipeline.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>FF</strong> (<em>pysam.VariantRecord</em>) – </li>
+<li><strong>RR</strong> (<em>pysam.VariantRecord</em>) – </li>
+<li><strong>min_bkpt_cnv_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Minimum distance between breakpoints to call flanking CNV.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>svtype</strong></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">str</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="svtk.cxsv.cpx_inv.classify_1_cnv">
+<code class="descclassname">svtk.cxsv.cpx_inv.</code><code class="descname">classify_1_cnv</code><span class="sig-paren">(</span><em>FF</em>, <em>RR</em>, <em>cnv</em>, <em>min_frac=0.5</em>, <em>min_bkpt_cnv_size=500</em>, <em>max_bkpt_cnv_size=4000</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cxsv.cpx_inv.classify_1_cnv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Classify the cxSV class of a pair of inv bkpts and one associated CNV.</p>
+<p>Matches each CNV to a 5’ or 3’ location, as constrained by the breakpoint
+coordinates. After matching CNV, check if distance between breakpoints
+at other end is sufficient to call a second flanking CNV.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>FF</strong> (<em>pysam.VariantRecord</em>) – </li>
+<li><strong>RR</strong> (<em>pysam.VariantRecord</em>) – </li>
+<li><strong>cnvs</strong> (<em>[</em><em>pysam.VariantRecord</em><em>, </em><em>pysam.VariantRecord</em><em>]</em>) – </li>
+<li><strong>min_frac</strong> (<em>float</em><em>, </em><em>optional</em>) – Minimum reciprocal overlap of each cnv with a candidate CNV interval
+defined by the breakpoint coordinates.</li>
+<li><strong>min_bkpt_cnv_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Minimum distance between breakpoints to call flanking CNV.</li>
+<li><strong>max_bkpt_cnv_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Maximum distance between breakpoints to call flanking CNV.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>svtype</strong></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">str</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="svtk.cxsv.cpx_inv.classify_2_cnv">
+<code class="descclassname">svtk.cxsv.cpx_inv.</code><code class="descname">classify_2_cnv</code><span class="sig-paren">(</span><em>FF</em>, <em>RR</em>, <em>cnvs</em>, <em>min_frac=0.5</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cxsv.cpx_inv.classify_2_cnv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Classify the cxSV class of a pair of inv bkpts and two associated CNVs.</p>
+<p>Matches each CNV to a 5’ or 3’ location, as constrained by the breakpoint
+coordinates.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>FF</strong> (<em>pysam.VariantRecord</em>) – </li>
+<li><strong>RR</strong> (<em>pysam.VariantRecord</em>) – </li>
+<li><strong>cnvs</strong> (<em>[</em><em>pysam.VariantRecord</em><em>, </em><em>pysam.VariantRecord</em><em>]</em>) – </li>
+<li><strong>min_frac</strong> (<em>float</em><em>, </em><em>optional</em>) – Minimum reciprocal overlap of each cnv with a candidate CNV interval
+defined by the breakpoint coordinates.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>svtype</strong></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">str</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="svtk.cxsv.cpx_inv.classify_complex_inversion">
+<code class="descclassname">svtk.cxsv.cpx_inv.</code><code class="descname">classify_complex_inversion</code><span class="sig-paren">(</span><em>FF</em>, <em>RR</em>, <em>cnvs</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cxsv.cpx_inv.classify_complex_inversion" title="Permalink to this definition">¶</a></dt>
+<dd><p>Classify the complex class of an inversion and associated CNVs.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>FF</strong> (<em>pysam.VariantRecord</em>) – FF inversion breakpoint.</li>
+<li><strong>RR</strong> (<em>pysam.VariantRecord</em>) – RR inversion breakpoint.</li>
+<li><strong>cnvs</strong> (<em>list of pysam.VariantRecord</em>) – List of overlapping CNVs.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>svtype</strong> (<em>str</em>) – Complex SV class.</li>
+<li><strong>cnvs</strong> (<em>list of pysam.VariantRecord</em>) – CNVs represented in resolved variant structure</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="svtk.cxsv.cpx_inv.filter_multiple_cnvs">
+<code class="descclassname">svtk.cxsv.cpx_inv.</code><code class="descname">filter_multiple_cnvs</code><span class="sig-paren">(</span><em>FF</em>, <em>RR</em>, <em>cnvs</em>, <em>min_frac=0.5</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cxsv.cpx_inv.filter_multiple_cnvs" title="Permalink to this definition">¶</a></dt>
+<dd><p>For cases with 3 or more overlapping CNV, try to remove spurious hits
+by forcing 50% reciprocal with any of the possible CNV intervals. If
+multiple CNVs are present for a candidate interval (e.g. 5’ deletion),
+their coordinates are merged by taking the median.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>FF</strong> (<em>pysam.VariantRecord</em>) – FF inversion breakpoint.</li>
+<li><strong>RR</strong> (<em>pysam.VariantRecord.</em>) – RR inversion breakpoint</li>
+<li><strong>cnvs</strong> (<em>list of pysam.VariantRecord</em>) – List of CNVs overlapping breakpoints.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>cnvs</strong> – Filtered and merged CNVs.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">list of pysam.VariantRecord</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-svtk.cxsv.cpx_link">
+<span id="svtk-cxsv-cpx-link-module"></span><h2>svtk.cxsv.cpx_link module<a class="headerlink" href="#module-svtk.cxsv.cpx_link" title="Permalink to this headline">¶</a></h2>
+<p>Link complex records</p>
+<dl class="function">
+<dt id="svtk.cxsv.cpx_link.extract_breakpoints">
+<code class="descclassname">svtk.cxsv.cpx_link.</code><code class="descname">extract_breakpoints</code><span class="sig-paren">(</span><em>vcf</em>, <em>bkpt_idxs</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cxsv.cpx_link.extract_breakpoints" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract all VCF records in list of IDs
+(Assumes VCF is sorted by variant ID)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>vcfpath</strong> (<em>str</em>) – Path to VCF</li>
+<li><strong>bkpt_idxs</strong> (<em>dict of {str : int}</em>) – Mapping of variant IDs to array index</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>bkpts</strong></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">list of pysam.VariantRecord</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="svtk.cxsv.cpx_link.link_cpx">
+<code class="descclassname">svtk.cxsv.cpx_link.</code><code class="descname">link_cpx</code><span class="sig-paren">(</span><em>vcf</em>, <em>bkpt_window=300</em>, <em>cpx_dist=20000</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cxsv.cpx_link.link_cpx" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>vcfpath</strong> (<em>str</em>) – Path to breakpoint VCF</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="svtk.cxsv.cpx_link.samples_overlap">
+<code class="descclassname">svtk.cxsv.cpx_link.</code><code class="descname">samples_overlap</code><span class="sig-paren">(</span><em>recA</em>, <em>recB</em>, <em>upper_thresh=0.8</em>, <em>lower_thresh=0.5</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cxsv.cpx_link.samples_overlap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Report if the samples called in two VCF records overlap sufficiently.</p>
+<p>The fraction of each record’s samples which are shared with the other
+record is calculated. The record with a greater fraction of shared samples
+must exceed the upper threshold AND the record with a lesser fraction of
+shared samples must exceed the lower threshold. This is intended to
+maximize sensitivity in rare variants with a false negative in one
+breakpoint.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>recA</strong> (<em>pysam.VariantRecord</em>) – </li>
+<li><strong>recB</strong> (<em>pysam.VariantRecord</em>) – </li>
+<li><strong>upper_thresh</strong> (<em>float</em><em>, </em><em>optional</em>) – Minimum sample overlap in record with greater overlap</li>
+<li><strong>lower_thresh</strong> (<em>float</em><em>, </em><em>optional</em>) – Minimum sample overlap in record with lesser overlap</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>samples_overlap</strong> – Samples shared between records meet required thresholds.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">bool</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-svtk.cxsv.cpx_tloc">
+<span id="svtk-cxsv-cpx-tloc-module"></span><h2>svtk.cxsv.cpx_tloc module<a class="headerlink" href="#module-svtk.cxsv.cpx_tloc" title="Permalink to this headline">¶</a></h2>
+<p>Classification of reciprocal translocations.</p>
+<dl class="function">
+<dt id="svtk.cxsv.cpx_tloc.classify_insertion">
+<code class="descclassname">svtk.cxsv.cpx_tloc.</code><code class="descname">classify_insertion</code><span class="sig-paren">(</span><em>plus</em>, <em>minus</em>, <em>mh_buffer=50</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cxsv.cpx_tloc.classify_insertion" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="svtk.cxsv.cpx_tloc.classify_simple_translocation">
+<code class="descclassname">svtk.cxsv.cpx_tloc.</code><code class="descname">classify_simple_translocation</code><span class="sig-paren">(</span><em>plus</em>, <em>minus</em>, <em>mh_buffer=10</em><span class="sig-paren">)</span><a class="headerlink" href="#svtk.cxsv.cpx_tloc.classify_simple_translocation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resolve a pair of interchromosomal breakends.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>FF</strong> (<em>pysam.VariantRecord</em>) – FF inversion breakpoint.</li>
+<li><strong>RR</strong> (<em>pysam.VariantRecord</em>) – RR inversion breakpoint.</li>
+<li><strong>cnvs</strong> (<em>list of pysam.VariantRecord</em>) – List of overlapping CNVs.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>svtype</strong> – Complex SV class.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">str</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-svtk.cxsv">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-svtk.cxsv" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Matthew Stone.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'0.1',
+            LANGUAGE:'None',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
