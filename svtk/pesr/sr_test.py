@@ -76,7 +76,10 @@ class SRTest(PESRTest):
 
         if pos > 0:
             region = '{0}:{1}-{1}'.format(chrom, pos)
-            lines = self.countfile.fetch(region)
+            try:
+                lines = self.countfile.fetch(region)
+            except ValueError:
+                lines = []
         else:
             lines = []
         #  counts = io.StringIO('\n'.join([l for l in lines]))

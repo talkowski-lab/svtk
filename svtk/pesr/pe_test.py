@@ -92,7 +92,11 @@ class PETest(PESRTest):
         startB, endB = _get_coords(record.stop, strandB)
 
         region = '{0}:{1}-{2}'.format(record.chrom, startA, endA)
-        pairs = self.discfile.fetch(region=region, parser=pysam.asTuple())
+
+        try:
+            pairs = self.discfile.fetch(region=region, parser=pysam.asTuple())
+        except ValueError:
+            pairs = []
 
         counts = defaultdict(int)
         for pair in pairs:
