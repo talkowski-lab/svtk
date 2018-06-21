@@ -31,7 +31,7 @@ def choose_best_genotype(sample, records):
         for record in records:
             if record.samples[sample]['GT'] != (0, 0):
                 return record
-        return record
+        return records[0]
 
     # Pick best non-reference genotype
     for record in records:
