@@ -95,6 +95,13 @@ class ComplexSV:
 
         svu.update_best_genotypes(self.vcf_record, self.records)
 
+        varGQs = []
+        for record in self.records:
+            if 'varGQ' in record.info.keys():
+                varGQs.append(record.info['varGQ'])
+        if len(varGQs) > 0 and 'varGQ' in self.vcf_record.header.info.keys():
+            self.vcf_record.info['varGQ'] = max(varGQs)
+
     @property
     def record_ids(self):
         return [r.id for r in self.records]
