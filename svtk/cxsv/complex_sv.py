@@ -88,7 +88,13 @@ class ComplexSV:
         Merge and clean metadata
         """
         sources = set([s for r in self.records for s in r.info['ALGORITHMS']])
-        self.vcf_record.info['ALGORITHMS'] = tuple(sorted(sources))
+
+        # some variants throw an error if you try to overwrite ALGORITHMS info
+        # without removing it via `pop` first. don't remove with `del`, it
+        # will break the ability to set ALGORITHMS at all (Invalid INFO field)
+        # bcf_update_info: Assertion `!inf->vptr_free' failed.
+        self.vcf_record.info.pop('ALGORITHMS')
+        self.vcf_record.info['ALGORITHMS'] = ','.join(tuple(sorted(sources)))
 
         members = [r.id for r in self.records]
         self.vcf_record.info['MEMBERS'] = tuple(sorted(members))
