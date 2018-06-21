@@ -53,9 +53,9 @@ class ComplexSV:
             return record.info.get('EVIDENCE', None) == ('SR', )
 
         if 'EVIDENCE' in self.records[0].header.info.keys():
-            self.records = [r for r in self.records if not _is_SR_only(r)]
-        else:
-            pass
+            clean_records = [r for r in self.records if not _is_SR_only(r)]
+            if len(clean_records) > 0:
+                self.records = clean_records
 
     def resolve(self):
         self.set_cluster_type()
