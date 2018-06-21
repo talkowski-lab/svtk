@@ -331,6 +331,8 @@ class SVRecordCluster:
                     new_record.info[info] = [','.join(vlist) for vlist in zip(values)]
 
             # TODO merge numeric INFO
+            elif info == 'varGQ':
+                new_record.info[info] = max(values)
             else:
                 pass
 
