@@ -99,8 +99,6 @@ class ComplexSV:
         members = [r.id for r in self.records]
         self.vcf_record.info['MEMBERS'] = tuple(sorted(members))
 
-        svu.update_best_genotypes(self.vcf_record, self.records)
-
         varGQs = []
         for record in self.records:
             if 'varGQ' in record.info.keys():
