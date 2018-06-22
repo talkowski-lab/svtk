@@ -132,5 +132,10 @@ def update_best_genotypes(new_record, records, preserve_multiallelic=False):
                     else:
                         GT = tuple([min(x, 1) for x in GT])
                         new_record.samples[sample][key] = GT
+                elif key == 'EV':
+                    curr_ev = new_record.samples[sample][key]
+                    for record in records:
+                        curr_ev = curr_ev | record.samples[sample][key]
+                    new_record.samples[sample][key] = curr_ev
                 else:
                     new_record.samples[sample][key] = best_record.samples[sample][key]
