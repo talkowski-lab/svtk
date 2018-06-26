@@ -96,6 +96,7 @@ class VCFCluster(GenomeSLINK):
         # Parameterize clustering
         self.frac = frac
         self.match_strands = match_strands
+        self.match_svtypes = match_svtypes
         self.svtypes = svtypes
         self.preserve_ids = preserve_ids
         self.preserve_genotypes = preserve_genotypes
