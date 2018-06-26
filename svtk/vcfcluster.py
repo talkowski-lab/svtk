@@ -25,7 +25,7 @@ from svtk.genomeslink import GenomeSLINK
 class VCFCluster(GenomeSLINK):
     def __init__(self, vcfs,
                  dist=500, frac=0.0,
-                 match_strands=True, preserve_ids=False,
+                 match_strands=True, match_svtypes=True, preserve_ids=False,
                  region=None, blacklist=None, svtypes=None,
                  preserve_genotypes=False, sample_overlap=0.0,
                  preserve_header=False):
@@ -141,6 +141,7 @@ class VCFCluster(GenomeSLINK):
         """
         clusters = super().cluster(frac=self.frac,
                                    match_strands=self.match_strands,
+                                   match_svtypes=self.match_svtypes,
                                    sample_overlap=self.sample_overlap)
         
         for records in clusters:

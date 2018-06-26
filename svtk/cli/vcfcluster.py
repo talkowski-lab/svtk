@@ -97,6 +97,8 @@ def main(argv):
     parser.add_argument('-t', '--svtypes', default='DEL,DUP,INV,BND',
                         help='Comma delimited list of svtypes to cluster '
                         '[DEL,DUP,INV,BND]')
+    parser.add_argument('--ignore-svtypes', action='store_true', default=False,
+                        help='Ignore svtypes when clustering.')
     parser.add_argument('-o', '--sample-overlap', type=float, default=0.0,
                         help='Minimum sample overlap for two variants to be '
                         'clustered together.')
@@ -124,9 +126,11 @@ def main(argv):
     vcfs = parse_filepaths(filepaths)
 
     svtypes = args.svtypes.split(',')
+    match_svtypes = not args.ignore_svtypes
 
     svc = VCFCluster(vcfs, dist=args.dist, blacklist=args.blacklist,
                      frac=args.frac, svtypes=svtypes, region=args.region,
+                     match_svtypes=match_svtypes,
                      preserve_ids=args.preserve_ids,
                      preserve_genotypes=args.preserve_genotypes,
                      preserve_header=args.preserve_header)

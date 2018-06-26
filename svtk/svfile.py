@@ -115,7 +115,7 @@ class SVRecord(GSNode):
         super().__init__(chrA, posA, chrB, posB, name)
 
     def clusters_with(self, other, dist, frac=0.0, match_strands=False,
-                      sample_overlap=0.0):
+                      match_svtypes=True, sample_overlap=0.0):
         """
         Check if two SV cluster with each other.
 
@@ -130,18 +130,18 @@ class SVRecord(GSNode):
         """
 
         # If svtypes don't match, skip remaining calculations for efficiency
-        if self.svtype != other.svtype:
+        if match_svtypes and self.svtype != other.svtype:
             return False
 
         # If both records have an INS subclass specified, require it to match
         # Otherwise, permit clustering if one or both don't have subclass
-        if self.svtype == 'INS':
+        if match_svtypes and self.svtype == 'INS':
             if self.record.alts[0] != other.record.alts[0]:
                 if self.record.alts[0] != '<INS>' and self.record.alts[0] != '<INS>':
                     return False
 
         # If strands are required to match and don't, skip remaining calcs
-        if match_strands:
+        if match_svtypes and match_strands:
             if self.record.info['STRANDS'] != other.record.info['STRANDS']:
                 return False
 
@@ -226,6 +226,7 @@ class SVRecordCluster:
         Aggregate metadata (coordinates, alts, and INFO) of clustered records.
 
         * Original record IDs are preserved in a new INFO field
+        * svtype is reported for base record
 
         Parameters
         ----------

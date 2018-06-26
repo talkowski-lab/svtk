@@ -16,7 +16,7 @@ import natsort
 import svtk.utils as svu
 
 
-def samples_overlap(recA, recB, upper_thresh=0.8, lower_thresh=0.5):
+def samples_overlap(recA, recB, upper_thresh=0.5, lower_thresh=0.5):
     """
     Report if the samples called in two VCF records overlap sufficiently.
 
