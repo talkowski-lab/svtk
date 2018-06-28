@@ -101,9 +101,9 @@ def link_cpx(vcf, bkpt_window=300, cpx_dist=20000):
     # Exclude self-hits
     #  overlap = overlap.filter(lambda b: b.fields[3] != b.fields[9]).saveas()
 
-    # Restrict to overlaps involving a BCA breakpoint
-    cnvtypes = 'DEL DUP'.split()
-    overlap = overlap.filter(lambda b: b.fields[4] not in cnvtypes).saveas()
+    # # Restrict to overlaps involving a BCA breakpoint
+    # cnvtypes = 'DEL DUP'.split()
+    # overlap = overlap.filter(lambda b: b.fields[4] not in cnvtypes).saveas()
 
     # Get linked variant IDs
     links = [(b[3], b[9]) for b in overlap.intervals]
