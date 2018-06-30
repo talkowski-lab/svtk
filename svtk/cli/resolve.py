@@ -88,7 +88,8 @@ def _merge_records(vcf, cpx_records, cpx_record_ids):
 
 
 def resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed,
-                       variant_prefix='CPX_'):
+                       variant_prefix='CPX_', min_rescan_support=4, 
+                       pe_blacklist=None):
     """
     Resolve complex SV from CNV intervals and BCA breakpoints.
 
@@ -102,7 +103,12 @@ def resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed,
     mei_bed : pybedtools.BedTool
     variant_prefix : str
         Prefix to assign to resolved variants
-
+    min_rescan_support : int
+        Number of pairs required to count a sample as 
+        supported during PE rescan
+    pe_blacklist : pysam.TabixFile, optional
+        Blacklisted genomic regions. Anomalous pairs in these regions will be
+        removed prior to clustering.
 
     Yields
     ------
@@ -122,7 +128,9 @@ def resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed,
     for cluster in clusters:
         # Try finding opposite strand support for single enders
         if len(cluster) == 1 and cluster[0].info['SVTYPE'] == 'INV':
-            rec, opp = rescan_single_ender(cluster[0], disc_pairs)
+            rec, opp = rescan_single_ender(cluster[0], disc_pairs, 
+                                           min_rescan_support, 
+                                           pe_blacklist=pe_blacklist)
             if opp is not None:
                 cluster = deque([rec, opp])
 
@@ -197,6 +205,13 @@ def main(argv):
     #  parser.add_argument('--famfile', help='Fam file', required=True)
     #  parser.add_argument('--cutoffs', help='Random forest cutoffs',
                         #  required=True)
+    parser.add_argument('--min-rescan-pe-support', type=int, default=4, 
+                        help='Minumum discordant pairs required during '
+                        'single-ender rescan ')
+    parser.add_argument('-x', '--pe-blacklist', metavar='BED.GZ',
+                        default=None, help='Tabix indexed bed of blacklisted '
+                        'regions. Any anomalous pair falling inside one '
+                        'of these regions is excluded from PE rescanning.')
     parser.add_argument('-u', '--unresolved', type=argparse.FileType('w'),
                         help='Unresolved complex breakpoints and CNV.')
     parser.add_argument('-p', '--prefix', default='CPX_',
@@ -221,6 +236,7 @@ def main(argv):
     cytobands = pysam.TabixFile(args.cytobands)
 
     mei_bed = pbt.BedTool(args.mei_bed)
+    blacklist = pysam.TabixFile(args.pe_blacklist)
     #  cutoffs = pd.read_table(args.cutoffs)
     #  rdtest = svu.RdTest(args.bincov, args.medianfile, args.famfile, 
                         #  list(vcf.header.samples), cutoffs)
@@ -235,7 +251,9 @@ def main(argv):
         disc_pairs = svu.MultiTabixFile(tabixfiles)
 
     for record in resolve_complex_sv(vcf, cytobands, disc_pairs, 
-                                     mei_bed, args.prefix):
+                                     mei_bed, args.prefix, 
+                                     args.min_rescan_pe_support, 
+                                     blacklist):
         if record.info['UNRESOLVED']:
             unresolved_f.write(record)
         else:

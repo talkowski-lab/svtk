@@ -78,8 +78,8 @@ def match_cluster(record, cluster, dist=300):
 
 
 
-def rescan_single_ender(record, pe, window=500, dist=300, min_support=4,
-                        min_frac_samples=0.5):
+def rescan_single_ender(record, pe, min_support=4, window=500, dist=300, 
+                        min_frac_samples=0.5, pe_blacklist=None):
     """
     Test if a putative single-ender inversion has support from other strand.
 
@@ -93,16 +93,20 @@ def rescan_single_ender(record, pe, window=500, dist=300, min_support=4,
     record : pysam.VariantRecord
     pe : pysam.TabixFile
         Scraped discordant pair metadata
+    min_support : int, optional
+        Number of pairs required to count a sample as supported
     window : int, optional
         Window around record start to search for pairs
     dist : int, optional
         Clustering distance for fetched pairs
-    min_support : int, optional
-        Number of pairs required to count a sample as supported
     min_frac_samples : float, optional
         Fraction of called samples required to have opposite strand support in
         order to call the record as having both strands present. If 0, only one
         sample will be required.
+    pe_blacklist : pysam.TabixFile, optional
+        Blacklisted genomic regions. Anomalous pairs in these regions will be
+        removed prior to clustering.
+
 
     Returns
     -------
@@ -121,7 +125,7 @@ def rescan_single_ender(record, pe, window=500, dist=300, min_support=4,
     pairs = [p for p in pairs if p.sample in called and p.is_inversion]
 
     # Cluster pairs
-    slink = GenomeSLINK(pairs, dist)
+    slink = GenomeSLINK(pairs, dist, blacklist=pe_blacklist)
     clusters = [c for c in slink.cluster() if match_cluster(record, c, window)]
 
     # If no clusters, fail site, otherwise choose largest cluster
@@ -173,9 +177,10 @@ def make_new_record(pairs, old_record):
     return record
 
 
-def rescan_single_enders(vcf, pe, window=500):
+def rescan_single_enders(vcf, pe, min_support=4, window=500, pe_blacklist=None):
     for record in vcf:
-        rescan_single_ender(record, pe, window)
+        rescan_single_ender(record, pe, min_support, window, 
+                            pe_blacklist=pe_blacklist)
 
 
 def main():
@@ -184,14 +189,24 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('vcf', help='Single enders')
     parser.add_argument('pairs', help='Scraped discordant pair file.')
+    parser.add_argument('--min-rescan-pe-support', type=int, default=4, 
+                        help='Minumum discordant pairs required during '
+                        'single-ender rescan ')
     parser.add_argument('--window', type=int, default=500, help='Window around '
                         'single ender coordinates to search for pairs')
+    parser.add_argument('-x', '--pe-blacklist', metavar='BED.GZ',
+                        default=None, help='Tabix indexed bed of blacklisted '
+                        'regions. Any anomalous pair falling inside one '
+                        'of these regions is excluded from PE rescanning.')
+
     args = parser.parse_args()
 
     vcf = pysam.VariantFile(args.vcf)
     pe = pysam.TabixFile(args.pairs)
+    blacklist = pysam.TabixFile(args.pe_blacklist)
 
-    rescan_single_enders(vcf, pe)
+    rescan_single_enders(vcf, pe, args.min_rescan_pe_support, args.window, 
+                         pe_blacklist=blacklist)
 
 
 if __name__ == '__main__':
