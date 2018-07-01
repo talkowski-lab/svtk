@@ -142,7 +142,7 @@ def link_cpx(vcf, bkpt_window=300, cpx_dist=20000):
     #     ok = any([record.info['SVTYPE'] not in cnvtypes for record in cluster])
     #     return ok
 
-    clusters = [c for c in clusters if _ok_cluster(c)]
+    # clusters = [c for c in clusters if _ok_cluster(c)]
     #  clusters = [c for c in clusters if len(c) > 1]
 
     return clusters
