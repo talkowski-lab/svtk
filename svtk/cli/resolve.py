@@ -180,7 +180,7 @@ def resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed,
 def main(argv):
     parser = argparse.ArgumentParser(
         description=__doc__,
-        prog='svtk link-cpx',
+        prog='svtk resolve',
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('raw', help='Filtered breakpoints and CNV intervals.')
 
@@ -207,7 +207,7 @@ def main(argv):
                         #  required=True)
     parser.add_argument('--min-rescan-pe-support', type=int, default=4, 
                         help='Minumum discordant pairs required during '
-                        'single-ender rescan ')
+                        'single-ender rescan.')
     parser.add_argument('-x', '--pe-blacklist', metavar='BED.GZ',
                         default=None, help='Tabix indexed bed of blacklisted '
                         'regions. Any anomalous pair falling inside one '

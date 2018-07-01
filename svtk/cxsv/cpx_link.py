@@ -137,10 +137,10 @@ def link_cpx(vcf, bkpt_window=300, cpx_dist=20000):
     for i, c_label in enumerate(comp_list):
         clusters[c_label].append(bkpts[i])
 
-    # Remove clusters of only CNV - leftover from shared sample filtering
-    def _ok_cluster(cluster):
-        ok = any([record.info['SVTYPE'] not in cnvtypes for record in cluster])
-        return ok
+    # # Remove clusters of only CNV - leftover from shared sample filtering
+    # def _ok_cluster(cluster):
+    #     ok = any([record.info['SVTYPE'] not in cnvtypes for record in cluster])
+    #     return ok
 
     clusters = [c for c in clusters if _ok_cluster(c)]
     #  clusters = [c for c in clusters if len(c) > 1]
