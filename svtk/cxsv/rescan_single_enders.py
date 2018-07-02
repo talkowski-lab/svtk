@@ -139,10 +139,6 @@ def rescan_single_ender(record, pe, min_support=4, window=500, dist=300,
     if median(pairs_count_list) > min_support:
         return record, None
 
-    # Debug
-    import ipdb
-    ipdb.set_trace(context=10)
-
     # Cluster pairs
     slink = GenomeSLINK(pairs, dist, blacklist=pe_blacklist)
     clusters = [c for c in slink.cluster() if match_cluster(record, c, window)]
