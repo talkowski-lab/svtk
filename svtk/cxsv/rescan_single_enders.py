@@ -14,6 +14,7 @@ from collections import defaultdict
 import pysam
 from svtk.genomeslink import GenomeSLINK, GSNode
 import svtk.utils as svu
+from statistics import median
 
 
 class DiscPair(GSNode):
@@ -124,11 +125,26 @@ def rescan_single_ender(record, pe, min_support=4, window=500, dist=300,
     called = svu.get_called_samples(record)
     pairs = [p for p in pairs if p.sample in called and p.is_inversion]
 
-    # Cluster pairs
-    slink = GenomeSLINK(pairs, dist, blacklist=pe_blacklist)
+    # Count number of pairs per sample
+    sample_support_precluster = defaultdict(int)
+    for pair in pairs:
+        sample_support_precluster[pair.sample] += 1
+    sample_support_precluster.get('G94818_NWD163451', 0)
+    pairs_count_list = []
+    for s in record.samples.keys():
+        pairs_count_list.append(sample_support_precluster.get(s, 0))
+    
+    # If median number of pairs per sample across all samples > min_support,
+    # fail record. Otherwise, keep going
+    if median(pairs_count_list) > min_support:
+        return record, None
+
     # Debug
     import ipdb
     ipdb.set_trace(context=10)
+
+    # Cluster pairs
+    slink = GenomeSLINK(pairs, dist, blacklist=pe_blacklist)
     clusters = [c for c in slink.cluster() if match_cluster(record, c, window)]
 
     # If no clusters, fail site, otherwise choose largest cluster
