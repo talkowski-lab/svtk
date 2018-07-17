@@ -14,6 +14,7 @@ import numpy as np
 import scipy.sparse as sps
 import natsort
 import svtk.utils as svu
+import re
 
 
 def samples_overlap(recA, recB, upper_thresh=0.5, lower_thresh=0.5):
@@ -101,9 +102,13 @@ def link_cpx(vcf, bkpt_window=300, cpx_dist=20000):
     # Exclude self-hits
     #  overlap = overlap.filter(lambda b: b.fields[3] != b.fields[9]).saveas()
 
-    # # Restrict to overlaps involving a BCA breakpoint
+    # Exclude intersections where two DELs or two DUPs cluster together
     # cnvtypes = 'DEL DUP'.split()
-    # overlap = overlap.filter(lambda b: b.fields[4] not in cnvtypes).saveas()
+    overlap = overlap.filter(lambda b: not (b.fields[4] == "DEL" and b.fields[10] == "DEL")).saveas()
+    overlap = overlap.filter(lambda b: not (b.fields[4] == "DUP" and b.fields[10] == "DUP")).saveas()
+
+    # # Exclude intersections with annotated mobile elements (rather than BNDs)
+    # overlap = overlap.filter(lambda b: b.fields[4] is not re.match(re.compile('INS\:ME\:*'), b.fields[4])).saveas()    
 
     # Get linked variant IDs
     links = [(b[3], b[9]) for b in overlap.intervals]
