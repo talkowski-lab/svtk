@@ -11,6 +11,8 @@ Resolve complex SV from inversion/translocation breakpoints and CNV intervals.
 import argparse
 import sys
 import subprocess
+import random
+import string
 from collections import deque
 import itertools
 import pysam
@@ -117,7 +119,7 @@ def resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed,
 
     clusters = link_cpx(vcf)
 
-    resolved_idx = unresolved_idx = 1
+    # resolved_idx = unresolved_idx = 1
 
     if not variant_prefix.endswith('_'):
         variant_prefix += '_'
@@ -126,7 +128,7 @@ def resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed,
     cpx_record_ids = set()
 
     for cluster in clusters:
-        # Try finding opposite strand support for single enders
+        # Try finding opposite strand support for single ender inversions
         if len(cluster) == 1 and cluster[0].info['SVTYPE'] == 'INV':
             rec, opp = rescan_single_ender(cluster[0], disc_pairs, 
                                            min_rescan_support, 
@@ -139,10 +141,11 @@ def resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed,
             for record in cluster:
                 cpx = ComplexSV([record], cytobands, mei_bed)
                 cpx_record_ids = cpx_record_ids.union(cpx.record_ids)
-    
-                cpx.vcf_record.id = variant_prefix + str(resolved_idx)
+                
+                # Assign random string as resolved ID to handle sharding
+                cpx.vcf_record.id = variant_prefix + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
                 cpx_records.append(cpx.vcf_record)
-                resolved_idx += 1
+                # resolved_idx += 1
 
         else:
             cpx = ComplexSV(cluster, cytobands, mei_bed)
@@ -150,16 +153,17 @@ def resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed,
     
             if cpx.svtype == 'UNR':
                 for i, record in enumerate(cpx.records):
-                    record.info['EVENT'] = 'UNRESOLVED_{0}'.format(unresolved_idx)
+                    # Assign random string as unresolved ID to handle sharding
+                    record.info['EVENT'] = 'UNRESOLVED_' + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
                     record.info['CPX_TYPE'] = cpx.cpx_type
                     record.info['UNRESOLVED'] = True
                     cpx_records.append(record)
-                unresolved_idx += 1
+                # unresolved_idx += 1
     
             else:
-                cpx.vcf_record.id = variant_prefix + str(resolved_idx)
+                cpx.vcf_record.id = variant_prefix + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
                 cpx_records.append(cpx.vcf_record)
-                resolved_idx += 1
+                # resolved_idx += 1
 
     # Output all variants
     vcf.reset()
