@@ -35,6 +35,8 @@ def vcf2bed(argv):
                         'in the order in which they appear in the VCF header.')
     parser.add_argument('--split-bnd', action='store_true', default=False,
                         help='Report two entries in bed file for each BND.')
+    parser.add_argument('--split-cpx', action='store_true', default=False,
+                        help='Report entries for each CPX rearrangement interval.')
     parser.add_argument('--no-header', dest='header', action='store_false',
                         default=True, help='Suppress header.')
 
@@ -63,6 +65,7 @@ def vcf2bed(argv):
                          split_bnd=args.split_bnd,
                          include_samples=args.include_samples,
                          include_strands=False,
+                         split_cpx=args.split_cpx,
                          include_infos=args.info,
                          annotate_ins=False,
                          report_alt=True)
