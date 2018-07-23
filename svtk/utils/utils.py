@@ -197,6 +197,11 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
                 infos = [_format_info(v) for v in infos]
                 infos = '\t'.join(infos)
 
+            # Set start & end coordinates to appropriate sorted order
+            # for all records (to not break bedtools) 
+            if chrom == record.info['CHR2']:
+                start, record.stop = sorted([start, record.stop])
+
             if record.info.get('SVTYPE', None) == 'BND':
                 # First end of breakpoint
                 end = record.pos + 1
