@@ -178,9 +178,9 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
             # for all records (to not break bedtools)
             if no_sort_coords:
                 start = record.pos
-                end = record.stop
+                end = record.info['END']
             else:
-                start, end = sorted([record.pos, record.stop])
+                start, end = sorted([record.pos, record.info['END']])
             
             if report_alt:
                 svtype = record.alts[0].strip('<>')
