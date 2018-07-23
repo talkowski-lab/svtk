@@ -110,7 +110,8 @@ def get_called_samples(record, include_null=False):
 # TODO: check if record is CPX and make entry per complex interval
 def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
                 include_strands=True, split_cpx=False, include_infos=None,
-                annotate_ins=True, report_alt=False, svtypes=None):
+                annotate_ins=True, report_alt=False, svtypes=None, 
+                sort_coords=True):
     """
     Wrap VCF as a bedtool. Necessary as pybedtools does not support SV in VCF.
 
@@ -132,6 +133,8 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
         Report record's ALT as SVTYPE in bed
     svtypes : list of str, optional
         Whitelist of SV types to restrict generated bed to
+    sort_coords : bool, optional
+        Sort start & end coordinate to not break bedtools
 
     Returns
     -------
@@ -172,8 +175,11 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
             name = record.id
 
             # Set start & end coordinates to appropriate sorted order
-            # for all records (to not break bedtools) 
-            start, end = sorted([record.pos, record.stop])
+            # for all records (to not break bedtools)
+            start = record.pos
+            end = record.stop
+            if sort_coords:
+                start, end = sorted([start, end])
             
             if report_alt:
                 svtype = record.alts[0].strip('<>')
