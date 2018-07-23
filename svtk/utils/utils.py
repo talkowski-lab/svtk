@@ -111,7 +111,7 @@ def get_called_samples(record, include_null=False):
 def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
                 include_strands=True, split_cpx=False, include_infos=None,
                 annotate_ins=True, report_alt=False, svtypes=None, 
-                sort_coords=True):
+                no_sort_coords=False):
     """
     Wrap VCF as a bedtool. Necessary as pybedtools does not support SV in VCF.
 
@@ -133,8 +133,8 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
         Report record's ALT as SVTYPE in bed
     svtypes : list of str, optional
         Whitelist of SV types to restrict generated bed to
-    sort_coords : bool, optional
-        Sort start & end coordinate to not break bedtools
+    no_sort_coords : bool, optional
+        Do not sort start & end coordinates
 
     Returns
     -------
@@ -178,7 +178,7 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
             # for all records (to not break bedtools)
             start = record.pos
             end = record.stop
-            if sort_coords:
+            if not no_sort_coords:
                 start, end = sorted([start, end])
             
             if report_alt:
