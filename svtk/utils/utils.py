@@ -176,10 +176,11 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
 
             # Set start & end coordinates to appropriate sorted order
             # for all records (to not break bedtools)
-            start = record.pos
-            end = record.stop
-            if not no_sort_coords:
-                start, end = sorted([start, end])
+            if no_sort_coords:
+                start = record.pos
+                end = record.stop
+            else:
+                start, end = sorted([record.pos, record.stop])
             
             if report_alt:
                 svtype = record.alts[0].strip('<>')
