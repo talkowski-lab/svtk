@@ -247,8 +247,6 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
                     svtype, region = interval.split('_')
                     chrom, coords = region.split(':')
                     start, end = coords.split('-')
-                    if not no_sort_coords:
-                        start, end = sorted([start, end])
                     yield entry.format(**locals())
 
             elif (record.info.get('SVTYPE', None) == 'CPX' and
@@ -256,8 +254,6 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
                    'DISPERSED_DUP' in record.info.get('CPX_TYPE', None))):
                 if annotate_ins:
                     svtype = 'DEL'
-                if not no_sort_coords:
-                    start, end = sorted([start, end])
                 yield entry.format(**locals())
 
                 if split_cpx:
@@ -269,8 +265,6 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
                     region = source.split('_')[1]
                     chrom, coords = region.split(':')
                     start, end = coords.split('-')
-                    if not no_sort_coords:
-                        start, end = sorted([start, end])
                     yield entry.format(**locals())
 
             else:
