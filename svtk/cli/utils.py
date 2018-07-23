@@ -40,8 +40,8 @@ def vcf2bed(argv):
     parser.add_argument('--no-header', dest='header', action='store_false',
                         default=True, help='Suppress header.')
     parser.add_argument('--no-sort-coords', dest='header', action='store_true',
-                        default=False, help='Do not sort record start/end '
-                        'coordinates.')
+                        default=False, help='Do not sort start/end coordinates '
+                        'per record before writing to bed.')
 
     # Print help if no arguments specified
     if len(argv) == 0:
