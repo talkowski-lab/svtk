@@ -47,6 +47,8 @@ class ComplexSV:
 
         cnvtypes = 'DEL DUP'.split()
         self.cnvs = [r for r in self.records if r.info['SVTYPE'] in cnvtypes]
+        self.dels = [r for r in self.records if r.info['SVTYPE'] == 'DEL']
+        self.dups = [r for r in self.records if r.info['SVTYPE'] == 'DUP']
 
     def remove_SR_only_breakpoints(self):
         def _is_SR_only(record):
@@ -68,6 +70,8 @@ class ComplexSV:
             self.resolve_insertion()
         elif self.cluster_type == 'RESOLVED_INSERTION':
             self.report_simple_insertion()
+        elif self.cluster_type == 'TANDEM_DUPLICATION_FLANKING_INSERTIONS':
+            self.report_manta_tandem_dup()
         else:
             self.remove_SR_only_breakpoints()
             self.organize_records()
@@ -358,6 +362,17 @@ class ComplexSV:
         else:
             self.set_unresolved()
 
+    #Where Manta calls two insertions flanking a duplication, report just the dup
+    def report_manta_tandem_dup(self):
+        record = self.dups[0]
+        self.cpx_type = record.alts[0].strip('<>')
+        self.svtype = 'DUP'
+        self.vcf_record.alts = record.alts
+        self.vcf_record.info['SVTYPE'] = self.svtype
+        self.vcf_record.info['CPX_TYPE'] = self.cpx_type
+        self.vcf_record.info['CHR2'] = record.info['CHR2']
+        self.vcf_record.info['SVLEN'] = record.info['SVLEN']
+
     def set_cluster_type(self):
         # Restrict to double-ended inversion events with appropriate
         # strand pairing
@@ -377,7 +392,7 @@ class ComplexSV:
             if idx == 0:
                 if (self.inversions[0].info['STRANDS'] ==
                         self.inversions[1].info['STRANDS']):
-                    self.cluster_type = 'MATCHED_STRANDS'
+                    self.cluster_type = 'CONGRUENT_INV_STRANDS'
                 else:
                     self.cluster_type = 'CANDIDATE_INVERSION'
             elif idx == 1:
@@ -395,7 +410,11 @@ class ComplexSV:
                 else:
                     self.cluster_type = 'STRAND_MISMATCH_INS'
             elif idx == 3:
-                self.cluster_type = 'MULTIPLE_RESOLVED_INSERTIONS'
+                #Catch case where Manta emits two insertions and a duplication
+                if len(self.dups) == 1 and len(self.insertions) == 2:
+                    self.cluster_type = 'TANDEM_DUPLICATION_FLANKING_INSERTIONS'
+                else:
+                    self.cluster_type = 'MULTIPLE_RESOLVED_INSERTIONS'
 
         elif sum(class_counts) == 0:
             self.cluster_type = 'ERROR_CNV_ONLY'
@@ -403,9 +422,13 @@ class ComplexSV:
             if len(self.insertions) == 1:
                 self.cluster_type = 'RESOLVED_INSERTION'
             else:
-                self.cluster_type = 'SINGLE_ENDER'
+                if self.svtype == 'INV'
+                    self.cluster_type = 'INVERSION_SINGLE_ENDER'
+                    self.svtype = 'BND'
+                else:
+                    self.cluster_type = 'SINGLE_ENDER'
         elif sum(class_counts) >= 2:
-            if(self.insertions) == 1 and len(self.breakends) >= 1:
+            if len(self.insertions) >= 1 and len(self.breakends) >= 1:
                 self.cluster_type = 'RESOLVED_INSERTION'
             else:
                 self.cluster_type = 'MIXED_BREAKENDS'

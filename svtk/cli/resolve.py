@@ -152,9 +152,10 @@ def resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed,
             cpx_record_ids = cpx_record_ids.union(cpx.record_ids)
     
             if cpx.svtype == 'UNR':
+                # Assign random string as unresolved ID to handle sharding
+                unresolved_vid = 'UNRESOLVED_' + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
                 for i, record in enumerate(cpx.records):
-                    # Assign random string as unresolved ID to handle sharding
-                    record.info['EVENT'] = 'UNRESOLVED_' + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
+                    record.info['EVENT'] = unresolved_vid
                     record.info['CPX_TYPE'] = cpx.cpx_type
                     record.info['UNRESOLVED'] = True
                     cpx_records.append(record)
