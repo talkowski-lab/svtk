@@ -422,7 +422,7 @@ class ComplexSV:
             if len(self.insertions) == 1:
                 self.cluster_type = 'RESOLVED_INSERTION'
             else:
-                if self.svtype == 'INV':
+                if len(self.inversions) > 0:
                     self.cluster_type = 'INVERSION_SINGLE_ENDER'
                     self.svtype = 'BND'
                 else:
