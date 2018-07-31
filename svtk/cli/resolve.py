@@ -171,7 +171,10 @@ def resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed,
 
     for record in _merge_records(vcf, cpx_records, cpx_record_ids):
         if 'CPX_TYPE' in record.info.keys():
-            if 'UNRESOLVED' not in record.info.keys():
+            if 'UNRESOLVED' in record.info.keys():
+                record.info['UNRESOLVED_TYPE'] = record.info['CPX_TYPE']
+                record.info.pop('CPX_TYPE')
+            else:
                 record.info.pop('STRANDS')
         if 'CIPOS' in record.info.keys():
             record.info.pop('CIPOS')
