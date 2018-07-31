@@ -86,8 +86,9 @@ class ComplexSV:
                 self.report_simple_insertion()
             else:
                 self.set_unresolved()
-                if self.cluster_type == 'SINGLE_ENDER' or 
-                self.cluster_type == 'INVERSION_SINGLE_ENDER':
+                if self.cluster_type == 'SINGLE_ENDER':
+                    self.vcf_record.info['SVTYPE'] = 'BND'
+                if self.cluster_type == 'INVERSION_SINGLE_ENDER':
                     self.vcf_record.info['SVTYPE'] = 'BND'
 
     def clean_record(self):
