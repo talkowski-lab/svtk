@@ -31,6 +31,7 @@ CPX_INFO = [
     '##INFO=<ID=CPX_TYPE,Number=1,Type=String,Description="Class of complex variant.">',
     '##INFO=<ID=CPX_INTERVALS,Number=.,Type=String,Description="Genomic intervals constituting complex variant.">',
     '##INFO=<ID=EVENT,Number=1,Type=String,Description="ID of event associated to breakend">',
+    '##INFO=<ID=UNRESOLVED_TYPE,Number=1,Type=String,Description="Class of unresolved variant.">',
     '##INFO=<ID=UNRESOLVED,Number=0,Type=Flag,Description="Variant is unresolved.">'
 ]
 
