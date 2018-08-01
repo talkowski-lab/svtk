@@ -175,6 +175,8 @@ def resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed,
             if 'UNRESOLVED' in record.info.keys():
                 record.info['UNRESOLVED_TYPE'] = record.info['CPX_TYPE']
                 record.info.pop('CPX_TYPE')
+                if record.info['UNRESOLVED_TYPE'] == 'INVERSION_SINGLE_ENDER':
+                    record.info['SVTYPE'] = 'BND'
             else:
                 record.info.pop('STRANDS')
         if 'CIPOS' in record.info.keys():
