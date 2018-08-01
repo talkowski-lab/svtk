@@ -436,6 +436,17 @@ class ComplexSV:
             self.vcf_record.info['SVLEN'] = record.info['SVLEN']
 
 
+    #Where Manta calls two insertions flanking a duplication, report just the dup
+    def report_manta_tandem_dup(self):
+        record = self.dups[0]
+        self.cpx_type = record.alts[0].strip('<>')
+        self.svtype = 'DUP'
+        self.vcf_record.alts = record.alts
+        self.vcf_record.info['SVTYPE'] = self.svtype
+        self.vcf_record.info['CPX_TYPE'] = self.cpx_type
+        self.vcf_record.info['CHR2'] = record.info['CHR2']
+        self.vcf_record.info['SVLEN'] = record.info['SVLEN']
+
     def set_cluster_type(self):
         # Restrict to double-ended inversion events with appropriate
         # strand pairing
