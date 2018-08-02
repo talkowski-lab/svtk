@@ -134,6 +134,26 @@ def cluster_INV_list(independent_INV):
                     rec = i.stop
     return out
 
+
+def cluster_single_cleanup(cluster):
+    #for clusters including both FF and RR inversions, only keep inversions for CPX resolution
+    cluster_index = [i for i in range(len(cluster))]
+    cluster_svtype = [[i.info['SVTYPE'], i.info['STRANDS']] for i in cluster]
+    out=deque()
+    if ['INV', '--'] in cluster_svtype and ['INV', '++'] in cluster_svtype:
+        out.append(cluster[cluster_svtype.index(['INV', '--'])])
+        out.append(cluster[cluster_svtype.index(['INV', '++'])])
+    else:
+        out=cluster
+    return out
+
+def clusters_cleanup(clusters):
+    out=deque()
+    for cluster in clusters:
+        out.append(cluster_single_cleanup(cluster))
+    return out
+
+
 def resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed,variant_prefix='CPX_', min_rescan_support=4, pe_blacklist=None):
     """
     Resolve complex SV from CNV intervals and BCA breakpoints.
@@ -158,6 +178,7 @@ def resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed,variant_prefix='CPX_'
     """
 
     clusters = link_cpx(vcf)
+    clusters = clusters_cleanup(clusters)
 
     # resolved_idx = unresolved_idx = 1
 
