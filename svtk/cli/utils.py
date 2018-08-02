@@ -39,6 +39,9 @@ def vcf2bed(argv):
                         help='Report entries for each CPX rearrangement interval.')
     parser.add_argument('--no-header', dest='header', action='store_false',
                         default=True, help='Suppress header.')
+    parser.add_argument('--no-sort-coords', dest='no_sort_coords', action='store_true',
+                        default=False, help='Do not sort start/end coordinates '
+                        'per record before writing to bed.')
 
     # Print help if no arguments specified
     if len(argv) == 0:
@@ -68,7 +71,8 @@ def vcf2bed(argv):
                          split_cpx=args.split_cpx,
                          include_infos=args.info,
                          annotate_ins=False,
-                         report_alt=True)
+                         report_alt=True,
+                         no_sort_coords=args.no_sort_coords)
 
     if args.bed in 'stdout -'.split():
         if args.header:

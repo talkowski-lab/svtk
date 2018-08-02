@@ -110,7 +110,8 @@ def get_called_samples(record, include_null=False):
 # TODO: check if record is CPX and make entry per complex interval
 def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
                 include_strands=True, split_cpx=False, include_infos=None,
-                annotate_ins=True, report_alt=False, svtypes=None):
+                annotate_ins=True, report_alt=False, svtypes=None, 
+                no_sort_coords=False):
     """
     Wrap VCF as a bedtool. Necessary as pybedtools does not support SV in VCF.
 
@@ -132,6 +133,8 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
         Report record's ALT as SVTYPE in bed
     svtypes : list of str, optional
         Whitelist of SV types to restrict generated bed to
+    no_sort_coords : bool, optional
+        Do not sort start & end coordinates
 
     Returns
     -------
@@ -169,8 +172,16 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
                 continue
 
             chrom = record.chrom
-            start = record.pos
             name = record.id
+
+            # Set start & end coordinates to appropriate sorted order
+            # for all records (to not break bedtools)
+            if no_sort_coords:
+                start = record.pos
+                end = record.stop
+            else:
+                start, end = sorted([record.pos, record.stop])
+            
             if report_alt:
                 svtype = record.alts[0].strip('<>')
             else:
@@ -215,19 +226,8 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
                 # TODO: rename CPX_INTERVALS to SOURCE for insertions
                 if annotate_ins:
                     svtype = 'DEL'
-                end = record.stop
-
-                # We permit start > end in insertions in cases of
-                # microdup/microhomology
-                # Reorder start/end so bedtools doesn't break
-                start, end = sorted([start, end])
-                yield entry.format(**locals())
-
-            elif record.info.get('SVTYPE', None) == 'INV':
-                end = record.stop
-
-                # Reorder start/end so bedtools doesn't break
-                start, end = sorted([start, end])
+                if not no_sort_coords:
+                    start, end = sorted([start, end])
                 yield entry.format(**locals())
 
             elif record.info.get('SVTYPE', None) == 'CTX':
@@ -254,12 +254,6 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
                    'DISPERSED_DUP' in record.info.get('CPX_TYPE', None))):
                 if annotate_ins:
                     svtype = 'DEL'
-                end = record.stop
-
-                # We permit start > end in insertions in cases of
-                # microdup/microhomology
-                # Reorder start/end so bedtools doesn't break
-                start, end = sorted([start, end])
                 yield entry.format(**locals())
 
                 if split_cpx:
@@ -274,7 +268,8 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
                     yield entry.format(**locals())
 
             else:
-                end = record.stop
+                if not no_sort_coords:
+                    start, end = sorted([start, end])
                 yield entry.format(**locals())
 
     return pbt.BedTool(_converter()).saveas()

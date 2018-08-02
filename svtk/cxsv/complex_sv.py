@@ -47,6 +47,8 @@ class ComplexSV:
 
         cnvtypes = 'DEL DUP'.split()
         self.cnvs = [r for r in self.records if r.info['SVTYPE'] in cnvtypes]
+        self.dels = [r for r in self.records if r.info['SVTYPE'] == 'DEL']
+        self.dups = [r for r in self.records if r.info['SVTYPE'] == 'DUP']
 
     def remove_SR_only_breakpoints(self):
         def _is_SR_only(record):
@@ -68,6 +70,8 @@ class ComplexSV:
             self.resolve_insertion()
         elif self.cluster_type == 'RESOLVED_INSERTION':
             self.report_simple_insertion()
+        elif self.cluster_type == 'TANDEM_DUPLICATION_FLANKING_INSERTIONS':
+            self.report_manta_tandem_dup()
         else:
             self.remove_SR_only_breakpoints()
             self.organize_records()
@@ -82,6 +86,10 @@ class ComplexSV:
                 self.report_simple_insertion()
             else:
                 self.set_unresolved()
+                if self.cluster_type == 'SINGLE_ENDER':
+                    self.vcf_record.info['SVTYPE'] = 'BND'
+                if self.cluster_type == 'INVERSION_SINGLE_ENDER':
+                    self.vcf_record.info['SVTYPE'] = 'BND'
 
     def clean_record(self):
         """
@@ -334,18 +342,9 @@ class ComplexSV:
             self.vcf_record.info['ALGORITHMS'] = algs
 
     def report_simple_insertion(self):
-        # unresolved insertion breakends == simple insertion
-        if len(self.breakends) > 0 and len(self.cnvs) == 0:
-            record = self.insertions[0]
-            self.cpx_type = record.alts[0].strip('<>')
-            self.svtype = 'INS'
-    
-            self.vcf_record.alts = record.alts
-            self.vcf_record.info['SVTYPE'] = self.svtype
-            self.vcf_record.info['CPX_TYPE'] = self.cpx_type
-            self.vcf_record.info['CHR2'] = record.info['CHR2']
-            self.vcf_record.info['SVLEN'] = record.info['SVLEN']
-        elif len(self.cnvs) == 1 and len(self.breakends) == 0:
+        # if cluster contains a single duplication, report that
+        # otherwise, report the first insertion record and discard all others
+        if len(self.cnvs) == 1:
             if self.cnvs[0].info['SVTYPE'] == 'DUP':
                 record = self.cnvs[0]
                 self.svtype = 'DUP'
@@ -354,9 +353,99 @@ class ComplexSV:
                 self.vcf_record.info['CHR2'] = record.info['CHR2']
                 self.vcf_record.info['SVLEN'] = record.info['SVLEN']
             else:
-                self.set_unresolved()
+                record = self.insertions[0]
+                self.cpx_type = record.alts[0].strip('<>')
+                self.svtype = 'INS'
+                self.vcf_record.alts = record.alts
+                self.vcf_record.info['SVTYPE'] = self.svtype
+                self.vcf_record.info['CPX_TYPE'] = self.cpx_type
+                self.vcf_record.info['CHR2'] = record.info['CHR2']
+                self.vcf_record.info['SVLEN'] = record.info['SVLEN']    
         else:
-            self.set_unresolved()
+            record = self.insertions[0]
+            self.cpx_type = record.alts[0].strip('<>')
+            self.svtype = 'INS'
+            self.vcf_record.alts = record.alts
+            self.vcf_record.info['SVTYPE'] = self.svtype
+            self.vcf_record.info['CPX_TYPE'] = self.cpx_type
+            self.vcf_record.info['CHR2'] = record.info['CHR2']
+            self.vcf_record.info['SVLEN'] = record.info['SVLEN']
+
+
+        # if len(self.breakends) > 0 and len(self.cnvs) == 0:
+        #     record = self.insertions[0]
+        #     self.cpx_type = record.alts[0].strip('<>')
+        #     self.svtype = 'INS'
+        #     self.vcf_record.alts = record.alts
+        #     self.vcf_record.info['SVTYPE'] = self.svtype
+        #     self.vcf_record.info['CPX_TYPE'] = self.cpx_type
+        #     self.vcf_record.info['CHR2'] = record.info['CHR2']
+        #     self.vcf_record.info['SVLEN'] = record.info['SVLEN']
+        # elif len(self.cnvs) == 1 and len(self.breakends) == 0:
+        #     if self.cnvs[0].info['SVTYPE'] == 'DUP':
+        #         record = self.cnvs[0]
+        #         self.svtype = 'DUP'
+        #         self.vcf_record.alts = record.alts
+        #         self.vcf_record.info['SVTYPE'] = self.svtype
+        #         self.vcf_record.info['CHR2'] = record.info['CHR2']
+        #         self.vcf_record.info['SVLEN'] = record.info['SVLEN']
+        #     else:
+        #         self.set_unresolved()
+        # else:
+        #     self.set_unresolved()
+
+    #Where Manta calls two insertions flanking a duplication, report just the dup
+    def report_manta_tandem_dup(self):
+        record = self.dups[0]
+        self.cpx_type = record.alts[0].strip('<>')
+        self.svtype = 'DUP'
+        self.vcf_record.alts = record.alts
+        self.vcf_record.info['SVTYPE'] = self.svtype
+        self.vcf_record.info['CPX_TYPE'] = self.cpx_type
+        self.vcf_record.info['CHR2'] = record.info['CHR2']
+        self.vcf_record.info['SVLEN'] = record.info['SVLEN']
+
+    def report_single_ender(self):
+        # if cluster contains a single duplication, report that
+        # otherwise, report the first insertion record and discard all others
+        if len(self.cnvs) == 1:
+            if self.cnvs[0].info['SVTYPE'] == 'DUP':
+                record = self.cnvs[0]
+                self.svtype = 'DUP'
+                self.vcf_record.alts = record.alts
+                self.vcf_record.info['SVTYPE'] = self.svtype
+                self.vcf_record.info['CHR2'] = record.info['CHR2']
+                self.vcf_record.info['SVLEN'] = record.info['SVLEN']
+            else:
+                record = self.insertions[0]
+                self.cpx_type = record.alts[0].strip('<>')
+                self.svtype = 'INS'
+                self.vcf_record.alts = record.alts
+                self.vcf_record.info['SVTYPE'] = self.svtype
+                self.vcf_record.info['CPX_TYPE'] = self.cpx_type
+                self.vcf_record.info['CHR2'] = record.info['CHR2']
+                self.vcf_record.info['SVLEN'] = record.info['SVLEN']    
+        else:
+            record = self.insertions[0]
+            self.cpx_type = record.alts[0].strip('<>')
+            self.svtype = 'INS'
+            self.vcf_record.alts = record.alts
+            self.vcf_record.info['SVTYPE'] = self.svtype
+            self.vcf_record.info['CPX_TYPE'] = self.cpx_type
+            self.vcf_record.info['CHR2'] = record.info['CHR2']
+            self.vcf_record.info['SVLEN'] = record.info['SVLEN']
+
+
+    #Where Manta calls two insertions flanking a duplication, report just the dup
+    def report_manta_tandem_dup(self):
+        record = self.dups[0]
+        self.cpx_type = record.alts[0].strip('<>')
+        self.svtype = 'DUP'
+        self.vcf_record.alts = record.alts
+        self.vcf_record.info['SVTYPE'] = self.svtype
+        self.vcf_record.info['CPX_TYPE'] = self.cpx_type
+        self.vcf_record.info['CHR2'] = record.info['CHR2']
+        self.vcf_record.info['SVLEN'] = record.info['SVLEN']
 
     def set_cluster_type(self):
         # Restrict to double-ended inversion events with appropriate
@@ -377,7 +466,7 @@ class ComplexSV:
             if idx == 0:
                 if (self.inversions[0].info['STRANDS'] ==
                         self.inversions[1].info['STRANDS']):
-                    self.cluster_type = 'MATCHED_STRANDS'
+                    self.cluster_type = 'CONGRUENT_INV_STRANDS'
                 else:
                     self.cluster_type = 'CANDIDATE_INVERSION'
             elif idx == 1:
@@ -395,7 +484,11 @@ class ComplexSV:
                 else:
                     self.cluster_type = 'STRAND_MISMATCH_INS'
             elif idx == 3:
-                self.cluster_type = 'MULTIPLE_RESOLVED_INSERTIONS'
+                #Catch case where Manta emits two insertions and a duplication
+                if len(self.dups) == 1 and len(self.insertions) == 2:
+                    self.cluster_type = 'TANDEM_DUPLICATION_FLANKING_INSERTIONS'
+                else:
+                    self.cluster_type = 'MULTIPLE_RESOLVED_INSERTIONS'
 
         elif sum(class_counts) == 0:
             self.cluster_type = 'ERROR_CNV_ONLY'
@@ -403,9 +496,12 @@ class ComplexSV:
             if len(self.insertions) == 1:
                 self.cluster_type = 'RESOLVED_INSERTION'
             else:
-                self.cluster_type = 'SINGLE_ENDER'
+                if len(self.inversions) > 0:
+                    self.cluster_type = 'INVERSION_SINGLE_ENDER'
+                else:
+                    self.cluster_type = 'SINGLE_ENDER'
         elif sum(class_counts) >= 2:
-            if(self.insertions) == 1 and len(self.breakends) >= 1:
+            if len(self.insertions) >= 1 and len(self.breakends) >= 1:
                 self.cluster_type = 'RESOLVED_INSERTION'
             else:
                 self.cluster_type = 'MIXED_BREAKENDS'
