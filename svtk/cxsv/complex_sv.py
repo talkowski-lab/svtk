@@ -497,7 +497,7 @@ class ComplexSV:
                 self.cluster_type = 'RESOLVED_INSERTION'
             else:
                 if len(self.inversions) > 0:
-                    self.cluster_type = 'INVERSION_SINGLE_ENDER'
+                    self.cluster_type = 'INVERSION_SINGLE_ENDER_' + self.inversions[0].info['STRANDS']
                 else:
                     self.cluster_type = 'SINGLE_ENDER'
         elif sum(class_counts) >= 2:
