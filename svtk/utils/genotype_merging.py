@@ -34,14 +34,28 @@ def choose_best_genotype(sample, records):
         return records[0]
 
     # Pick best non-reference genotype
-    for record in records:
-        if record.samples[sample]['GQ'] >= best_GQ:
+    #for record in records:
+    #    if record.samples[sample]['GQ'] >= best_GQ:
             # if record is non-reference , use it
             # or if it's a higher GQ for a reference call, use it
-            if record.samples[sample]['GT'] != (0, 0) or best_GT == (0, 0):
+    #        if record.samples[sample]['GT'] != (0, 0) or best_GT == (0, 0):
+    #            best_GT = record.samples[sample]['GT']
+    #            best_GQ = record.samples[sample]['GQ']
+    #            best_record = record
+
+    for record in records:
+        #if found non-ref GT, replace GT and GQ together
+        if record.samples[sample]['GT'] != (0, 0) and best_GT == (0, 0):
                 best_GT = record.samples[sample]['GT']
                 best_GQ = record.samples[sample]['GQ']
                 best_record = record
+        elif record.samples[sample]['GT'] == (0, 0) and best_GT != (0, 0):
+                continue
+        # if new GT  = best_GT, while found a higher GQ, replace GQ
+        else:
+                if record.samples[sample]['GQ'] >= best_GQ:
+                    best_GQ = record.samples[sample]['GQ']
+                    best_record = record
 
     return best_record
 
