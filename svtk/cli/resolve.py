@@ -294,8 +294,10 @@ def resolve_complex_sv_v2(resolve_CPX, resolve_INV, resolve_CNV, cytobands,disc_
                 cpx.vcf_record.id = variant_prefix + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
                 cpx_records_v2.append(cpx.vcf_record)
     for i in cpx_records_v2:
-        if i.info['SVTYPE'] == 'CPX' and i.info['UNRESOLVED']:
-            i.info.pop('UNRESOLVED')
+        if i.info['SVTYPE'] == 'CPX':
+            if i.info['UNRESOLVED']:          i.info.pop('UNRESOLVED')
+            if i.info['EVENT']:               i.info.pop('EVENT')
+            if i.info['UNRESOLVED_TYPE']:     i.info.pop('UNRESOLVED_TYPE')
     return cpx_records_v2
 
 def main(argv):
