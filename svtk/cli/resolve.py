@@ -295,9 +295,9 @@ def resolve_complex_sv_v2(resolve_CPX, resolve_INV, resolve_CNV, cytobands,disc_
                 cpx_records_v2.append(cpx.vcf_record)
     for i in cpx_records_v2:
         if i.info['SVTYPE'] == 'CPX':
-            if i.info['UNRESOLVED']:          i.info.pop('UNRESOLVED')
-            if i.info['EVENT']:               i.info.pop('EVENT')
-            if i.info['UNRESOLVED_TYPE']:     i.info.pop('UNRESOLVED_TYPE')
+            for info in 'UNRESOLVED EVENT UNRESOLVED_TYPE'.split():
+                if info in i.info.keys():
+                    i.info.pop(info)
     return cpx_records_v2
 
 def main(argv):
