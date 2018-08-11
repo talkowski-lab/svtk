@@ -183,12 +183,13 @@ def link_cpx_V2(linked_INV, resolve_CNV, cpx_dist=2000 ):
     cluster=[]
     for i in lined_INV_V2:
         if abs(i[1].pos - i[0].pos) > cpx_dist and abs(i[1].stop - i[0].stop) > cpx_dist:
-            if sorted(unify_list([i[0].info['STRANDS'],i[1].info['STRANDS']])) == ['++', '--']:
-                if i[0].pos < i[1].pos < i[0].stop < i[1].stop or i[1].pos < i[0].pos < i[1].stop < i[0].stop:
-                    cpx_intervals = [[i[0].chrom , sorted([i[0].pos, i[0].stop,i[1].pos, i[1].stop])[0],sorted([i[0].pos, i[0].stop,i[1].pos, i[1].stop])[1]],[i[0].chrom , sorted([i[0].pos, i[0].stop,i[1].pos, i[1].stop])[2],sorted([i[0].pos, i[0].stop,i[1].pos, i[1].stop])[3]]]
-                    CNV_close=[j for j in out_rec if ro_calu_interval([j.chrom, j.pos, j.stop], cpx_intervals[0])>.5 and abs(j.pos - cpx_intervals[0][1]) <cpx_dist and abs(j.stop - cpx_intervals[0][2]) < cpx_dist]
-                    CNV_close+=[j for j in out_rec if ro_calu_interval([j.chrom, j.pos, j.stop], cpx_intervals[1])>.5 and abs(j.pos - cpx_intervals[1][1]) <cpx_dist and abs(j.stop - cpx_intervals[1][2]) < cpx_dist]
-                    cluster.append(CNV_close+i)
+            if 'STRANDS' in i[0].info.keys() and 'STRANDS' in i[1].info.keys():
+                if sorted(unify_list([i[0].info['STRANDS'],i[1].info['STRANDS']])) == ['++', '--']:
+                    if i[0].pos < i[1].pos < i[0].stop < i[1].stop or i[1].pos < i[0].pos < i[1].stop < i[0].stop:
+                        cpx_intervals = [[i[0].chrom , sorted([i[0].pos, i[0].stop,i[1].pos, i[1].stop])[0],sorted([i[0].pos, i[0].stop,i[1].pos, i[1].stop])[1]],[i[0].chrom , sorted([i[0].pos, i[0].stop,i[1].pos, i[1].stop])[2],sorted([i[0].pos, i[0].stop,i[1].pos, i[1].stop])[3]]]
+                        CNV_close=[j for j in out_rec if ro_calu_interval([j.chrom, j.pos, j.stop], cpx_intervals[0])>.5 and abs(j.pos - cpx_intervals[0][1]) <cpx_dist and abs(j.stop - cpx_intervals[0][2]) < cpx_dist]
+                        CNV_close+=[j for j in out_rec if ro_calu_interval([j.chrom, j.pos, j.stop], cpx_intervals[1])>.5 and abs(j.pos - cpx_intervals[1][1]) <cpx_dist and abs(j.stop - cpx_intervals[1][2]) < cpx_dist]
+                        cluster.append(CNV_close+i)
     return cluster
 
 
