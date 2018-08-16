@@ -45,10 +45,13 @@ def samples_overlap(recA, recB, upper_thresh=0.5, lower_thresh=0.5):
     samplesA = set(svu.get_called_samples(recA))
     samplesB = set(svu.get_called_samples(recB))
     # Compute fraction of each record's samples which are shared
-    shared = samplesA & samplesB
-    fracA = len(shared) / len(samplesA)
-    fracB = len(shared) / len(samplesB)
-    min_frac, max_frac = sorted([fracA, fracB])
+    if len(samplesA) > 0 and len(samplesB) > 0:
+        shared = samplesA & samplesB
+        fracA = len(shared) / len(samplesA)
+        fracB = len(shared) / len(samplesB)
+        min_frac, max_frac = sorted([fracA, fracB])
+    else:
+        min_frac, max_frac = [0, 0]
     return min_frac >= lower_thresh and max_frac >= upper_thresh
 
 
