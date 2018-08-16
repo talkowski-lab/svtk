@@ -348,6 +348,7 @@ class ComplexSV:
             if self.cnvs[0].info['SVTYPE'] == 'DUP':
                 record = self.cnvs[0]
                 self.svtype = 'DUP'
+                self.vcf_record.id = record.id
                 self.vcf_record.alts = record.alts
                 self.vcf_record.info['SVTYPE'] = self.svtype
                 self.vcf_record.info['CHR2'] = record.info['CHR2']
@@ -357,6 +358,7 @@ class ComplexSV:
                 self.cpx_type = record.alts[0].strip('<>')
                 self.svtype = 'INS'
                 self.vcf_record.alts = record.alts
+                self.vcf_record.id = record.id
                 self.vcf_record.info['SVTYPE'] = self.svtype
                 self.vcf_record.info['CPX_TYPE'] = self.cpx_type
                 self.vcf_record.info['CHR2'] = record.info['CHR2']
@@ -365,6 +367,7 @@ class ComplexSV:
             record = self.insertions[0]
             self.cpx_type = record.alts[0].strip('<>')
             self.svtype = 'INS'
+            self.vcf_record.id = record.id
             self.vcf_record.alts = record.alts
             self.vcf_record.info['SVTYPE'] = self.svtype
             self.vcf_record.info['CPX_TYPE'] = self.cpx_type
