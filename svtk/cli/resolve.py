@@ -382,7 +382,7 @@ def main(argv):
     cpx_dist=20000
     for record in resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed, args.prefix, args.min_rescan_pe_support, blacklist):
         #Move members to existing variant IDs unless variant is complex
-        if record.info['SVTYPE'] != 'CPX':
+        if record.info['SVTYPE'] != 'CPX' and 'CPX' not in record.id.split('_'):
             record.info['MEMBERS'] = record.id
         #Treat 
         if record.info['UNRESOLVED']:
@@ -401,7 +401,7 @@ def main(argv):
 
     for record in cpx_records_v2:
         #Move members to existing variant IDs unless variant is complex
-        if record.info['SVTYPE'] != 'CPX':
+        if record.info['SVTYPE'] != 'CPX' and 'CPX' not in record.id.split('_'):
             record.info['MEMBERS'] = record.id
         if record.info['UNRESOLVED']:
             unresolved_f.write(record)
