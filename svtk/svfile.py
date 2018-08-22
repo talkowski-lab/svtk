@@ -42,10 +42,10 @@ class SVFile(object):
             if hrec.key == 'source':
                 self.sources = hrec.value.split(',')
 
-        # if self.sources is None:
-        #     msg = "Source not specified in header of {0}"
-        #     msg = msg.format(self.filename)
-        #     raise KeyError(msg)
+        if self.sources is None:
+            msg = "Source not specified in header of {0}"
+            msg = msg.format(self.filename)
+            raise KeyError(msg)
 
     def fetch(self, chrom, start=None, end=None):
         """
