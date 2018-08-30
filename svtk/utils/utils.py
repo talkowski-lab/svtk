@@ -332,8 +332,12 @@ def samples_overlap(samplesA, samplesB, upper_thresh=0.8, lower_thresh=0.5):
 
     # Compute fraction of each record's samples which are shared
     shared = samplesA & samplesB
-    fracA = len(shared) / len(samplesA)
-    fracB = len(shared) / len(samplesB)
+    if len(samplesA) > 0 and len(samplesB) > 0:
+        fracA = len(shared) / len(samplesA)
+        fracB = len(shared) / len(samplesB)
+    else:
+        fracA = 0
+        fracB = 0
 
     min_frac, max_frac = sorted([fracA, fracB])
 
