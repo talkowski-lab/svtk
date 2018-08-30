@@ -380,21 +380,22 @@ def main(argv):
     resolve_INV=[]
     resolve_CNV=[]
     cpx_dist=20000
+
     for record in resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed, args.prefix, args.min_rescan_pe_support, blacklist):
         #Move members to existing variant IDs unless variant is complex
         if record.info['SVTYPE'] != 'CPX' and 'CPX' not in record.id.split('_'):
             record.info['MEMBERS'] = record.id
         #Treat 
-        if record.info['UNRESOLVED']:
+        if record.info['SVTYPE']=='CPX':
+            resolve_CPX.append(record)
+        elif record.info['SVTYPE']=='INV' and record.stop-record.pos > cpx_dist:
+            resolve_INV.append(record)
+        elif record.info['SVTYPE'] in ['DEL','DUP'] and record.stop-record.pos > cpx_dist/2:
+            resolve_CNV.append(record)
+        elif record.info['UNRESOLVED']:
             unresolved_f.write(record)
         else:
             resolved_f.write(record)
-        if record.info['SVTYPE']=='CPX': 
-            resolve_CPX.append(record)
-        if record.info['SVTYPE']=='INV' and record.stop-record.pos > cpx_dist: 
-            resolve_INV.append(record)
-        if record.info['SVTYPE'] in ['DEL','DUP'] and record.stop-record.pos > cpx_dist/2:
-            resolve_CNV.append(record) 
 
     #out_rec = resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed, args.prefix, args.min_rescan_pe_support, blacklist)
     cpx_records_v2 = resolve_complex_sv_v2(resolve_CPX, resolve_INV, resolve_CNV ,cytobands, disc_pairs, mei_bed, args.prefix, args.min_rescan_pe_support, blacklist)
