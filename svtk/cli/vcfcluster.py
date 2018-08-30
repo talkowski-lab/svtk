@@ -99,7 +99,7 @@ def main(argv):
                         '[DEL,DUP,INV,BND]')
     parser.add_argument('--ignore-svtypes', action='store_true', default=False,
                         help='Ignore svtypes when clustering.')
-    parser.add_argument('-o', '--sample-overlap', type=float, default=0.0
+    parser.add_argument('-o', '--sample-overlap', type=float, default=0.0,
                         help='Minimum sample overlap for two variants to be '
                         'clustered together.')
     parser.add_argument('--preserve-ids', action='store_true', default=False,
