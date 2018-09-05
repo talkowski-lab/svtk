@@ -307,14 +307,14 @@ def set_null(record, sample):
             record.samples[sample][fmt] = tuple(null_val for i in range(n))
 
 
-def samples_overlap(samplesA, samplesB, upper_thresh=0.8, lower_thresh=0.5):
+def samples_overlap(samplesA, samplesB, upper_thresh=0.5, lower_thresh=0.5):
     """
     Test if two sets of samples are sufficiently similar.
 
     The two sets are tested to determine which fraction of their respective
     samples appears in the other set. The set with greater overlap must have at
-    least 80% of its samples appear in the other set, while the set with lesser
-    overlap must have at least 50% of its samples appear in the other set.
+    least upper_thresh% of its samples appear in the other set, while the set with lesser
+    overlap must have at least lower_thresh% of its samples appear in the other set.
 
     Arguments
     ---------
@@ -331,8 +331,8 @@ def samples_overlap(samplesA, samplesB, upper_thresh=0.8, lower_thresh=0.5):
     samplesB = set(samplesB)
 
     # Compute fraction of each record's samples which are shared
-    shared = samplesA & samplesB
     if len(samplesA) > 0 and len(samplesB) > 0:
+        shared = samplesA & samplesB
         fracA = len(shared) / len(samplesA)
         fracB = len(shared) / len(samplesB)
     else:

@@ -149,7 +149,8 @@ class SVRecord(GSNode):
                     self.overlaps(other, frac))
 
         # Only compute sample overlap if a minimum sample overlap is required
-        if sample_overlap > 0:
+        # and if records are eligible to cluster
+        if clusters and sample_overlap > 0:
             samplesA = get_called_samples(self.record)
             samplesB = get_called_samples(other.record)
             clusters = clusters and samples_overlap(samplesA, samplesB, sample_overlap, sample_overlap)
