@@ -88,7 +88,7 @@ class SmooveStandardizer(VCFStandardizer):
 
         # Any sample in TAGS field is considered to be called
         for sample in raw_rec.samples:
-            if raw_rec.samples[sample]['SQ'] >= 4:
+            if std_rec.samples[sample]['GT'] = (0, 1):
                 std_rec.samples[sample]['GT'] = (0, 1)
                 std_rec.samples[sample][source] = 1
             else:
