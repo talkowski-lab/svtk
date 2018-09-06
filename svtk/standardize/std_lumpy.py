@@ -121,21 +121,3 @@ class LumpyStandardizer(VCFStandardizer):
                 std_rec.alts = ('<INV>', )
         std_rec.stop = stop
         return std_rec
-
-    def standardize_format(self, std_rec, raw_rec):
-        """
-        Parse called samples from TAGS field
-        """
-
-        source = std_rec.info['ALGORITHMS'][0]
-
-        # Any sample in TAGS field is considered to be called
-        for sample in raw_rec.samples:
-            if raw_rec.samples[sample]['SU'] >= 4:
-                std_rec.samples[sample]['GT'] = (0, 1)
-                std_rec.samples[sample][source] = 1
-            else:
-                std_rec.samples[sample]['GT'] = (0, 0)
-                std_rec.samples[sample][source] = 0
-
-        return std_rec
