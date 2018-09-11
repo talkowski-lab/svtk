@@ -51,6 +51,10 @@ def disruption_type(hit_type, svtype):
             'BOTH-INSIDE': 'DISRUPTING',
             'ONE-INSIDE': 'DISRUPTING',
             'SPAN': 'COPY_GAIN'},
+        'MCNV': {
+            'BOTH-INSIDE': 'DISRUPTING',
+            'ONE-INSIDE': 'DISRUPTING',
+            'SPAN': 'COPY_GAIN'},
         'INV': {
             'BOTH-INSIDE': 'DISRUPTING',
             'ONE-INSIDE': 'DISRUPTING',
