@@ -20,6 +20,7 @@ import pandas as pd
 import pybedtools as pbt
 import svtk.utils as svu
 from svtk.cxsv import link_cpx, ComplexSV, rescan_single_ender,link_cpx_V2
+import datetime
 
 
 CPX_INFO = [
@@ -154,7 +155,8 @@ def clusters_cleanup(clusters):
     return out
 
 
-def resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed,variant_prefix='CPX_', min_rescan_support=4, pe_blacklist=None):
+def resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed,variant_prefix='CPX_', 
+                       min_rescan_support=4, pe_blacklist=None, quiet=False):
     """
     Resolve complex SV from CNV intervals and BCA breakpoints.
     Yields all resolved events, simple or complex, in sorted order.
@@ -172,6 +174,8 @@ def resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed,variant_prefix='CPX_'
     pe_blacklist : pysam.TabixFile, optional
         Blacklisted genomic regions. Anomalous pairs in these regions will be
         removed prior to clustering.
+    quiet : boolean, optional
+        Do not print status updates
     Yields
     ------
     sv : pysam.VariantRecord
@@ -179,6 +183,12 @@ def resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed,variant_prefix='CPX_'
 
     clusters = link_cpx(vcf)
     clusters = clusters_cleanup(clusters)
+    #Print number of candidate clusters identified
+    if not quiet:
+        now = datetime.datetime.now()
+        print('svtk resolve @ ' + now.strftime("%H:%M:%S") + ': ' + 
+              'identified ' + str(len(clusters)) + ' candidate complex clusters ' +
+              'during first pass')
 
     # resolved_idx = unresolved_idx = 1
 
@@ -189,6 +199,13 @@ def resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed,variant_prefix='CPX_'
     cpx_record_ids = set()
 
     for cluster in clusters:
+        #Print status for each cluster
+        if not quiet:
+            now = datetime.datetime.now()
+            print('svtk resolve @ ' + now.strftime("%H:%M:%S") + ': ' + 
+                  'resolving candidate cluster containing the following records: ' + 
+                  ', '.join([e.id for e in cluster]))
+
         # Try finding opposite strand support for single ender inversions
         if len(cluster) == 1 and cluster[0].info['SVTYPE'] == 'INV':
             rec, opp = rescan_single_ender(cluster[0], disc_pairs, 
@@ -196,6 +213,7 @@ def resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed,variant_prefix='CPX_'
                                            pe_blacklist=pe_blacklist)
             if opp is not None:
                 cluster = deque([rec, opp])
+
         # if cxsv overlap pulled in unrelated insertions, keep them separate
         if all([r.info['SVTYPE'] == 'INS' for r in cluster]):
             for record in cluster:
@@ -206,6 +224,7 @@ def resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed,variant_prefix='CPX_'
                 cpx.vcf_record.id = variant_prefix + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
                 cpx_records.append(cpx.vcf_record)
                 # resolved_idx += 1
+            outcome = 'treated as separate unrelated insertions'
         else:
             cpx = ComplexSV(cluster, cytobands, mei_bed)
             cpx_record_ids = cpx_record_ids.union(cpx.record_ids)
@@ -218,10 +237,17 @@ def resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed,variant_prefix='CPX_'
                     record.info['UNRESOLVED'] = True
                     cpx_records.append(record)
                 # unresolved_idx += 1
+                outcome = 'is unresolved'
             else:
                 cpx.vcf_record.id = variant_prefix + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
                 cpx_records.append(cpx.vcf_record)
+                outcome = 'resolved as ' + str(cpx.vcf_record.info['CPX_TYPE'])
                 # resolved_idx += 1
+        #Report outcome per cluster
+        if not quiet:
+            now = datetime.datetime.now()
+            print('svtk resolve @ ' + now.strftime("%H:%M:%S") + ': ' + 
+                  'candidate cluster ' + outcome)
 
     # Output all variants
     vcf.reset()
@@ -253,21 +279,39 @@ def cluster_cleanup(clusters_v2):
             cluster_pos.append(i)
     return [clusters_v2[i] for i in cluster_pos]
 
-def resolve_complex_sv_v2(resolve_CPX, resolve_INV, resolve_CNV, cytobands,disc_pairs, mei_bed,variant_prefix='CPX_', min_rescan_support=4, pe_blacklist=None):
+def resolve_complex_sv_v2(resolve_CPX, resolve_INV, resolve_CNV, cytobands,disc_pairs, 
+                          mei_bed,variant_prefix='CPX_', min_rescan_support=4, 
+                          pe_blacklist=None, quiet=False):
     #resolve_CPX = [i for i in out_rec if i.info['SVTYPE']=='CPX']
     #resolve_INV = [i for i in out_rec if i.info['SVTYPE']=='INV']
     independent_INV = remove_CPX_from_INV(resolve_CPX, resolve_INV)
     linked_INV = cluster_INV(independent_INV)
     clusters_v2=link_cpx_V2(linked_INV,resolve_CNV,cpx_dist=2000 )
     clusters_v2=cluster_cleanup(clusters_v2)
+
+    #Print number of candidate clusters identified
+    if not quiet:
+        now = datetime.datetime.now()
+        print('svtk resolve @ ' + now.strftime("%H:%M:%S") + ': ' + 
+              'identified ' + str(len(clusters_v2)) + ' candidate complex clusters ' +
+              'during second pass')
+
     cpx_records_v2 = deque()
     cpx_record_ids_v2 = set()
     for cluster in clusters_v2:
+        #Print status for each cluster
+        if not quiet:
+            now = datetime.datetime.now()
+            print('svtk resolve @ ' + now.strftime("%H:%M:%S") + ': ' + 
+                  'resolving candidate cluster containing the following records: ' + 
+                  ', '.join([e.id for e in cluster]))
+
         # Try finding opposite strand support for single ender inversions
         if len(cluster) == 1 and cluster[0].info['SVTYPE'] == 'INV':
             rec, opp = rescan_single_ender(cluster[0], disc_pairs, min_rescan_support, pe_blacklist=pe_blacklist)
             if opp is not None:
                 cluster = deque([rec, opp])
+
         # if cxsv overlap pulled in unrelated insertions, keep them separate
         if all([r.info['SVTYPE'] == 'INS' for r in cluster]):
             for record in cluster:
@@ -278,6 +322,7 @@ def resolve_complex_sv_v2(resolve_CPX, resolve_INV, resolve_CNV, cytobands,disc_
                 cpx.vcf_record.id = variant_prefix + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
                 cpx_records.append(cpx.vcf_record)
                 # resolved_idx += 1
+            outcome = 'treated as separate unrelated insertions'
         else:
             cpx = ComplexSV(cluster, cytobands, mei_bed)
             cpx_record_ids_v2 = cpx_record_ids_v2.union(cpx.record_ids)
@@ -290,9 +335,18 @@ def resolve_complex_sv_v2(resolve_CPX, resolve_INV, resolve_CNV, cytobands,disc_
                     record.info['UNRESOLVED'] = True
                     cpx_records_v2.append(record)
                 # unresolved_idx += 1
+                outcome = 'is unresolved'
             else:
                 cpx.vcf_record.id = variant_prefix + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
                 cpx_records_v2.append(cpx.vcf_record)
+                outcome = 'resolved as ' + str(cpx.vcf_record.info['CPX_TYPE'])
+
+        #Report outcome per cluster
+        if not quiet:
+            now = datetime.datetime.now()
+            print('svtk resolve @ ' + now.strftime("%H:%M:%S") + ': ' + 
+                  'candidate cluster ' + outcome)
+
     for i in cpx_records_v2:
         if i.info['SVTYPE'] == 'CPX':
             for info in 'UNRESOLVED EVENT UNRESOLVED_TYPE'.split():
@@ -339,11 +393,19 @@ def main(argv):
                         help='Unresolved complex breakpoints and CNV.')
     parser.add_argument('-p', '--prefix', default='CPX_',
                         help='Variant prefix [CPX_]')
+    parser.add_argument('-q', '--quiet', default=False,
+                        help='Disable progress logging to stderr.')
 
     if len(argv) == 0:
         parser.print_help()
         sys.exit(1)
     args = parser.parse_args(argv)
+
+    #Print status
+    if not args.quiet:
+        now = datetime.datetime.now()
+        print('svtk resolve @ ' + now.strftime("%H:%M:%S") + ': ' + 
+              'starting variant resolution.')
 
     vcf = pysam.VariantFile(args.raw)
     for line in CPX_INFO:
@@ -381,13 +443,16 @@ def main(argv):
     resolve_CNV=[]
     cpx_dist=20000
 
-    for record in resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed, args.prefix, args.min_rescan_pe_support, blacklist):
+    for record in resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed, args.prefix, 
+                                     args.min_rescan_pe_support, blacklist, args.quiet):
         #Move members to existing variant IDs unless variant is complex
         if record.info['SVTYPE'] != 'CPX' and 'CPX' not in record.id.split('_'):
             record.info['MEMBERS'] = record.id
         #Treat 
         if record.info['SVTYPE']=='CPX':
             resolve_CPX.append(record)
+        elif record.info['SVTYPE'] == 'INV' and 'rescan' in record.info['ALGORITHMS']:
+             resolved_f.write(record)
         elif record.info['SVTYPE']=='INV' and record.stop-record.pos > cpx_dist:
             resolve_INV.append(record)
         elif record.info['SVTYPE'] in ['DEL','DUP'] and record.stop-record.pos > cpx_dist/2:
@@ -398,7 +463,14 @@ def main(argv):
             resolved_f.write(record)
 
     #out_rec = resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed, args.prefix, args.min_rescan_pe_support, blacklist)
-    cpx_records_v2 = resolve_complex_sv_v2(resolve_CPX, resolve_INV, resolve_CNV ,cytobands, disc_pairs, mei_bed, args.prefix, args.min_rescan_pe_support, blacklist)
+    #Print status
+    if not args.quiet:
+        now = datetime.datetime.now()
+        print('svtk resolve @ ' + now.strftime("%H:%M:%S") + ': ' + 
+              'starting second pass through the VCF for loose inversion linking')
+    cpx_records_v2 = resolve_complex_sv_v2(resolve_CPX, resolve_INV, resolve_CNV, 
+                                           cytobands, disc_pairs, mei_bed, args.prefix, 
+                                           args.min_rescan_pe_support, blacklist, args.quiet)
 
     for record in cpx_records_v2:
         #Move members to existing variant IDs unless variant is complex

@@ -15,7 +15,8 @@ import pysam
 from svtk.genomeslink import GenomeSLINK, GSNode
 import svtk.utils as svu
 from statistics import median
-
+import numpy as np
+import datetime
 
 class DiscPair(GSNode):
     def __init__(self, chrA, posA, strandA, chrB, posB, strandB, sample):
@@ -79,8 +80,9 @@ def match_cluster(record, cluster, dist=300):
 
 
 
-def rescan_single_ender(record, pe, min_support=4, window=500, dist=300, 
-                        min_frac_samples=0.5, pe_blacklist=None):
+def rescan_single_ender(record, pe, min_support=4, window=1000, dist=300, 
+                        min_frac_samples=0.5, pe_blacklist=None, max_samples=40, 
+                        quiet=False):
     """
     Test if a putative single-ender inversion has support from other strand.
 
@@ -107,6 +109,8 @@ def rescan_single_ender(record, pe, min_support=4, window=500, dist=300,
     pe_blacklist : pysam.TabixFile, optional
         Blacklisted genomic regions. Anomalous pairs in these regions will be
         removed prior to clustering.
+    quiet : boolean, optional
+        Do not print status updates
 
 
     Returns
@@ -116,28 +120,52 @@ def rescan_single_ender(record, pe, min_support=4, window=500, dist=300,
         None if no such pairs found
     """
 
+    # Print statement that single ender rescan has been attempted
+    if not quiet:
+        now = datetime.datetime.now()
+        print('svtk resolve @ ' + now.strftime("%H:%M:%S") + ': ' + 
+              'single-ender rescan procedure started for ' + 
+              record.id)
+
     # Select pairs nearby record
     pairs = pe.fetch('{0}:{1}-{2}'.format(record.chrom, record.pos - window,
                                           record.pos + window))
     pairs = [DiscPair(*p.split()) for p in pairs]
 
-    # Restrict to inversions in samples called in VCF record
-    called = svu.get_called_samples(record)
-    pairs = [p for p in pairs if p.sample in called and p.is_inversion]
+    # To protect against wasting time on particularly messy loci not captured 
+    # in the blacklist, automatically fail site if total number of discordant 
+    # pairs is > 2 * samples * min_support
+    all_samples = record.samples.keys()
+    if len(pairs) > 2 * len(all_samples) * min_support:
+        return record, None
 
-    # Count number of pairs per sample
+    # Subset to only inversion pairs
+    pairs = [p for p in pairs if p.is_inversion]
+
+    # Count number of pairs per sample for all samples
     sample_support_precluster = defaultdict(int)
     for pair in pairs:
         sample_support_precluster[pair.sample] += 1
-    sample_support_precluster.get('G94818_NWD163451', 0)
     pairs_count_list = []
     for s in record.samples.keys():
         pairs_count_list.append(sample_support_precluster.get(s, 0))
     
-    # If median number of pairs per sample across all samples > min_support,
-    # fail record. Otherwise, keep going
-    if median(pairs_count_list) > min_support:
-        return record, None
+    # If median number of pairs per sample not called in the original record
+    # > min_support, fail record. Otherwise, keep going.
+    called = svu.get_called_samples(record)
+    not_called = [s for s in all_samples if s not in called]
+    if len(called) < len(all_samples):
+        nocall_pairs_count_list = []
+        for s in not_called:
+            nocall_pairs_count_list.append(sample_support_precluster.get(s, 0))
+        if median(nocall_pairs_count_list) > min_support:
+            return record, None
+
+    # Restrict to inversions in samples called in VCF record
+    # Randomly subset pairs from all samples to max_samples
+    np.random.seed(123456789)
+    called_subset = np.random.choice(called, max_samples).tolist()
+    pairs = [p for p in pairs if p.sample in called_subset and p.is_inversion]
 
     # Cluster pairs
     slink = GenomeSLINK(pairs, dist, blacklist=pe_blacklist)
@@ -159,13 +187,20 @@ def rescan_single_ender(record, pe, min_support=4, window=500, dist=300,
         sample_support[pair.sample] += 1
    
     # If enough samples were found to have support, make new variant record
-    n_supported_samples = sum(sample_support[s] >= min_support for s in called)
-    if n_supported_samples / len(called) >= min_frac_samples:
+    n_supported_samples = sum(sample_support[s] > min_support for s in called_subset)
+    if n_supported_samples / len(called_subset) >= min_frac_samples:
         opp_strand = make_new_record(supporting_pairs, record)
 
         same_strand_pairs = [p for p in cluster if p.strandA != missing_strand]
         same_strand = make_new_record(same_strand_pairs, record)
         same_strand.id = record.id
+
+        # Print statement that single ender rescan has been successful
+        if not quiet:
+            now = datetime.datetime.now()
+            print('svtk resolve @ ' + now.strftime("%H:%M:%S") + ': ' + 
+                  'single-ender rescan successful for ' + 
+                  record.id)
 
         return same_strand, opp_strand
     else:
@@ -177,13 +212,15 @@ def make_new_record(pairs, old_record):
     
     record.id = record.id + '_OPPSTRAND'
 
+    #Take third quartile of + read positions for +/+ breakpoints
+    #Take first quartile of - read positions for -/- breakpoints
     if pairs[0].strandA == '+':
-        record.pos = max(p.posA for p in pairs)
-        record.stop = max(p.posB for p in pairs)
+        record.pos = round(np.percentile([p.posA for p in pairs], 75), 0)
+        record.stop = round(np.percentile([p.posB for p in pairs], 75), 0)
         record.info['STRANDS'] = '++'
     else:
-        record.pos = min(p.posA for p in pairs)
-        record.stop = min(p.posB for p in pairs)
+        record.pos = round(np.percentile([p.posA for p in pairs], 25), 0)
+        record.stop = round(np.percentile([p.posB for p in pairs], 25), 0)
         record.info['STRANDS'] = '--'
 
     record.info['SVLEN'] = record.stop - record.pos
