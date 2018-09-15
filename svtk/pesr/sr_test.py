@@ -22,7 +22,7 @@ class SRTest(PESRTest):
 
         super().__init__(medians)
 
-    def test_record(self, record, called, background):
+    def test_record_rec(self, record, called, background):
         # Test SR support at all coordinates within window of start/end
         results = []
         for coord in 'posA posB'.split():
@@ -42,6 +42,71 @@ class SRTest(PESRTest):
         cols = 'name coord pos log_pval called background bg_frac'.split()
 
         return results[cols]
+
+    def test_record(self, record, called, background):
+            # Test SR support at all coordinates within window of start/end
+            results = []
+            for coord in 'posA posB'.split():
+                result = self._test_coord(record, coord, called, background)
+                result['coord'] = coord
+                results.append(result)
+                #print(result)
+            if not int(results[0].pos)<int(results[1].pos):
+                del results[1]
+                rec=1
+                while True:
+                    result = self._test_coord_V2(record, coord, called, background,rec)
+                    #print(result)
+                    if int(result.pos) > int(results[0].pos):
+                        result['coord'] = coord
+                        results.append(result)
+                        break
+                    rec=rec+1
+            #print(results)
+            results = pd.concat(results, ignore_index=True)
+            # Add test for sum of posA and posB
+            total = self._test_total(results)
+            results = pd.concat([results, total], ignore_index=True)
+
+            # Clean up columns
+            results['name'] = record.id
+            results['bg_frac'] = results.called / (results.background + results.called)
+            results['bg_frac'] = results.bg_frac.fillna(0)
+            cols = 'name coord pos log_pval called background bg_frac'.split()
+
+            return results[cols]
+
+
+
+    def _test_coord_V2(self, record, coord, samples, background, optimal=0):
+            """Test enrichment at all positions within window"""
+            if coord == 'posA':
+                coord, strand = record.pos, record.info['STRANDS'][0]
+            else:
+                coord, strand = record.stop, record.info['STRANDS'][1]
+
+            # Run SR test at each position
+            results = []
+            for pos in range(coord - self.window, coord + self.window + 1):
+                result = self.test(record.chrom, pos, strand, samples, background)
+                result = result.to_frame().transpose()
+                result['pos'] = pos
+                result['dist'] = np.abs(pos - coord)
+                results.append(result)
+
+            results = pd.concat(results, ignore_index=True)
+
+            # Choose most significant position, using distance to predicted
+            # breakpoint as tiebreaker
+            results = results.sort_values(['log_pval', 'dist'], ascending=False)
+            if optimal<len(results):
+                best = results.iloc[optimal].to_frame().transpose()
+            else:
+                best = results.iloc[-1].to_frame().transpose()
+                best['log_pval']=0
+                best['pos']=record.stop
+            return best
+
 
     def test(self, chrom, pos, strand, called, background):
         """
