@@ -20,16 +20,16 @@ def annotate_gencode(sv, gencode):
     hits = annotate_intersection(sv, gencode, filetype='gtf')
     effects = classify_effect(hits)
     effects = effects.loc[effects.effect != 'GENE_OTHER'].copy()
-
+    
     # Annotate nearest TSS
     tss = annotate_nearest_tss(sv, gencode)
 
     # Only include TSS if no genic hit observed
-    tss = tss.loc[~tss.name.isin(effects.name)].copy()
+    if len(effects)>0:
+        tss = tss.loc[~tss.name.isin(effects.name)].copy()
 
     # Merge annotations
     effects = pd.concat([effects, tss])
-
     return effects
 
 
@@ -84,7 +84,7 @@ def annotate(sv, gencode, noncoding):
 
     effects = pd.concat([coding_anno, noncoding_anno])
 
-    # Aggregate genic effects by variant ID
+        # Aggregate genic effects by variant ID
     effects = effects.pivot_table(index='name',
                                   columns='effect',
                                   values='gene_name',
@@ -102,6 +102,7 @@ GENCODE_INFO = [
     '##INFO=<ID=INV_SPAN,Number=.,Type=String,Description="Gene(s) which are entirely spanned by an SV\'s inversion.">',
     '##INFO=<ID=UTR,Number=.,Type=String,Description="Gene(s) for which the SV is predicted to disrupt a UTR.">',
     '##INFO=<ID=NEAREST_TSS,Number=.,Type=String,Description="Nearest transcription start site to intragenic variants.">',
+    '##INFO=<ID=promoter,Number=0,Type=Flag,Description="Nearest promoter.">',
     '##INFO=<ID=INTERGENIC,Number=0,Type=Flag,Description="SV does not overlap coding sequence.">'
 ]
 
@@ -146,7 +147,6 @@ def annotate_vcf(vcf, gencode, noncoding, annotated_vcf):
 
     effects = annotate(sv, gencode, noncoding)
     effects = effects.to_dict(orient='index')
-
     # Add results to variant records and save
     for record in vcf:
         anno = effects.get(record.id)

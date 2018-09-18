@@ -41,6 +41,7 @@ def classify_dup(disrupt_dict):
         # duplication internal to gene, disrupting exon, is LoF
         # duplication spanning gene is copy gain
         # duplication overlapping gene is no effect (one good copy left)
+    if 'gene' in elements:
         if 'BOTH-INSIDE' in disrupt_dict['gene']:
             return 'LOF'
         elif 'SPAN' in disrupt_dict['gene']:
@@ -175,11 +176,10 @@ def classify_effect(hits):
         element_hit = {h[0]: h[1] for h in element_hit}
 
         return classify_disrupt(element_hit, svtype)
-
     if effects.shape[0] > 0:
         effects['effect'] = effects.apply(_apply_classify, axis=1)
-
+    else:
+        effects['effect'] = 'GENE_OTHER'
     # only necessary when testing
     effects = effects.drop('element_hit', axis=1)
-
     return effects
