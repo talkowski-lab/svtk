@@ -241,7 +241,7 @@ def resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed,variant_prefix='CPX_'
             else:
                 cpx.vcf_record.id = variant_prefix + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
                 cpx_records.append(cpx.vcf_record)
-                if 'CPX_TYPE' is in cpx.vcf_record.info.keys():
+                if 'CPX_TYPE' in cpx.vcf_record.info.keys():
                     outcome = 'resolved as ' + str(cpx.vcf_record.info['CPX_TYPE'])
                 else:
                     outcome = 'resolved as ' + str(cpx.vcf_record.info['SVTYPE'])
@@ -344,7 +344,7 @@ def resolve_complex_sv_v2(resolve_CPX, resolve_INV, resolve_CNV, cytobands,disc_
             else:
                 cpx.vcf_record.id = variant_prefix + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
                 cpx_records_v2.append(cpx.vcf_record)
-                if 'CPX_TYPE' is in cpx.vcf_record.info.keys():
+                if 'CPX_TYPE' in cpx.vcf_record.info.keys():
                     outcome = 'resolved as ' + str(cpx.vcf_record.info['CPX_TYPE'])
                 else:
                     outcome = 'resolved as ' + str(cpx.vcf_record.info['SVTYPE'])
