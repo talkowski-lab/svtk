@@ -286,7 +286,7 @@ def resolve_complex_sv_v2(resolve_CPX, resolve_INV, resolve_CNV, cytobands,disc_
     #resolve_INV = [i for i in out_rec if i.info['SVTYPE']=='INV']
     independent_INV = remove_CPX_from_INV(resolve_CPX, resolve_INV)
     linked_INV = cluster_INV(independent_INV)
-    clusters_v2=link_cpx_V2(linked_INV,resolve_CNV,cpx_dist=2000 )
+    clusters_v2=link_cpx_V2(linked_INV,resolve_CNV,cpx_dist=2000)
     clusters_v2=cluster_cleanup(clusters_v2)
 
     #Print number of candidate clusters identified
@@ -308,7 +308,9 @@ def resolve_complex_sv_v2(resolve_CPX, resolve_INV, resolve_CNV, cytobands,disc_
 
         # Try finding opposite strand support for single ender inversions
         if len(cluster) == 1 and cluster[0].info['SVTYPE'] == 'INV':
-            rec, opp = rescan_single_ender(cluster[0], disc_pairs, min_rescan_support, pe_blacklist=pe_blacklist)
+            rec, opp = rescan_single_ender(cluster[0], disc_pairs, 
+                                           min_rescan_support, 
+                                           pe_blacklist=pe_blacklist)
             if opp is not None:
                 cluster = deque([rec, opp])
 
@@ -448,8 +450,10 @@ def main(argv):
         #Move members to existing variant IDs unless variant is complex
         if record.info['SVTYPE'] != 'CPX' and 'CPX' not in record.id.split('_'):
             record.info['MEMBERS'] = record.id
-        #Treat 
-        if record.info['SVTYPE']=='CPX':
+        #Sort variants for second pass based on their status
+        if record.info['UNRESOLVED']:
+            unresolved_f.write(record)
+        elif record.info['SVTYPE']=='CPX':
             resolve_CPX.append(record)
         elif record.info['SVTYPE'] == 'INV' and 'rescan' in record.info['ALGORITHMS']:
              resolved_f.write(record)
@@ -457,8 +461,6 @@ def main(argv):
             resolve_INV.append(record)
         elif record.info['SVTYPE'] in ['DEL','DUP'] and record.stop-record.pos > cpx_dist/2:
             resolve_CNV.append(record)
-        elif record.info['UNRESOLVED']:
-            unresolved_f.write(record)
         else:
             resolved_f.write(record)
 
