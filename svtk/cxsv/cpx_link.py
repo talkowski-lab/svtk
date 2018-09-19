@@ -166,36 +166,42 @@ def CNV_readin_from_resolved_vcf(resolved_name,inv_intervals):
     return out
 
 
-def link_cpx_V2(linked_INV, resolve_CNV, cpx_dist=2000 ):
-    lined_INV_V2 = []
+def link_cpx_V2(linked_INV, resolve_CNV, cpx_dist=2000):
+    linked_INV_V2 = []
     for group in linked_INV:
         if len(group)>1:
             for i in group: 
                 for j in group:
                     if (samples_overlap(i,j) and ro_calu(i,j)>0):
-                        lined_INV_V2.append([i,j])
+                        linked_INV_V2.append([i,j])
+        else:
+            linked_INV_V2.append([group[0]])
     inv_intervals = []
-    for i in lined_INV_V2:
-        tmp=[i[0].chrom]
-        for j in i:
-            tmp+=[j.pos, j.stop]
-        inv_intervals.append([tmp[0],min(unify_list(tmp[1:])), max(unify_list(tmp[1:])) ])
+    for i in linked_INV_V2:
+        if len(i)>1:
+            tmp=[i[0].chrom]
+            for j in i:
+                tmp+=[j.pos, j.stop]
+            inv_intervals.append([tmp[0],min(unify_list(tmp[1:])), max(unify_list(tmp[1:])) ])
+        else:
+            inv_intervals.append([i[0].chrom, i[0].pos, i[0].stop])
     inv_intervals=sorted(unify_list(inv_intervals))
     #out_rec = unify_list(CNV_readin_from_resolved_vcf(resolved_name,inv_intervals) + CNV_readin_from_resolved_vcf(unresolved_name,inv_intervals)) 
     out_rec = resolve_CNV
     cluster=[]
-    for i in lined_INV_V2:
-        if abs(i[1].pos - i[0].pos) > cpx_dist and abs(i[1].stop - i[0].stop) > cpx_dist:
-            if 'STRANDS' in i[0].info.keys() and 'STRANDS' in i[1].info.keys():
-                if sorted(unify_list([i[0].info['STRANDS'],i[1].info['STRANDS']])) == ['++', '--']:
-                    if i[0].pos < i[1].pos < i[0].stop < i[1].stop or i[1].pos < i[0].pos < i[1].stop < i[0].stop:
-                        cpx_intervals = [[i[0].chrom , sorted([i[0].pos, i[0].stop,i[1].pos, i[1].stop])[0],sorted([i[0].pos, i[0].stop,i[1].pos, i[1].stop])[1]],[i[0].chrom , sorted([i[0].pos, i[0].stop,i[1].pos, i[1].stop])[2],sorted([i[0].pos, i[0].stop,i[1].pos, i[1].stop])[3]]]
-                        CNV_close=[j for j in out_rec if ro_calu_interval([j.chrom, j.pos, j.stop], cpx_intervals[0])>.5 and abs(j.pos - cpx_intervals[0][1]) <cpx_dist and abs(j.stop - cpx_intervals[0][2]) < cpx_dist]
-                        CNV_close+=[j for j in out_rec if ro_calu_interval([j.chrom, j.pos, j.stop], cpx_intervals[1])>.5 and abs(j.pos - cpx_intervals[1][1]) <cpx_dist and abs(j.stop - cpx_intervals[1][2]) < cpx_dist]
-                        cluster.append(CNV_close+i)
+    for i in linked_INV_V2:
+        if len(i)>1:
+            if abs(i[1].pos - i[0].pos) > cpx_dist and abs(i[1].stop - i[0].stop) > cpx_dist:
+                if 'STRANDS' in i[0].info.keys() and 'STRANDS' in i[1].info.keys():
+                    if sorted(unify_list([i[0].info['STRANDS'],i[1].info['STRANDS']])) == ['++', '--']:
+                        if i[0].pos < i[1].pos < i[0].stop < i[1].stop or i[1].pos < i[0].pos < i[1].stop < i[0].stop:
+                            cpx_intervals = [[i[0].chrom , sorted([i[0].pos, i[0].stop,i[1].pos, i[1].stop])[0],sorted([i[0].pos, i[0].stop,i[1].pos, i[1].stop])[1]],[i[0].chrom , sorted([i[0].pos, i[0].stop,i[1].pos, i[1].stop])[2],sorted([i[0].pos, i[0].stop,i[1].pos, i[1].stop])[3]]]
+                            CNV_close=[j for j in out_rec if ro_calu_interval([j.chrom, j.pos, j.stop], cpx_intervals[0])>.5 and abs(j.pos - cpx_intervals[0][1]) <cpx_dist and abs(j.stop - cpx_intervals[0][2]) < cpx_dist]
+                            CNV_close+=[j for j in out_rec if ro_calu_interval([j.chrom, j.pos, j.stop], cpx_intervals[1])>.5 and abs(j.pos - cpx_intervals[1][1]) <cpx_dist and abs(j.stop - cpx_intervals[1][2]) < cpx_dist]
+                            cluster.append(CNV_close+i)
+        else:
+            cluster.append(i)
     return cluster
-
-
 
 
 def link_inv(vcf, bkpt_window=300, cpx_dist=20000):

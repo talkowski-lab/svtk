@@ -455,7 +455,9 @@ def main(argv):
                                      args.min_rescan_pe_support, blacklist, args.quiet):
         #Move members to existing variant IDs unless variant is complex
         if record.info['SVTYPE'] != 'CPX' and 'CPX' not in record.id.split('_'):
-            record.info['MEMBERS'] = record.id
+            #Don't alter MEMBERS if record.id already in MEMBERS
+            if 'MEMBERS' in record.info.keys() and record.id not in record.info['MEMBERS']:
+                record.info['MEMBERS'] = record.id
         #Sort variants for second pass based on their status
         if record.info['UNRESOLVED']:
             unresolved_f.write(record)
@@ -483,7 +485,9 @@ def main(argv):
     for record in cpx_records_v2:
         #Move members to existing variant IDs unless variant is complex
         if record.info['SVTYPE'] != 'CPX' and 'CPX' not in record.id.split('_'):
-            record.info['MEMBERS'] = record.id
+            #Don't alter MEMBERS if record.id already in MEMBERS
+            if 'MEMBERS' in record.info.keys() and record.id not in record.info['MEMBERS']:
+                record.info['MEMBERS'] = record.id
         if record.info['UNRESOLVED']:
             unresolved_f.write(record)
         else:

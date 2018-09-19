@@ -344,6 +344,8 @@ class ComplexSV:
     def report_simple_insertion(self):
         # if cluster contains a single duplication, report that
         # otherwise, report the first insertion record and discard all others
+        # but add the other IDs to the MEMBERS field
+        members = [r.id for r in self.records]
         if len(self.cnvs) == 1:
             if self.cnvs[0].info['SVTYPE'] == 'DUP':
                 record = self.cnvs[0]
@@ -353,6 +355,7 @@ class ComplexSV:
                 self.vcf_record.info['SVTYPE'] = self.svtype
                 self.vcf_record.info['CHR2'] = record.info['CHR2']
                 self.vcf_record.info['SVLEN'] = record.info['SVLEN']
+                self.vcf_record.info['MEMBERS'] = members
             else:
                 record = self.insertions[0]
                 self.cpx_type = record.alts[0].strip('<>')
@@ -362,7 +365,8 @@ class ComplexSV:
                 self.vcf_record.info['SVTYPE'] = self.svtype
                 self.vcf_record.info['CPX_TYPE'] = self.cpx_type
                 self.vcf_record.info['CHR2'] = record.info['CHR2']
-                self.vcf_record.info['SVLEN'] = record.info['SVLEN']    
+                self.vcf_record.info['SVLEN'] = record.info['SVLEN']
+                self.vcf_record.info['MEMBERS'] = members
         else:
             record = self.insertions[0]
             self.cpx_type = record.alts[0].strip('<>')
@@ -373,6 +377,7 @@ class ComplexSV:
             self.vcf_record.info['CPX_TYPE'] = self.cpx_type
             self.vcf_record.info['CHR2'] = record.info['CHR2']
             self.vcf_record.info['SVLEN'] = record.info['SVLEN']
+            self.vcf_record.info['MEMBERS'] = members
 
 
         # if len(self.breakends) > 0 and len(self.cnvs) == 0:
