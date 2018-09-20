@@ -13,9 +13,9 @@ columns: (chrom, start, end, element_class).
 
 The following classes of genic effects are annotated as new VCF INFO fields if
 the SV meets the defined criteria:
-    1) LOF - Loss of function.
+    1) LOF (and DUP_LOF) - Loss of function.
         * Deletions are annotated LOF if they overlap any exon.
-        * Duplications are annotated LOF if they reside entirely within
+        * Duplications are annotated DUP_LOF if they reside entirely within
         a gene boundary and overlap any exon.
         * Inversions are annotated LOF if reside entirely within an exon, if
         one breakpoint falls within an exon, if they reside entirely within a

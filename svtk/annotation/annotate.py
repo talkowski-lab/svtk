@@ -100,6 +100,7 @@ GENCODE_INFO = [
     '##INFO=<ID=COPY_GAIN,Number=.,Type=String,Description="Gene(s) on which the SV is predicted to have a copy-gain effect.">',
     '##INFO=<ID=INTRONIC,Number=.,Type=String,Description="Gene(s) where the SV was found to lie entirely within an intron.">',
     '##INFO=<ID=DUP_PARTIAL,Number=.,Type=String,Description="Gene(s) which are partially overlapped by an SV\'s duplication, such that an unaltered copy is preserved.">',
+    '##INFO=<ID=MSV_EXON_OVR,Number=.,Type=String,Description="Gene(s) on which the multiallelic SV would be predicted to have a LOF, DUP_LOF, COPY_GAIN, or DUP_PARTIAL annotation if the SV were biallelic.">',
     '##INFO=<ID=INV_SPAN,Number=.,Type=String,Description="Gene(s) which are entirely spanned by an SV\'s inversion.">',
     '##INFO=<ID=UTR,Number=.,Type=String,Description="Gene(s) for which the SV is predicted to disrupt a UTR.">',
     '##INFO=<ID=NEAREST_TSS,Number=.,Type=String,Description="Nearest transcription start site to intragenic variants.">',
@@ -155,9 +156,24 @@ def annotate_vcf(vcf, gencode, noncoding, annotated_vcf):
             fout.write(record)
             continue
 
-        for info, genelist in anno.items():
-            if genelist != 'NA':
-                record.info[info] = genelist
+        #Handle general catch-all intersection for MULTIALLELIC variants
+        if 'MULTIALLELIC' in record.filter:
+            multi_ovr = []
+            for info, genelist in anno.items():
+                if info in 'LOF DUP_LOF COPY_GAIN DUP_PARTIAL'.split():
+                    if genelist != 'NA':
+                        for gene in genelist.split(','):
+                            if gene not in multi_ovr:
+                                multi_ovr.append(gene)
+                else:
+                    if genelist != 'NA':
+                        record.info[info] = genelist
+            if len(multi_ovr) > 0:
+                record.info['MSV_EXON_OVR'] = ','.join(multi_ovr)
+        else:
+            for info, genelist in anno.items():
+                if genelist != 'NA':
+                    record.info[info] = genelist
 
         if 'NEAREST_TSS' in record.info:
             record.info['INTERGENIC'] = True
