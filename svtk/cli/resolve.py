@@ -357,7 +357,7 @@ def resolve_complex_sv_v2(resolve_CPX, resolve_INV, resolve_CNV, cytobands,disc_
 
     for i in cpx_records_v2:
         if i.info['SVTYPE'] == 'CPX':
-            for info in 'UNRESOLVED EVENT UNRESOLVED_TYPE'.split():
+            for info in 'UNRESOLVED EVENT UNRESOLVED_TYPE STRANDS'.split():
                 if info in i.info.keys():
                     i.info.pop(info)
     return cpx_records_v2
@@ -458,26 +458,25 @@ def main(argv):
             #Don't alter MEMBERS if record.id already in MEMBERS
             if 'MEMBERS' in record.info.keys() and record.id not in record.info['MEMBERS']:
                 record.info['MEMBERS'] = record.id
-        #Sort variants for second pass based on their status
+        #Passes unresolved single-ender inversions to second-pass,
+        # otherwise writes resolved records to output files
         if record.info['UNRESOLVED']:
-            unresolved_f.write(record)
-        elif record.info['SVTYPE']=='CPX':
-            resolve_CPX.append(record)
-        elif record.info['SVTYPE'] == 'INV' and 'rescan' in record.info['ALGORITHMS']:
-             resolved_f.write(record)
-        elif record.info['SVTYPE']=='INV' and record.stop-record.pos > cpx_dist:
-            resolve_INV.append(record)
-        elif record.info['SVTYPE'] in ['DEL','DUP'] and record.stop-record.pos > cpx_dist/2:
-            resolve_CNV.append(record)
+            if record.info['SVTYPE'] == 'INV':
+                resolve_INV.append(record)
+            else:
+                unresolved_f.write(record)
         else:
-            resolved_f.write(record)
+                resolved_f.write(record)
 
     #out_rec = resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed, args.prefix, args.min_rescan_pe_support, blacklist)
     #Print status
     if not args.quiet:
         now = datetime.datetime.now()
         print('svtk resolve @ ' + now.strftime("%H:%M:%S") + ': ' + 
-              'starting second pass through the VCF for loose inversion linking')
+              'starting second pass through unresolved inversion single-enders '
+              + 'for loose inversion linking')
+    #RLC: As of Sept 19, 2018, only considering inversion single-enders in second-pass
+    # due to too many errors in second-pass linking and variant reporting
     cpx_records_v2 = resolve_complex_sv_v2(resolve_CPX, resolve_INV, resolve_CNV, 
                                            cytobands, disc_pairs, mei_bed, args.prefix, 
                                            args.min_rescan_pe_support, blacklist, args.quiet)
@@ -492,6 +491,17 @@ def main(argv):
             unresolved_f.write(record)
         else:
             resolved_f.write(record)
+
+    #Add back all unresolved inversions from first pass that were not used
+    # or discarded by second pass
+    v2_used = [r.id for r in cpx_records_v2]
+    for record in cpx_records_v2:
+        if 'MEMBERS' in record.info.keys():
+            v2_used = v2_used + [i for i in record.info['MEMBERS']]
+    for record in resolve_INV:
+        if record.id not in v2_used:
+            unresolved_f.write(record)
+    
     resolved_f.close()
     unresolved_f.close()
 
