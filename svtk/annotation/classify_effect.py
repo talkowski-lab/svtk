@@ -36,14 +36,14 @@ def classify_dup(disrupt_dict):
     if 'CDS' in elements:
         # duplication internal to exon
         if 'BOTH-INSIDE' in disrupt_dict['CDS']:
-            return 'LOF'
+            return 'DUP_LOF'
 
         # duplication internal to gene, disrupting exon, is LoF
         # duplication spanning gene is copy gain
         # duplication overlapping gene is no effect (one good copy left)
     if 'gene' in elements:
         if 'BOTH-INSIDE' in disrupt_dict['gene']:
-            return 'LOF'
+            return 'DUP_LOF'
         elif 'SPAN' in disrupt_dict['gene']:
             return 'COPY_GAIN'
         else:

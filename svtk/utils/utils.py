@@ -170,6 +170,10 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
         for record in vcf:
             if svtypes is not None and record.info['SVTYPE'] not in svtypes:
                 continue
+            if 'UNRESOLVED' in record.info.keys() \
+            or 'UNRESOLVED_TYPE' in record.info.keys() \
+            or 'UNRESOLVED' in record.filter:
+                continue
 
             chrom = record.chrom
             name = record.id
@@ -226,8 +230,11 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
                 # TODO: rename CPX_INTERVALS to SOURCE for insertions
                 if annotate_ins:
                     svtype = 'DEL'
-                if not no_sort_coords:
-                    start, end = sorted([start, end])
+                # if not no_sort_coords:
+                #     start, end = sorted([start, end])
+                # Reduce insertion sinks to single-bp intervals
+                start = start
+                end = start + 1
                 yield entry.format(**locals())
 
             elif record.info.get('SVTYPE', None) == 'CTX':
