@@ -155,7 +155,7 @@ def classify_disrupt(disrupt_dict, svtype):
 
     if svtype == 'DEL':
         return classify_del(disrupt_dict)
-    if svtype == 'DUP':
+    if svtype in 'DUP MCNV'.split():
         return classify_dup(disrupt_dict)
     if svtype == 'INV':
         return classify_inv(disrupt_dict)
