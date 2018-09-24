@@ -273,7 +273,7 @@ def parse_bnd_pos(alt):
     chrom : str
     pos : int
     """
-    alt = alt.strip('ATCGN')
+    alt = alt.strip('ATCGNRYSWKMBDHV')
     # Strip brackets separately, otherwise GL contigs will be altered
     alt = alt.strip('[]')
 
