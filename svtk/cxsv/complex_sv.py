@@ -70,26 +70,51 @@ class ComplexSV:
             self.resolve_insertion()
         elif self.cluster_type == 'RESOLVED_INSERTION':
             self.report_simple_insertion()
+        elif self.cluster_type == 'SINGLE_INSERTION_STRIP_CNVS':
+            self.report_insertion_strip_CNVs()
         elif self.cluster_type == 'TANDEM_DUPLICATION_FLANKING_INSERTIONS':
             self.report_manta_tandem_dup()
+
+        #Second pass through the record after excluding SR-only breakpoints 
+        # if first pass is unsuccessful
         else:
+            #Collect SR-only records
+            def _is_SR_only(record):
+                return record.info.get('EVIDENCE', None) == ('SR', )
+            sr_only_recs = [r for r in self.records if _is_SR_only(r)]
+
             self.remove_SR_only_breakpoints()
             self.organize_records()
             self.set_cluster_type()
-            if self.cluster_type == 'CANDIDATE_INVERSION':
-                self.resolve_inversion()
-            elif self.cluster_type == 'CANDIDATE_TRANSLOCATION':
-                self.resolve_translocation()
-            elif self.cluster_type == 'CANDIDATE_INSERTION':
-                self.resolve_insertion()
-            elif self.cluster_type == 'RESOLVED_INSERTION':
-                self.report_simple_insertion()
+
+            if self.cluster_type in 'CANDIDATE_INVERSION CANDIDATE_TRANSLOCATION '.split() + \
+                'CANDIDATE_INSERTION RESOLVED_INSERTION'.split():
+                if self.cluster_type == 'CANDIDATE_INVERSION':
+                    self.resolve_inversion()
+                elif self.cluster_type == 'CANDIDATE_TRANSLOCATION':
+                    self.resolve_translocation()
+                elif self.cluster_type == 'CANDIDATE_INSERTION':
+                    self.resolve_insertion()
+                elif self.cluster_type == 'RESOLVED_INSERTION':
+                    self.report_simple_insertion()
+
             else:
+                #Add back SR-only records if cluster is still unresolved
+                if len(sr_only_recs) > 0:
+                    for r in sr_only_recs:
+                        self.records.append(r)
+                self.organize_records()
+                self.set_cluster_type()
                 self.set_unresolved()
+
                 if self.cluster_type == 'SINGLE_ENDER':
                     self.vcf_record.info['SVTYPE'] = 'BND'
                 if self.cluster_type == 'INVERSION_SINGLE_ENDER':
                     self.vcf_record.info['SVTYPE'] = 'BND'
+                for r in self.records:
+                    r.info['UNRESOLVED'] = True
+                    r.info['UNRESOLVED_TYPE'] = self.cpx_type
+
 
     def clean_record(self):
         """
@@ -318,10 +343,12 @@ class ComplexSV:
             source_start = minus.pos
             source_end = plus.pos
 
-        # Don't report insertions with large deletions at insertion site
-        if sink_end - sink_start >= 100:
-            self.set_unresolved()
-            return
+        # RLC Note: no longer need this code, as this will now be handled in 
+        # the complex regenotyping WDL
+        # # Don't report insertions with large deletions at insertion site
+        # if sink_end - sink_start >= 100:
+        #     self.set_unresolved()
+        #     return
 
         self.vcf_record.chrom = sink_chrom
         self.vcf_record.pos = sink_start
@@ -342,9 +369,6 @@ class ComplexSV:
             self.vcf_record.info['ALGORITHMS'] = algs
 
     def report_simple_insertion(self):
-        # if cluster contains a single duplication, report that
-        # otherwise, report the first insertion record and discard all others
-        # but add the other IDs to the MEMBERS field
         members = [r.id for r in self.records]
         if len(self.cnvs) == 1:
             if self.cnvs[0].info['SVTYPE'] == 'DUP':
@@ -379,6 +403,26 @@ class ComplexSV:
             self.vcf_record.info['SVLEN'] = record.info['SVLEN']
             self.vcf_record.info['MEMBERS'] = members
 
+    # Handles situations where a single insertion clusters with one or more CNVs
+    def report_insertion_strip_CNVs(self):
+        # Desired behavior: if cluster contains a single duplication, report it 
+        # and merge INS into the MEMBERS tag for the duplication.
+        # Otherwise, mark cluster as svtype = 'SPLIT' and pass entire cluster 
+        # to resolve.py, where they will be parsed and reported appropriately
+        if len(self.cnvs) == 1 and len(self.dups) == 1 \
+        and self.cnvs[0].info['SVTYPE'] == 'DUP':
+                record = self.cnvs[0]
+                self.svtype = 'DUP'
+                self.vcf_record.id = record.id
+                self.vcf_record.alts = record.alts
+                self.vcf_record.info['SVTYPE'] = self.svtype
+                self.vcf_record.info['CHR2'] = record.info['CHR2']
+                self.vcf_record.info['SVLEN'] = record.info['SVLEN']
+                self.vcf_record.info['MEMBERS'] = [r.id for r in self.records]
+        elif len(self.cnvs) > 0:
+            self.svtype = 'SPLIT'
+        else:
+            self.svtype = 'INS'
 
         # if len(self.breakends) > 0 and len(self.cnvs) == 0:
         #     record = self.insertions[0]
@@ -468,8 +512,8 @@ class ComplexSV:
         paired = np.array([count == 2 for count in class_counts])
         absent = np.array([count == 0 for count in class_counts])
 
-        # If one class is paired and rest are absent 
-        if all(paired ^ absent) and len(np.where(paired)[0]) == 1:
+        # If one class is paired and rest are absent
+        if all(paired ^ absent) and len(np.where(paired)[0]) == 1 and len(self.cnvs) == 0:
             idx = np.where(paired)[0][0]
             if idx == 0:
                 if (self.inversions[0].info['STRANDS'] ==
@@ -502,9 +546,14 @@ class ComplexSV:
             self.cluster_type = 'ERROR_CNV_ONLY'
         elif sum(class_counts) == 1:
             if len(self.insertions) == 1:
-                self.cluster_type = 'RESOLVED_INSERTION'
+                if len(self.cnvs) > 0:
+                    self.cluster_type = 'SINGLE_INSERTION_STRIP_CNVS'
+                else:
+                    self.cluster_type = 'RESOLVED_INSERTION'
             else:
-                if len(self.inversions) > 0:
+                if len(self.cnvs) > 0:
+                    self.cluster_type = 'MIXED_BREAKENDS'
+                elif len(self.inversions) > 0:
                     self.cluster_type = 'INVERSION_SINGLE_ENDER_' + self.inversions[0].info['STRANDS']
                 else:
                     self.cluster_type = 'SINGLE_ENDER'
@@ -515,6 +564,7 @@ class ComplexSV:
                 self.cluster_type = 'MIXED_BREAKENDS'
         else:
             self.cluster_type = 'ERROR_UNCLASSIFIED'
+
 
     def make_record(self):
         self.vcf_record = self.records[0].copy()

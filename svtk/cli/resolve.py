@@ -183,6 +183,7 @@ def resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed,variant_prefix='CPX_'
 
     clusters = link_cpx(vcf)
     clusters = clusters_cleanup(clusters)
+    
     #Print number of candidate clusters identified
     if not quiet:
         now = datetime.datetime.now()
@@ -238,6 +239,24 @@ def resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed,variant_prefix='CPX_'
                     cpx_records.append(record)
                 # unresolved_idx += 1
                 outcome = 'is unresolved'
+            elif cpx.svtype == 'SPLIT':
+                # check all CNVs for depth support and report the first 
+                # insertion record and all CNVs with depth support. CNVs without 
+                # depth support will have their IDs added to the MEMBERS field of 
+                # the INS record
+                cnv_ids_to_append = []
+                for cnv in cpx.cnvs:
+                    if 'RD' in cnv.info['EVIDENCE']:
+                        cnv.info['MEMBERS'] = cnv.id
+                        cpx_records.append(cnv)
+                    else:
+                        cnv_ids_to_append.append(cnv.id)
+                ins_rec = cpx.insertions[0]
+                ins_rec.info['MEMBERS'] = (ins_rec.id,) + tuple(cnv_ids_to_append)
+                cpx_records.append(ins_rec)
+                outcome = 'split into INS and CNV variants. ' + \
+                          'The following records were merged into the INS record: ' + \
+                          ', '.join(cnv_ids_to_append)
             else:
                 cpx.vcf_record.id = variant_prefix + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
                 cpx_records.append(cpx.vcf_record)
@@ -256,6 +275,14 @@ def resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed,variant_prefix='CPX_'
     vcf.reset()
 
     for record in _merge_records(vcf, cpx_records, cpx_record_ids):
+        #Clean all BNDs to ensure they are set to unresolved
+        #Reason: some SR-only BNDs will escape being set as UNRESOLVED if they 
+        # are part of a multi-breakpoint complex cluster that remains UNRESOLVED
+        # after excluding SR-only breakpoints
+        if record.info['SVTYPE'] == 'BND':
+            record.info['UNRESOLVED'] = True
+            if 'UNRESOLVED_TYPE' not in record.info.keys():
+                record.info['UNRESOLVED_TYPE'] = 'SINGLE_ENDER'
         if 'CPX_TYPE' in record.info.keys():
             if 'UNRESOLVED' in record.info.keys():
                 record.info['UNRESOLVED_TYPE'] = record.info['CPX_TYPE']
@@ -446,16 +473,16 @@ def main(argv):
             tabixfiles.append(pysam.TabixFile(fname, index=idx))
         disc_pairs = svu.MultiTabixFile(tabixfiles)
 
-    resolve_CPX=[]
+    resolved_records=[]
+    unresolved_records=[]
     resolve_INV=[]
-    resolve_CNV=[]
     cpx_dist=20000
 
     for record in resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed, args.prefix, 
                                      args.min_rescan_pe_support, blacklist, args.quiet):
         #Move members to existing variant IDs unless variant is complex
-        if record.info['SVTYPE'] != 'CPX' and 'CPX' not in record.id.split('_'):
-            #Don't alter MEMBERS if record.id already in MEMBERS
+        if record.info['SVTYPE'] != 'CPX' and args.prefix not in record.id:
+            #Don't alter MEMBERS if the prefix of record.id is already in MEMBERS
             if 'MEMBERS' in record.info.keys() and record.id not in record.info['MEMBERS']:
                 record.info['MEMBERS'] = record.id
         #Passes unresolved single-ender inversions to second-pass,
@@ -464,9 +491,9 @@ def main(argv):
             if record.info['SVTYPE'] == 'INV':
                 resolve_INV.append(record)
             else:
-                unresolved_f.write(record)
+                unresolved_records.append(record)
         else:
-                resolved_f.write(record)
+                resolved_records.append(record)
 
     #out_rec = resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed, args.prefix, args.min_rescan_pe_support, blacklist)
     #Print status
@@ -477,6 +504,8 @@ def main(argv):
               + 'for loose inversion linking')
     #RLC: As of Sept 19, 2018, only considering inversion single-enders in second-pass
     # due to too many errors in second-pass linking and variant reporting
+    resolve_CPX = []
+    resolve_CNV = []
     cpx_records_v2 = resolve_complex_sv_v2(resolve_CPX, resolve_INV, resolve_CNV, 
                                            cytobands, disc_pairs, mei_bed, args.prefix, 
                                            args.min_rescan_pe_support, blacklist, args.quiet)
@@ -488,9 +517,9 @@ def main(argv):
             if 'MEMBERS' in record.info.keys() and record.id not in record.info['MEMBERS']:
                 record.info['MEMBERS'] = record.id
         if record.info['UNRESOLVED']:
-            unresolved_f.write(record)
+            unresolved_records.append(record)
         else:
-            resolved_f.write(record)
+            resolved_records.append(record)
 
     #Add back all unresolved inversions from first pass that were not used
     # or discarded by second pass
@@ -500,9 +529,48 @@ def main(argv):
             v2_used = v2_used + [i for i in record.info['MEMBERS']]
     for record in resolve_INV:
         if record.id not in v2_used:
-            unresolved_f.write(record)
-    
+            unresolved_records.append(record)
+
+    #Final pass as sanity check: iterate over original VCF, find records that 
+    # do not appear in either resolved or unresolved VCFs
+    k = 0
+    used_vids = [r.id for r in resolved_records] + [r.id for r in unresolved_records]
+    for m in [list(r.info['MEMBERS']) for r in resolved_records]:
+        for vid in m:
+            if vid not in used_vids:
+                used_vids.append(m)
+    for m in [list(r.info['MEMBERS']) for r in unresolved_records]:
+        for vid in m:
+            if vid not in used_vids:
+                used_vids.append(m)
+    for r in vcf:
+        if r.id not in used_vids:
+            k += 1
+            if r.info['SVTYPE'] in 'CNV DEL DUP MCNV INS'.split():
+                for tag in 'UNRESOLVED UNRESOLVED_TYPE':
+                    if tag in r.info.keys():
+                        r.info.pop(tag)
+                resolved_records.append(r)
+            else:
+                r.info['UNRESOLVED'] = True
+                r.info['UNRESOLVED_TYPE'] = 'POSTHOC_RESTORED'
+                unresolved_records.append(r)
+    #Print outcome
+    if not args.quiet:
+        now = datetime.datetime.now()
+        print('svtk resolve @ ' + now.strftime("%H:%M:%S") + ': ' + 
+              'final sanity check of original VCF resulted in ' + str(k) +
+              ' missing records being restored to final VCF.')
+
+    #Write records to file
+    for r in resolved_records:
+        resolved_f.write(r)
     resolved_f.close()
+    for r in unresolved_records:
+        r.info['UNRESOLVED'] = True
+        if 'UNRESOLVED_TYPE' not in r.info.keys():
+            r.info['UNRESOLVED_TYPE'] = 'UNKNOWN'
+        unresolved_f.write(r)
     unresolved_f.close()
 
     stdout, stderr = resolved_pipe.communicate()
