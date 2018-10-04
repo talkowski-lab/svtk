@@ -342,7 +342,7 @@ class ComplexSV:
             sink_end = plus.stop
             source_start = minus.pos
             source_end = plus.pos
-
+            
         # RLC Note: no longer need this code, as this will now be handled in 
         # the complex regenotyping WDL
         # # Don't report insertions with large deletions at insertion site
