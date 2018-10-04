@@ -78,17 +78,26 @@ class ComplexSV:
         #Second pass through the record after excluding SR-only breakpoints 
         # if first pass is unsuccessful
         else:
-            #Collect SR-only records
+            #Collect SR-only records that are not remaining in existing cluster
+            #Note: if the cluster only had a single breakpoint to begin with, 
+            # it will not be removed by .remove_SR_only_breakpoints(), even if
+            # it is SR only. The below code is necessary to prevent duplicating
+            # SR-only single-enders
             def _is_SR_only(record):
                 return record.info.get('EVIDENCE', None) == ('SR', )
-            sr_only_recs = [r for r in self.records if _is_SR_only(r)]
+            non_sr_only_rec_ids = [r.id for r in self.records if not _is_SR_only(r)]
+            if len(non_sr_only_rec_ids) > 0:
+                sr_only_recs = [r for r in self.records if _is_SR_only(r) and r.id not in non_sr_only_rec_ids]
+            else:
+                sr_only_recs = []
 
             self.remove_SR_only_breakpoints()
             self.organize_records()
             self.set_cluster_type()
 
             if self.cluster_type in 'CANDIDATE_INVERSION CANDIDATE_TRANSLOCATION '.split() + \
-                'CANDIDATE_INSERTION RESOLVED_INSERTION'.split():
+                'CANDIDATE_INSERTION RESOLVED_INSERTION'.split() \
+            and len(self.records) > 0:
                 if self.cluster_type == 'CANDIDATE_INVERSION':
                     self.resolve_inversion()
                 elif self.cluster_type == 'CANDIDATE_TRANSLOCATION':
@@ -99,7 +108,8 @@ class ComplexSV:
                     self.report_simple_insertion()
 
             else:
-                #Add back SR-only records if cluster is still unresolved
+                #Add back SR-only records if cluster is still unresolved, 
+                # and if SR-only record doesnt match only existing cluster
                 if len(sr_only_recs) > 0:
                     for r in sr_only_recs:
                         self.records.append(r)
@@ -342,7 +352,7 @@ class ComplexSV:
             sink_end = plus.stop
             source_start = minus.pos
             source_end = plus.pos
-            
+
         # RLC Note: no longer need this code, as this will now be handled in 
         # the complex regenotyping WDL
         # # Don't report insertions with large deletions at insertion site

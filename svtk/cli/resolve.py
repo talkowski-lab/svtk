@@ -265,6 +265,7 @@ def resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed,variant_prefix='CPX_'
                 else:
                     outcome = 'resolved as ' + str(cpx.vcf_record.info['SVTYPE'])
                 # resolved_idx += 1
+
         #Report outcome per cluster
         if not quiet:
             now = datetime.datetime.now()
@@ -493,7 +494,7 @@ def main(argv):
             else:
                 unresolved_records.append(record)
         else:
-                resolved_records.append(record)
+            resolved_records.append(record)
 
     #out_rec = resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed, args.prefix, args.min_rescan_pe_support, blacklist)
     #Print status
