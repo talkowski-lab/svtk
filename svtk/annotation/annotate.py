@@ -145,7 +145,8 @@ def annotate_vcf(vcf, gencode, noncoding, annotated_vcf):
         fname = vcf.filename.decode()
     else:
         fname = vcf.filename
-    sv = svu.vcf2bedtool(fname, split_bnd=True, split_cpx=True, simple_sinks=True)
+    sv = svu.vcf2bedtool(fname, split_bnd=True, split_cpx=True, 
+                         simple_sinks=True, include_unresolved=False)
 
     effects = annotate(sv, gencode, noncoding)
     effects = effects.to_dict(orient='index')
