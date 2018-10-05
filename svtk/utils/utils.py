@@ -111,7 +111,8 @@ def get_called_samples(record, include_null=False):
 def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
                 include_strands=True, split_cpx=False, include_infos=None,
                 annotate_ins=True, report_alt=False, svtypes=None, 
-                no_sort_coords=False):
+                no_sort_coords=False, simple_sinks=False, 
+                include_unresolved=True):
     """
     Wrap VCF as a bedtool. Necessary as pybedtools does not support SV in VCF.
 
@@ -135,6 +136,10 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
         Whitelist of SV types to restrict generated bed to
     no_sort_coords : bool, optional
         Do not sort start & end coordinates
+    simple_sinks : bool, optional
+        Treat all insertion sinks as single-bp windows
+    include_unresolved : bool, optional
+        Output unresolved variants
 
     Returns
     -------
@@ -170,10 +175,11 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
         for record in vcf:
             if svtypes is not None and record.info['SVTYPE'] not in svtypes:
                 continue
-            if 'UNRESOLVED' in record.info.keys() \
-            or 'UNRESOLVED_TYPE' in record.info.keys() \
-            or 'UNRESOLVED' in record.filter:
-                continue
+            if not include_unresolved:
+                if 'UNRESOLVED' in record.info.keys() \
+                or 'UNRESOLVED_TYPE' in record.info.keys() \
+                or 'UNRESOLVED' in record.filter:
+                    continue
 
             chrom = record.chrom
             name = record.id
@@ -232,9 +238,12 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
                     svtype = 'DEL'
                 # if not no_sort_coords:
                 #     start, end = sorted([start, end])
-                # Reduce insertion sinks to single-bp intervals
+                # Reduce insertion sinks to single-bp intervals if optioned
                 start = start
-                end = start + 1
+                if simple_sinks:
+                    end = start + 1
+                else:
+                    end = end
                 yield entry.format(**locals())
 
             elif record.info.get('SVTYPE', None) == 'CTX':

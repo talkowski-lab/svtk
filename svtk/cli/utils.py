@@ -42,6 +42,10 @@ def vcf2bed(argv):
     parser.add_argument('--no-sort-coords', dest='no_sort_coords', action='store_true',
                         default=False, help='Do not sort start/end coordinates '
                         'per record before writing to bed.')
+    parser.add_argument('--no-unresolved', dest='no_unresolved', action='store_true',
+                        default=False, help='Do not output unresolved variants.')
+    parser.add_argument('--simple-sinks', dest='simple_sinks', action='store_true',
+                        default=False, help='Report all INS sinks as 1bp intervals.')
 
     # Print help if no arguments specified
     if len(argv) == 0:
@@ -64,6 +68,8 @@ def vcf2bed(argv):
             header = header + args.info
     header = '\t'.join(header)
 
+    include_unresolved = not args.no_unresolved
+
     bt = svu.vcf2bedtool(vcf,
                          split_bnd=args.split_bnd,
                          include_samples=args.include_samples,
@@ -72,7 +78,9 @@ def vcf2bed(argv):
                          include_infos=args.info,
                          annotate_ins=False,
                          report_alt=True,
-                         no_sort_coords=args.no_sort_coords)
+                         no_sort_coords=args.no_sort_coords,
+                         simple_sinks=args.simple_sinks,
+                         include_unresolved=include_unresolved)
 
     if args.bed in 'stdout -'.split():
         if args.header:

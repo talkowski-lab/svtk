@@ -98,8 +98,8 @@ GENCODE_INFO = [
     '##INFO=<ID=LOF,Number=.,Type=String,Description="Gene(s) on which the SV is predicted to have a loss-of-function effect.">',
     '##INFO=<ID=DUP_LOF,Number=.,Type=String,Description="Gene(s) on which the SV is predicted to have a loss-of-function effect via intragenic exonic duplication.">',
     '##INFO=<ID=COPY_GAIN,Number=.,Type=String,Description="Gene(s) on which the SV is predicted to have a copy-gain effect.">',
-    '##INFO=<ID=MSV_EXON_OVR,Number=.,Type=String,Description="Gene(s) on which the multiallelic SV would be predicted to have a LOF, DUP_LOF, COPY_GAIN, or DUP_PARTIAL annotation if the SV were biallelic.">',
     '##INFO=<ID=DUP_PARTIAL,Number=.,Type=String,Description="Gene(s) which are partially overlapped by an SV\'s duplication, such that an unaltered copy is preserved.">',
+    '##INFO=<ID=MSV_EXON_OVR,Number=.,Type=String,Description="Gene(s) on which the multiallelic SV would be predicted to have a LOF, DUP_LOF, COPY_GAIN, or DUP_PARTIAL annotation if the SV were biallelic.">',
     '##INFO=<ID=INTRONIC,Number=.,Type=String,Description="Gene(s) where the SV was found to lie entirely within an intron.">',
     '##INFO=<ID=INV_SPAN,Number=.,Type=String,Description="Gene(s) which are entirely spanned by an SV\'s inversion.">',
     '##INFO=<ID=UTR,Number=.,Type=String,Description="Gene(s) for which the SV is predicted to disrupt a UTR.">',
@@ -145,7 +145,8 @@ def annotate_vcf(vcf, gencode, noncoding, annotated_vcf):
         fname = vcf.filename.decode()
     else:
         fname = vcf.filename
-    sv = svu.vcf2bedtool(fname, split_bnd=True, split_cpx=True)
+    sv = svu.vcf2bedtool(fname, split_bnd=True, split_cpx=True, 
+                         simple_sinks=True, include_unresolved=False)
 
     effects = annotate(sv, gencode, noncoding)
     effects = effects.to_dict(orient='index')

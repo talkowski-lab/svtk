@@ -82,7 +82,7 @@ def extract_breakpoints(vcf, bkpt_idxs):
     return bkpts
 
 
-def link_cpx(vcf, bkpt_window=300, cpx_dist=20000):
+def link_cpx(vcf, bkpt_window=300, cpx_dist=2000):
     """
     Parameters
     ----------
@@ -204,7 +204,7 @@ def link_cpx_V2(linked_INV, resolve_CNV, cpx_dist=2000):
     return cluster
 
 
-def link_inv(vcf, bkpt_window=300, cpx_dist=20000):
+def link_inv(vcf, bkpt_window=300, cpx_dist=2000):
     bt = svu.vcf2bedtool(vcf.filename, annotate_ins=False)
     overlap = bt.window(bt, w=bkpt_window).saveas()
     overlap = overlap.filter(lambda b: not (b.fields[4] == "DEL" and b.fields[10] == "DEL")).saveas()
@@ -229,7 +229,7 @@ def link_inv(vcf, bkpt_window=300, cpx_dist=20000):
     return clusters
 
 
-def close_enough(r1, r2, cpx_dist=20000):
+def close_enough(r1, r2, cpx_dist=2000):
     distA = np.abs(r1.pos - r2.pos)
     distB = np.abs(r1.stop - r2.stop)
     return distA < cpx_dist or distB < cpx_dist
