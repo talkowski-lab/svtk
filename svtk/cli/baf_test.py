@@ -132,7 +132,11 @@ def main(argv):
                 samples=dat[4]
                 samplelist=samples.split(',')
                 type=dat[5]
-                het_counts, called_bafs = preprocess(chrom, start, end, tbx, samples=splist)
+                try:
+                    het_counts, called_bafs = preprocess(chrom, start, end, tbx, samples=splist)
+                except ValueError:
+                    het_counts=pd.DataFrame()
+                    called_bafs=pd.DataFrame()
                 ###### Running BAF testing
                 if not het_counts.empty:
                     Del=DeletionTest(het_counts,samplelist,min(end-start,1000000))
