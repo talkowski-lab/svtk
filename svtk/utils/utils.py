@@ -266,14 +266,15 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
                     yield entry.format(**locals())
 
             elif (record.info.get('SVTYPE', None) == 'CPX' and
-                  ('INS' in record.info.get('CPX_TYPE', None) or
-                   'DISPERSED_DUP' in record.info.get('CPX_TYPE', None))):
-                if annotate_ins:
-                    svtype = 'DEL'
-                yield entry.format(**locals())
+                  'CPX_TYPE' in record.info.keys()):
+                if ('INS' in record.info.get('CPX_TYPE', None) or
+                   'dDUP' in record.info.get('CPX_TYPE', None)):
+                    if annotate_ins:
+                        svtype = 'DEL'
+                    yield entry.format(**locals())
 
                 if split_cpx:
-                    if record.info.get('CPX_TYPE', None) == 'INV_DISPERSED_DUP':
+                    if 'dDUP' in record.info.get('CPX_TYPE', None):
                         svtype = 'DUP'
                     else:
                         svtype = 'INS'
