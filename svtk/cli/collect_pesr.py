@@ -231,7 +231,7 @@ def get_split_position(read):
     if read.cigartuples[0][0] == 0:
         for operation, length in read.cigartuples:
             # Only shift based on matches, ignore DEL/INS/clips
-            if operation == 0:
+            if not is_clipping_operation(operation) and operation_consumes_ref_bases(operation):
                 pos += length
         return pos, 'RIGHT'
 
@@ -243,6 +243,15 @@ def get_split_position(read):
     else:
         return None, 'MIDDLE'
 
+
+def is_clipping_operation(operation):
+    return operation == 4 or operation == 5
+
+def operation_consumes_ref_bases(operation):
+    """
+    Returns true if this is a cigar operation that consumes reference bases
+    """
+    return operation == 0 or operation == 2 or operation == 3 or operation == 7
 
 def main(argv):
     parser = argparse.ArgumentParser(
