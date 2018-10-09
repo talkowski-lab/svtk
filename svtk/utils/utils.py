@@ -148,6 +148,8 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
         Included columns: chrom, start, end, name, svtype, strands
     """
 
+    cpx_ins_classes = 'dDUP dDUP_iDEL INS_iDEL'.split()
+
     if not isinstance(vcf, pysam.VariantFile):
         vcf = pysam.VariantFile(vcf)
 
@@ -267,8 +269,7 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
 
             elif (record.info.get('SVTYPE', None) == 'CPX' and
                   'CPX_TYPE' in record.info.keys()):
-                if ('INS' in record.info.get('CPX_TYPE', None) or
-                   'dDUP' in record.info.get('CPX_TYPE', None)):
+                if (record.info.get('CPX_TYPE', None) in cpx_ins_classes):
                     if annotate_ins:
                         svtype = 'DEL'
                     yield entry.format(**locals())
