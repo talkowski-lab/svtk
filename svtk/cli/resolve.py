@@ -156,7 +156,8 @@ def clusters_cleanup(clusters):
 
 
 def resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed,variant_prefix='CPX_', 
-                       min_rescan_support=4, pe_blacklist=None, quiet=False):
+                       min_rescan_support=4, pe_blacklist=None, quiet=False,
+                       SR_only_cutoff=1000):
     """
     Resolve complex SV from CNV intervals and BCA breakpoints.
     Yields all resolved events, simple or complex, in sorted order.
@@ -218,7 +219,7 @@ def resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed,variant_prefix='CPX_'
         # if cxsv overlap pulled in unrelated insertions, keep them separate
         if all([r.info['SVTYPE'] == 'INS' for r in cluster]):
             for record in cluster:
-                cpx = ComplexSV([record], cytobands, mei_bed)
+                cpx = ComplexSV([record], cytobands, mei_bed, SR_only_cutoff)
                 cpx_record_ids = cpx_record_ids.union(cpx.record_ids)
                 
                 # Assign random string as resolved ID to handle sharding
@@ -227,14 +228,13 @@ def resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed,variant_prefix='CPX_'
                 # resolved_idx += 1
             outcome = 'treated as separate unrelated insertions'
         else:
-            cpx = ComplexSV(cluster, cytobands, mei_bed)
+            cpx = ComplexSV(cluster, cytobands, mei_bed, SR_only_cutoff)
             cpx_record_ids = cpx_record_ids.union(cpx.record_ids)
             if cpx.svtype == 'UNR':
                 # Assign random string as unresolved ID to handle sharding
                 unresolved_vid = 'UNRESOLVED_' + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
                 for i, record in enumerate(cpx.records):
                     record.info['EVENT'] = unresolved_vid
-                    record.info['CPX_TYPE'] = cpx.cpx_type
                     record.info['UNRESOLVED'] = True
                     cpx_records.append(record)
                 # unresolved_idx += 1
@@ -312,7 +312,7 @@ def cluster_cleanup(clusters_v2):
 
 def resolve_complex_sv_v2(resolve_CPX, resolve_INV, resolve_CNV, cytobands,disc_pairs, 
                           mei_bed,variant_prefix='CPX_', min_rescan_support=4, 
-                          pe_blacklist=None, quiet=False):
+                          pe_blacklist=None, quiet=False, SR_only_cutoff=1000):
     #resolve_CPX = [i for i in out_rec if i.info['SVTYPE']=='CPX']
     #resolve_INV = [i for i in out_rec if i.info['SVTYPE']=='INV']
     independent_INV = remove_CPX_from_INV(resolve_CPX, resolve_INV)
@@ -348,29 +348,28 @@ def resolve_complex_sv_v2(resolve_CPX, resolve_INV, resolve_CNV, cytobands,disc_
         # if cxsv overlap pulled in unrelated insertions, keep them separate
         if all([r.info['SVTYPE'] == 'INS' for r in cluster]):
             for record in cluster:
-                cpx = ComplexSV([record], cytobands, mei_bed)
+                cpx = ComplexSV([record], cytobands, mei_bed, SR_only_cutoff)
                 cpx_record_ids = cpx_record_ids.union(cpx.record_ids)
                 
                 # Assign random string as resolved ID to handle sharding
-                cpx.vcf_record.id = variant_prefix + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
+                cpx.vcf_record.id = variant_prefix + '_' + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
                 cpx_records.append(cpx.vcf_record)
                 # resolved_idx += 1
             outcome = 'treated as separate unrelated insertions'
         else:
-            cpx = ComplexSV(cluster, cytobands, mei_bed)
+            cpx = ComplexSV(cluster, cytobands, mei_bed, SR_only_cutoff)
             cpx_record_ids_v2 = cpx_record_ids_v2.union(cpx.record_ids)
             if cpx.svtype == 'UNR':
                 # Assign random string as unresolved ID to handle sharding
                 unresolved_vid = 'UNRESOLVED_' + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
                 for i, record in enumerate(cpx.records):
                     record.info['EVENT'] = unresolved_vid
-                    record.info['CPX_TYPE'] = cpx.cpx_type
                     record.info['UNRESOLVED'] = True
                     cpx_records_v2.append(record)
                 # unresolved_idx += 1
                 outcome = 'is unresolved'
             else:
-                cpx.vcf_record.id = variant_prefix + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
+                cpx.vcf_record.id = variant_prefix + '_' + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
                 cpx_records_v2.append(cpx.vcf_record)
                 if 'CPX_TYPE' in cpx.vcf_record.info.keys():
                     outcome = 'resolved as ' + str(cpx.vcf_record.info['CPX_TYPE'])
@@ -489,7 +488,7 @@ def main(argv):
         #Passes unresolved single-ender inversions to second-pass,
         # otherwise writes resolved records to output files
         if record.info['UNRESOLVED']:
-            if record.info['SVTYPE'] == 'INV':
+            if record.info['SVTYPE'] == 'INV' and record.info['UNRESOLVED_TYPE'] is not 'SR_ONLY_LARGE_INVERSION':
                 resolve_INV.append(record)
             else:
                 unresolved_records.append(record)
@@ -503,6 +502,7 @@ def main(argv):
         print('svtk resolve @ ' + now.strftime("%H:%M:%S") + ': ' + 
               'starting second pass through unresolved inversion single-enders '
               + 'for loose inversion linking')
+
     #RLC: As of Sept 19, 2018, only considering inversion single-enders in second-pass
     # due to too many errors in second-pass linking and variant reporting
     resolve_CPX = []
@@ -571,6 +571,10 @@ def main(argv):
         r.info['UNRESOLVED'] = True
         if 'UNRESOLVED_TYPE' not in r.info.keys():
             r.info['UNRESOLVED_TYPE'] = 'UNKNOWN'
+        if 'CPX_TYPE' in record.info.keys():
+            record.info.pop('CPX_TYPE')
+        if 'CPX_INTERVALS' in record.info.keys():
+            record.info.pop('CPX_INTERVALS')
         unresolved_f.write(r)
     unresolved_f.close()
 
