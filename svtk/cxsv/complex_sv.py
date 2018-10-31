@@ -113,19 +113,19 @@ class ComplexSV:
             and len(self.records) > 0:
                 if self.cluster_type == 'CANDIDATE_INVERSION':
                     self.resolve_inversion(SR_only_cutoff=SR_only_cutoff)
-                if self.svtype == 'UNR':
-                    self.set_unresolved()
-                    self.vcf_record.info['SVTYPE'] = 'BND'
-                    self.vcf_record.info['UNRESOLVED_TYPE'] = 'SR_ONLY_LARGE_INVERSION'
-                    self.cluster_type = 'SR_ONLY_LARGE_INVERSION'
-                    for r in self.records:
-                        r.info['UNRESOLVED'] = True
-                        r.info['UNRESOLVED_TYPE'] = 'SR_ONLY_LARGE_INVERSION'
-                        r.info['SVTYPE'] = 'BND'
-                        if 'CPX_TYPE' in r.info.keys():
-                            r.info.pop('CPX_TYPE')
-                        if 'CPX_INTERVALS' in r.info.keys():
-                            r.info.pop('CPX_INTERVALS')
+                    if self.svtype == 'UNR':
+                        self.set_unresolved()
+                        self.vcf_record.info['SVTYPE'] = 'BND'
+                        self.vcf_record.info['UNRESOLVED_TYPE'] = 'SR_ONLY_LARGE_INVERSION'
+                        self.cluster_type = 'SR_ONLY_LARGE_INVERSION'
+                        for r in self.records:
+                            r.info['UNRESOLVED'] = True
+                            r.info['UNRESOLVED_TYPE'] = 'SR_ONLY_LARGE_INVERSION'
+                            r.info['SVTYPE'] = 'BND'
+                            if 'CPX_TYPE' in r.info.keys():
+                                r.info.pop('CPX_TYPE')
+                            if 'CPX_INTERVALS' in r.info.keys():
+                                r.info.pop('CPX_INTERVALS')
                 elif self.cluster_type == 'CANDIDATE_TRANSLOCATION':
                     self.resolve_translocation()
                 elif self.cluster_type == 'CANDIDATE_INSERTION':
