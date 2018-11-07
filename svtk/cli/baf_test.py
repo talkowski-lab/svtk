@@ -121,6 +121,9 @@ def main(argv):
             raise Exception('Must provide tabix index with remote URL')
         tbx = pysam.TabixFile(args.file)
 
+    # this is necessary to avoid stochasticity in calculation of KS statistic
+    np.random.seed(0)
+
     with open(args.bed,'r') as f:
         for line in f:
             if line[0]!="#":
