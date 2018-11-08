@@ -125,7 +125,7 @@ class DeletionTest:
                 # stat1=(stat-np.mean(self.nullratio))/(np.std(self.nullratio))
                 # gmm = mixture.BayesianGaussianMixture(n_components=3, covariance_type='spherical').fit(a.reshape(-1,1))
                 # ans=stats.norm.cdf(stat1)
-                ans=self.gmm.score(stat)
+                ans=self.gmm.score(np.array(stat).reshape(1,-1))
                 return 10**-stat,ans
         else:
             # tstat,pvalue=stats.ttest_ind(testlist,self.nullratio)
