@@ -85,7 +85,10 @@ def main(argv):
         sys.exit(1)
     args = parser.parse_args(argv)
 
-    vcf = VariantFile(args.vcf)
+    if args.vcf in '- stdin'.split():
+        vcf = VariantFile(sys.stdin)
+    else:
+        vcf = VariantFile(args.vcf)
     header = not args.no_header
 
     if args.total_variants:
