@@ -225,7 +225,7 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
                 infos = '\t'.join(infos)
             if include_filters:
                 filters = [f for f in record.filter]
-                filters = '\t'.join(filters)
+                filters = ','.join(filters)
 
             if record.info.get('SVTYPE', None) == 'BND':
                 # First end of breakpoint
