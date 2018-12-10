@@ -113,9 +113,9 @@ def adjudicate_RD(metrics):
                              ~testable.chrom.isin(ALLOSOMES) &
                              ~testable.is_outlier_specific]
 
-    testable.to_csv('RD_pesr_gt1kb_testable.txt', index=False, sep='\t')
+    testable.to_csv('RD_pesr_gt5kb_testable.txt', index=False, sep='\t')
     trainable['label'] = labeler.label(trainable)
-    trainable.to_csv('RD_pesr_gt1kb_trainable.txt', index=False, sep='\t')
+    trainable.to_csv('RD_pesr_gt5kb_trainable.txt', index=False, sep='\t')
     cutoffs = rf_classify(metrics, trainable, testable, features,
                                    labeler, cutoff_features, 'RD_prob')
 
@@ -132,9 +132,9 @@ def adjudicate_RD(metrics):
                              (testable.poor_region_cov < 0.3) &
                              ~testable.chrom.isin(ALLOSOMES) &
                              ~testable.is_outlier_specific]
-    testable.to_csv('RD_pesr_lt1kb_testable.txt', index=False, sep='\t')
+    testable.to_csv('RD_pesr_lt5kb_testable.txt', index=False, sep='\t')
     trainable['label'] = labeler.label(trainable)
-    trainable.to_csv('RD_pesr_lt1kb_trainable.txt', index=False, sep='\t')
+    trainable.to_csv('RD_pesr_lt5kb_trainable.txt', index=False, sep='\t')
 
     cutoffs = rf_classify(metrics, trainable, testable, features,
                                    labeler, cutoff_features, 'RD_prob')
@@ -273,29 +273,29 @@ def consolidate_score(metrics, cutoffs):
     """Assign final score to each variant"""
 
     # Score PE/SR <1 kb
-    lt1kb = ~metrics.name.str.contains('depth') & (metrics.svsize < 1000)
+    lt5kb = ~metrics.name.str.contains('depth') & (metrics.svsize < 5000)
     pesr_cols = 'PE_prob SR1_prob'.split()
-    metrics.loc[lt1kb, 'score'] = metrics[pesr_cols].max(axis=1)
+    metrics.loc[lt5kb, 'score'] = metrics[pesr_cols].max(axis=1)
 
     # Score depth
     depth = metrics.name.str.contains('depth')
     metrics.loc[depth, 'score'] = metrics.RD_prob
 
     # Score PE/SR >1 kb
-    gt1kb = ~metrics.name.str.contains('depth') & (metrics.svsize >= 1000)
+    gt5kb = ~metrics.name.str.contains('depth') & (metrics.svsize >= 5000)
     PESR_pass = (metrics.PE_prob >= 0.5) | (metrics.SR1_prob >= 0.5)
     RD_pass = (metrics.RD_prob >= 0.5)
     prob_cols = 'PE_prob SR1_prob RD_prob'.split()
 
     # If variants pass both RD + PE/SR or fail both, use max across the three
-    metrics.loc[gt1kb & ~(PESR_pass ^ RD_pass), 'score'] = metrics[prob_cols].max(axis=1)
+    metrics.loc[gt5kb & ~(PESR_pass ^ RD_pass), 'score'] = metrics[prob_cols].max(axis=1)
 
     # If variants pass PE/SR but not RD, use max PE/SR and reclassify as BND
-    metrics.loc[gt1kb & PESR_pass & ~RD_pass, 'score'] = metrics[pesr_cols].max(axis=1)
-    metrics.loc[gt1kb & PESR_pass & ~RD_pass, 'svtype'] = 'BND'
+    metrics.loc[gt5kb & PESR_pass & ~RD_pass, 'score'] = metrics[pesr_cols].max(axis=1)
+    metrics.loc[gt5kb & PESR_pass & ~RD_pass, 'svtype'] = 'BND'
 
     # If variants pass RD but not PE/SR, pass if they pass depth-based cutoffs
-    depth_dels = gt1kb & ~PESR_pass & RD_pass & (metrics.svtype == 'DEL')
+    depth_dels = gt5kb & ~PESR_pass & RD_pass & (metrics.svtype == 'DEL')
 
     depth_cutoffs = cutoffs.loc[(cutoffs.algtype == 'Depth') &
                                 (cutoffs.test == 'RD') &
@@ -308,7 +308,7 @@ def consolidate_score(metrics, cutoffs):
     metrics.loc[depth_dels & ~depth_pass, 'score'] = 0.495
     
     # dups
-    depth_dups = gt1kb & ~PESR_pass & RD_pass & (metrics.svtype == 'DUP')
+    depth_dups = gt5kb & ~PESR_pass & RD_pass & (metrics.svtype == 'DUP')
 
     depth_cutoffs = cutoffs.loc[(cutoffs.algtype == 'Depth') &
                                 (cutoffs.test == 'RD') &
