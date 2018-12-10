@@ -68,16 +68,34 @@ def classify_simple_translocation(plus, minus, mh_buffer=10):
     def _greater(p1, p2):
         return p1 > p2 - mh_buffer
 
+    # Check for PE evidence
+    def _hasPE(recA, recB):
+        if 'EVIDENCE' in recA.info.keys() \
+        and 'EVIDENCE' in recB.info.keys():
+            if 'PE' in recA.info['EVIDENCE'] \
+            and 'PE' in recB.info['EVIDENCE']:
+                return True
+            else:
+                return False
+        else:
+            return False
+
     if plus_strands == '+-':
         if _greater(minus_A, plus_A) and _greater(plus_B, minus_B):
-            return 'CTX_PP/QQ'
+            if _hasPE(plus, minus):
+                return 'CTX_PP/QQ'
+            else:
+                return 'CTX_UNR'
         if _greater(minus_A, plus_A) and _greater(minus_B, plus_B):
             return 'CTX_INS_B2A'
         if _greater(plus_A, minus_A) and _greater(plus_B, minus_B):
             return 'CTX_INS_A2B'
     else:
         if _greater(minus_A, plus_A) and _greater(minus_B, plus_B):
-            return 'CTX_PQ/QP'
+            if _hasPE(plus, minus):
+                return 'CTX_PQ/QP'
+            else:
+                return 'CTX_UNR'
         if _greater(minus_A, plus_A) and _greater(plus_B, minus_B):
             return 'CTX_INV_INS_B2A'
         if _greater(plus_A, minus_A) and _greater(minus_B, plus_B):

@@ -33,6 +33,9 @@ def vcf2bed(argv):
                         'reported in the order in which they are requested. '
                         'If ALL INFO fields are requested, they are reported '
                         'in the order in which they appear in the VCF header.')
+    parser.add_argument('--include-filters', action='store_true', default=False,
+                        help='Include FILTER status in output, with the same ' + 
+                             'behavior an INFO field.')
     parser.add_argument('--split-bnd', action='store_true', default=False,
                         help='Report two entries in bed file for each BND.')
     parser.add_argument('--split-cpx', action='store_true', default=False,
@@ -66,6 +69,8 @@ def vcf2bed(argv):
             header = header + vcf.header.info.keys()
         else:
             header = header + args.info
+    if args.include_filters:
+        header = header + ['FILTER']
     header = '\t'.join(header)
 
     include_unresolved = not args.no_unresolved
@@ -80,7 +85,8 @@ def vcf2bed(argv):
                          report_alt=True,
                          no_sort_coords=args.no_sort_coords,
                          simple_sinks=args.simple_sinks,
-                         include_unresolved=include_unresolved)
+                         include_unresolved=include_unresolved,
+                         include_filters=args.include_filters)
 
     if args.bed in 'stdout -'.split():
         if args.header:

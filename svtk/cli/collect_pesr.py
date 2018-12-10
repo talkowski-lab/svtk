@@ -154,29 +154,31 @@ class PESRCollection:
         read : pysam.AlignedSegment
         """
 
-        pos, side = get_split_position(read)
+        split_positions = get_split_positions(read)
+        #pos, side = get_split_positions(read)
 
-        # Calculate distance to previous split and update position tracker
-        # Use abs to catch contig switches
-        if self.prev_split_pos is None:
-            dist = 0
-        else:
-            dist = np.abs(pos - self.prev_split_pos)
-        self.prev_split_pos = pos
+        for (pos, side) in split_positions:
+            # Calculate distance to previous split and update position tracker
+            # Use abs to catch contig switches
+            if self.prev_split_pos is None:
+                dist = 0
+            else:
+                dist = np.abs(pos - self.prev_split_pos)
+            self.prev_split_pos = pos
 
-        if self.curr_chrom is None:
-            self.curr_chrom = read.reference_name
+            if self.curr_chrom is None:
+                self.curr_chrom = read.reference_name
 
-        # Flush aggregated split reads if we've moved beyond the max dist
-        if dist > self.max_split_dist:
-            self.flush_split_counts()
-            self.curr_chrom = read.reference_name
+            # Flush aggregated split reads if we've moved beyond the max dist
+            if dist > self.max_split_dist:
+                self.flush_split_counts()
+                self.curr_chrom = read.reference_name
 
-        # Tally the split at its corresponding position
-        if side == 'RIGHT':
-            self.right_split_counts[pos] += 1
-        elif side == 'LEFT':
-            self.left_split_counts[pos] += 1
+            # Tally the split at its corresponding position
+            if side == 'RIGHT':
+                self.right_split_counts[pos] += 1
+            elif side == 'LEFT':
+                self.left_split_counts[pos] += 1
 
     def flush_split_counts(self):
         """
@@ -205,7 +207,7 @@ class PESRCollection:
         self.left_split_counts = defaultdict(int)
 
 
-def get_split_position(read):
+def get_split_positions(read):
     """
     Calculate split coordinate based on read alignment and CIGAR operations.
 
@@ -225,24 +227,40 @@ def get_split_position(read):
         Direction of soft clip
     """
 
+
     pos = read.pos
 
-    # Right soft clip - add length of aligned sequence
-    if read.cigartuples[0][0] == 0:
-        for operation, length in read.cigartuples:
-            # Only shift based on matches, ignore DEL/INS/clips
-            if operation == 0:
-                pos += length
-        return pos, 'RIGHT'
+    split_positions = []
 
     # Left soft clip - sequence is already aligned to split position
-    elif read.cigartuples[-1][0] == 0:
-        return pos, 'LEFT'
+    if is_left_clipped(read):
+        split_positions.append([pos, 'LEFT'])
 
-    # Safety check - ignore match flanked by soft clips
-    else:
-        return None, 'MIDDLE'
+    # Right soft clip - add length of aligned sequence
+    if is_right_clipped(read):
+        clip_pos = pos
+        for operation, length in read.cigartuples:
+            # Only shift based on matches, ignore DEL/INS/clips
+            if not is_clipping_operation(operation) and operation_consumes_ref_bases(operation):
+                clip_pos += length
+        split_positions.append([clip_pos, 'RIGHT'])
 
+    return split_positions
+
+def is_left_clipped(read):
+    return len(read.cigartuples) >= 1 and is_clipping_operation(read.cigartuples[0][0])
+
+def is_right_clipped(read):
+    return len(read.cigartuples) >= 1 and is_clipping_operation(read.cigartuples[-1][0])
+
+def is_clipping_operation(operation):
+    return operation == 4 or operation == 5
+
+def operation_consumes_ref_bases(operation):
+    """
+    Returns true if this is a cigar operation that consumes reference bases
+    """
+    return operation == 0 or operation == 2 or operation == 3 or operation == 7
 
 def main(argv):
     parser = argparse.ArgumentParser(

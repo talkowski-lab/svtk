@@ -242,7 +242,11 @@ def ro_calu(r1, r2):
     elif r1.pos>r2.stop or r1.stop < r2.pos:
         out = 0
     else:
-        out = (sorted([r1.pos, r2.pos, r1.stop, r2.stop])[2] - sorted([r1.pos, r2.pos, r1.stop, r2.stop])[1])/max([r1.stop-r1.pos ,r2.stop-r2.pos])
+        maxval = max([r1.stop-r1.pos ,r2.stop-r2.pos])
+        if maxval > 0:
+            out = (sorted([r1.pos, r2.pos, r1.stop, r2.stop])[2] - sorted([r1.pos, r2.pos, r1.stop, r2.stop])[1])/maxval
+        else:
+            out = 0
     return out
 
 

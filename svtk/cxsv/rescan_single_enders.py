@@ -82,7 +82,7 @@ def match_cluster(record, cluster, dist=300):
 
 def rescan_single_ender(record, pe, min_support=4, window=1000, dist=300, 
                         min_frac_samples=0.5, pe_blacklist=None, max_samples=40, 
-                        quiet=False):
+                        quiet=False, min_span=50):
     """
     Test if a putative single-ender inversion has support from other strand.
 
@@ -111,6 +111,9 @@ def rescan_single_ender(record, pe, min_support=4, window=1000, dist=300,
         removed prior to clustering.
     quiet : boolean, optional
         Do not print status updates
+    min_span : int, optional
+        Minimum distance spanned between discordant read mapping positions in
+        newly identified candidate breakpoints
 
 
     Returns
@@ -128,8 +131,11 @@ def rescan_single_ender(record, pe, min_support=4, window=1000, dist=300,
               record.id)
 
     # Select pairs nearby record
-    pairs = pe.fetch('{0}:{1}-{2}'.format(record.chrom, record.pos - window,
-                                          record.pos + window))
+    search_start = max([0, record.pos - window])
+    search_end = max([0, record.pos + window])
+    if search_end <= search_start:
+        search_end = search_start + 1
+    pairs = pe.fetch('{0}:{1}-{2}'.format(record.chrom, search_start, search_end))
     pairs = [DiscPair(*p.split()) for p in pairs]
 
     # To protect against wasting time on particularly messy loci not captured 
@@ -181,6 +187,18 @@ def rescan_single_ender(record, pe, min_support=4, window=1000, dist=300,
     missing_strand = '+' if record.info['STRANDS'] == '--' else '-'
     supporting_pairs = [p for p in cluster if p.strandA == missing_strand]
 
+    #Check span of supporting pairs from best cluster
+    minA = round(np.percentile([p.posA for p in cluster], 10))
+    maxA = round(np.percentile([p.posA for p in cluster], 90))
+    spanA = maxA - minA
+    
+    minB = round(np.percentile([p.posB for p in cluster], 10))
+    maxB = round(np.percentile([p.posB for p in cluster], 90))
+    spanB = maxB - minB
+
+    if min([spanA, spanB]) < min_span:
+        return record, None
+
     # Count number of supporting pairs in each called sample
     sample_support = defaultdict(int)
     for pair in supporting_pairs:
@@ -192,7 +210,7 @@ def rescan_single_ender(record, pe, min_support=4, window=1000, dist=300,
         opp_strand = make_new_record(supporting_pairs, record)
 
         same_strand_pairs = [p for p in cluster if p.strandA != missing_strand]
-        same_strand = make_new_record(same_strand_pairs, record)
+        same_strand = make_new_record(same_strand_pairs, record, True)
         same_strand.id = record.id
 
         # Print statement that single ender rescan has been successful
@@ -207,7 +225,7 @@ def rescan_single_ender(record, pe, min_support=4, window=1000, dist=300,
         return record, None
 
 
-def make_new_record(pairs, old_record):
+def make_new_record(pairs, old_record, retain_algs=False):
     record = old_record.copy()
     
     record.id = record.id + '_OPPSTRAND'
@@ -215,16 +233,19 @@ def make_new_record(pairs, old_record):
     #Take third quartile of + read positions for +/+ breakpoints
     #Take first quartile of - read positions for -/- breakpoints
     if pairs[0].strandA == '+':
-        record.pos = round(np.percentile([p.posA for p in pairs], 75), 0)
-        record.stop = round(np.percentile([p.posB for p in pairs], 75), 0)
+        record.pos = round(np.percentile([p.posA for p in pairs], 90), 0)
+        record.stop = round(np.percentile([p.posB for p in pairs], 90), 0)
         record.info['STRANDS'] = '++'
     else:
-        record.pos = round(np.percentile([p.posA for p in pairs], 25), 0)
-        record.stop = round(np.percentile([p.posB for p in pairs], 25), 0)
+        record.pos = round(np.percentile([p.posA for p in pairs], 10), 0)
+        record.stop = round(np.percentile([p.posB for p in pairs], 10), 0)
         record.info['STRANDS'] = '--'
 
     record.info['SVLEN'] = record.stop - record.pos
-    record.info['ALGORITHMS'] = ('rescan',)
+    if retain_algs:
+        old_algs = list(record.info['ALGORITHMS'])
+        old_algs.append('rescan')
+        record.info['ALGORITHMS'] = tuple(old_algs)
 
     return record
 
