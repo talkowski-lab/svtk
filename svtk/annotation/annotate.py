@@ -20,12 +20,12 @@ def annotate_gencode(sv, gencode):
     hits = annotate_intersection(sv, gencode, filetype='gtf')
     effects = classify_effect(hits)
     effects = effects.loc[effects.effect != 'GENE_OTHER'].copy()
-    
+
     # Annotate nearest TSS
     tss = annotate_nearest_tss(sv, gencode)
 
     # Only include TSS if no genic hit observed
-    if len(effects)>0:
+    if len(effects) > 0:
         tss = tss.loc[~tss.name.isin(effects.name)].copy()
 
     # Merge annotations
@@ -38,14 +38,13 @@ def annotate_noncoding(sv, noncoding):
     # For now, any overlap gets annotated
     noncoding_hits = annotate_intersection(sv, noncoding, filetype='bed')
     noncoding_hits = noncoding_hits.drop_duplicates()
-   
+
     noncoding_hits.loc[noncoding_hits.hit_type == 'SPAN', 'effect'] = 'NONCODING_SPAN'
     noncoding_hits.loc[noncoding_hits.hit_type != 'SPAN', 'effect'] = 'NONCODING_BREAKPOINT'
 
     noncoding_cols = 'name svtype gene_name effect'.split()
 
     effects = noncoding_hits[noncoding_cols].drop_duplicates()
-
     return effects
 
 
@@ -72,19 +71,12 @@ def annotate(sv, gencode, noncoding):
         Gencode annotations
     """
 
-    if gencode is not None:
-        coding_anno = annotate_gencode(sv, gencode)
-    else:
-        coding_anno = None
-
-    if noncoding is not None:
-        noncoding_anno = annotate_noncoding(sv, noncoding)
-    else:
-        noncoding_anno = None
+    coding_anno = None if gencode is None else annotate_gencode(sv, gencode)
+    noncoding_anno = None if noncoding is None else annotate_noncoding(sv, noncoding)
 
     effects = pd.concat([coding_anno, noncoding_anno])
 
-        # Aggregate genic effects by variant ID
+    # Aggregate genic effects by variant ID
     effects = effects.pivot_table(index='name',
                                   columns='effect',
                                   values='gene_name',
@@ -145,7 +137,7 @@ def annotate_vcf(vcf, gencode, noncoding, annotated_vcf):
         fname = vcf.filename.decode()
     else:
         fname = vcf.filename
-    sv = svu.vcf2bedtool(fname, split_bnd=True, split_cpx=True, 
+    sv = svu.vcf2bedtool(fname, split_bnd=True, split_cpx=True,
                          simple_sinks=True, include_unresolved=False)
 
     effects = annotate(sv, gencode, noncoding)
@@ -157,7 +149,7 @@ def annotate_vcf(vcf, gencode, noncoding, annotated_vcf):
             fout.write(record)
             continue
 
-        #Handle general catch-all intersection for MULTIALLELIC variants
+        # Handle general catch-all intersection for MULTIALLELIC variants
         if 'MULTIALLELIC' in record.filter:
             multi_ovr = []
             for info, genelist in anno.items():
