@@ -76,14 +76,8 @@ def main(argv):
 
     vcf = pysam.VariantFile(args.vcf)
 
-    if args.gencode is not None:
-        gencode = pbt.BedTool(args.gencode)
-    else:
-        gencode = None
-    if args.noncoding is not None:
-        noncoding = pbt.BedTool(args.noncoding)
-    else:
-        noncoding = None
+    gencode = None if args.gencode is None else pbt.BedTool(args.gencode)
+    noncoding = None if args.noncoding is None else pbt.BedTool(args.noncoding)
 
     anno.annotate_vcf(vcf, gencode, noncoding, args.annotated_vcf)
 

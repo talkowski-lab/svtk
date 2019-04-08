@@ -45,25 +45,23 @@ class SRTest(PESRTest):
 
     def test_record(self, record, called, background):
             # Test SR support at all coordinates within window of start/end
-            results = []
-            for coord in 'posA posB'.split():
-                result = self._test_coord(record, coord, called, background)
-                result['coord'] = coord
-                results.append(result)
-                #print(result)
-            if not int(results[0].pos)<int(results[1].pos):
-                del results[1]
-                rec=1
+            resultA = self._test_coord(record, 'posA', record.chrom, called, background)
+            resultA['coord'] = 'posA'
+
+            resultB = self._test_coord(record, 'posB', record.info['CHR2'], called, background)
+            resultB['coord'] = 'posB'
+
+            if (record.chrom == record.info['CHR2']) and (int(resultA.pos) >= int(resultB.pos)):
+                rec = 1
                 while True:
-                    result = self._test_coord_V2(record, coord, called, background,rec)
-                    #print(result)
-                    if int(result.pos) > int(results[0].pos):
-                        result['coord'] = coord
-                        results.append(result)
+                    result = self._test_coord_V2(record, 'posB', record.chrom, called, background, rec)
+                    if int(result.pos) > int(resultA.pos.iloc[0]):
+                        result['coord'] = 'posB'
+                        resultB = result
                         break
-                    rec=rec+1
-            #print(results)
-            results = pd.concat(results, ignore_index=True)
+                    rec = rec + 1
+
+            results = pd.concat([resultA, resultB], ignore_index=True)
             # Add test for sum of posA and posB
             total = self._test_total(results)
             results = pd.concat([results, total], ignore_index=True)
@@ -78,7 +76,7 @@ class SRTest(PESRTest):
 
 
 
-    def _test_coord_V2(self, record, coord, samples, background, optimal=0):
+    def _test_coord_V2(self, record, coord, chrom, samples, background, optimal=0):
             """Test enrichment at all positions within window"""
             if coord == 'posA':
                 coord, strand = record.pos, record.info['STRANDS'][0]
@@ -88,7 +86,7 @@ class SRTest(PESRTest):
             # Run SR test at each position
             results = []
             for pos in range(coord - self.window, coord + self.window + 1):
-                result = self.test(record.chrom, pos, strand, samples, background)
+                result = self.test(chrom, pos, strand, samples, background)
                 result = result.to_frame().transpose()
                 result['pos'] = pos
                 result['dist'] = np.abs(pos - coord)
@@ -104,7 +102,7 @@ class SRTest(PESRTest):
             else:
                 best = results.iloc[-1].to_frame().transpose()
                 best['log_pval']=0
-                best['pos']=record.stop
+                best['pos']=record.stop+self.window+1
             return best
 
 
@@ -174,7 +172,7 @@ class SRTest(PESRTest):
 
         return total
 
-    def _test_coord(self, record, coord, samples, background):
+    def _test_coord(self, record, coord, chrom, samples, background):
         """Test enrichment at all positions within window"""
         if coord == 'posA':
             coord, strand = record.pos, record.info['STRANDS'][0]
@@ -184,7 +182,7 @@ class SRTest(PESRTest):
         # Run SR test at each position
         results = []
         for pos in range(coord - self.window, coord + self.window + 1):
-            result = self.test(record.chrom, pos, strand, samples, background)
+            result = self.test(chrom, pos, strand, samples, background)
             result = result.to_frame().transpose()
             result['pos'] = pos
             result['dist'] = np.abs(pos - coord)
