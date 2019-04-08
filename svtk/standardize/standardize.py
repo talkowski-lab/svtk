@@ -279,7 +279,7 @@ def parse_bnd_pos(alt):
 
     # HLA contigs include colons, so be careful when parsing
     data = alt.split(':')
-    chr2 = ':'.join(data[:-1])
+    chr2 = ':'.join(data[:-1]).replace("CHR","chr")
     end = int(data[-1])
 
     return chr2, end
