@@ -99,9 +99,14 @@ class PETest(PESRTest):
             pairs = []
 
         counts = defaultdict(int)
+        i=0
         for pair in pairs:
             pair = _DiscPair(*pair)
-
+            if(i>1000000):
+                print(region)
+                counts = defaultdict(int)
+                break
+            i+=1
             # Pairs were selected based on window around chrA;
             # just need to check chrB
             if pair.chrB != record.info['CHR2']:

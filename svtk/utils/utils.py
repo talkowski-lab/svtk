@@ -229,6 +229,7 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
 
             if record.info.get('SVTYPE', None) == 'BND':
                 # First end of breakpoint
+                start=record.pos
                 end = record.pos + 1
                 yield entry.format(**locals())
 
