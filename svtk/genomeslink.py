@@ -233,7 +233,8 @@ class GenomeSLINK(object):
         n = len(candidates)
 
         # Permit clusters of size 1
-        G = sparse.eye(n, dtype=np.uint16, format='lil')
+        #G = sparse.eye(n, dtype=np.uint8, format='lil')
+        G = sparse.lil_matrix((n, n), dtype=np.uint8)
 
         # Add edges between nodes with overlap
         for p1, p2 in combinations(range(n), 2):

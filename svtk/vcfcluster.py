@@ -155,7 +155,7 @@ class VCFCluster(GenomeSLINK):
                                                       self.preserve_genotypes)
                 record = cluster.merge_record_infos(record, self.header)
                 if self.preserve_ids:
-                    record.info['MEMBERS'] = [r.record.id for r in records]
+                    record.info['MEMBERS'] = tuple(r.record.id for r in records)
 
                 if SVRecord(record).is_in(self.blacklist):
                     continue
