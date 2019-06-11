@@ -146,7 +146,9 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
     Returns
     -------
     bt : pybedtools.BedTool
-        SV converted to Bedtool. Ends of BND records are assigned as pos + 1.
+        SV converted to Bedtool. Starts of BND records are assigned as pos - 1.
+        Note that BED is 0-based but VCF is 1-based, so 1bp is subtracted from
+        all pos values when converted from VCF to BED
         Included columns: chrom, start, end, name, svtype, strands
     """
 
@@ -197,6 +199,9 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
                 end = record.stop
             else:
                 start, end = sorted([record.pos, record.stop])
+
+            #Subtract 1bp from pos to convert to 0-based BED vs 1-based VCF
+            start = max([0, start - 1])
             
             if report_alt:
                 svtype = record.alts[0].strip('<>')
@@ -229,15 +234,15 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
 
             if record.info.get('SVTYPE', None) == 'BND':
                 # First end of breakpoint
-                start=record.pos
-                end = record.pos + 1
+                start = max([0, record.pos - 1])
+                end = record.pos
                 yield entry.format(**locals())
 
                 # Second end of breakpoint
                 if split_bnd:
                     chrom = record.info['CHR2']
-                    start = record.stop
-                    end = record.stop + 1
+                    start = max([0, record.stop - 1])
+                    end = record.stop
                     yield entry.format(**locals())
 
             elif record.info.get('SVTYPE', None) == 'INS':
@@ -249,22 +254,19 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
                 # if not no_sort_coords:
                 #     start, end = sorted([start, end])
                 # Reduce insertion sinks to single-bp intervals if optioned
-                start = start
                 if simple_sinks:
                     end = start + 1
-                else:
-                    end = end
                 yield entry.format(**locals())
 
             elif record.info.get('SVTYPE', None) == 'CTX':
-                end = record.pos + 1
+                end = start + 1
                 yield entry.format(**locals())
 
                 # Second end of breakpoint
                 if split_bnd:
                     chrom = record.info['CHR2']
-                    start = record.stop
-                    end = record.stop + 1
+                    start = max([0, record.stop - 1])
+                    end = record.stop
                     yield entry.format(**locals())
 
             #Deconstruct complex intervals, if optioned
@@ -274,13 +276,14 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
                     svtype, region = interval.split('_')
                     chrom, coords = region.split(':')
                     start, end = coords.split('-')
+                    start = max([0, start - 1])
                     yield entry.format(**locals())
                 #If complex insertion, return insertion point as 1bp DEL
                 if record.info.get('CPX_TYPE', None) in cpx_ins_classes:
                     svtype = 'DEL'
                     chrom = record.chrom
-                    start = record.pos
-                    end = start + 1
+                    start = max([0, record.pos - 1])
+                    end = record.pos
                     entry.format(**locals())
 
             # elif (record.info.get('SVTYPE', None) == 'CPX' and
