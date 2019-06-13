@@ -11,10 +11,12 @@ Resolve complex SV from inversion/translocation breakpoints and CNV intervals.
 import argparse
 import sys
 import subprocess
-import numpy as np
+import random
 import string
 from collections import deque
+import itertools
 import pysam
+import pandas as pd
 import pybedtools as pbt
 import svtk.utils as svu
 from svtk.cxsv import link_cpx, ComplexSV, rescan_single_ender,link_cpx_V2
@@ -40,12 +42,10 @@ def _merge_records(vcf, cpx_records, cpx_record_ids):
     r1, r2 : iter of pysam.VariantRecord
     """
     def _next_record():
-        # Skip VCF records that were included in complex event
-        # get next record that's not already present in cpx_record_idss
-        _rec = next(vcf, None)
-        while _rec is not None and _rec.id in cpx_record_ids:
-            _rec = next(vcf, None)
-        return _rec
+        try:
+            return next(vcf)
+        except StopIteration:
+            return None
     def _next_cpx():
         try:
             return cpx_records.popleft()
@@ -55,7 +55,11 @@ def _merge_records(vcf, cpx_records, cpx_record_ids):
     curr_record = _next_record()
     curr_cpx = _next_cpx()
     while curr_record is not None and curr_cpx is not None:
-        # Merge sort records not in complex event
+        # Remove VCF records that were included in complex event
+        if curr_record.id in cpx_record_ids:
+            curr_record = _next_record()
+            continue
+        # Merge sort remaining
         if curr_record.chrom == curr_cpx.chrom:
             if curr_record.pos <= curr_cpx.pos:
                 yield curr_record
@@ -69,25 +73,29 @@ def _merge_records(vcf, cpx_records, cpx_record_ids):
         else:
             yield curr_cpx
             curr_cpx = _next_cpx()
-
-    # At least one iterator is exhausted, return rest of other iterator, if any
-    while curr_record is not None:
-        yield curr_record
-        curr_record = _next_record()
-    while curr_cpx is not None:
-        yield curr_cpx
-        curr_cpx = _next_cpx()
-
+    # After one iterator is exhausted, return rest of other iterator
+    if curr_record is None:
+        for cpx in itertools.chain([curr_cpx], cpx_records):
+            yield cpx
+    elif curr_cpx is None:
+        for record in itertools.chain([curr_record], vcf):
+            if record.id not in cpx_record_ids:
+                yield record
 
 def remove_CPX_from_INV(resolve_CPX, resolve_INV):
-    """
-    Return list of inversion calls not overlapped by list of complex calls
-    """
-    cpx_interval = [(i.chrom, i.pos, i.stop) for i in resolve_CPX]
-    out = [
-        inv for inv in resolve_INV
-        if not any(cpx[0] == inv.chrom and cpx[1] <= i.stop and i.pos <= cpx[2] for cpx in cpx_interval)
-    ]
+    cpx_interval = [[i.chrom, i.pos, i.stop, i] for i in resolve_CPX]
+    inv_interval = [[i.chrom, i.pos, i.stop, i] for i in resolve_INV]
+    out=[]
+    for i in inv_interval:
+        rec = 0
+        for j in cpx_interval:
+            if i[0]==j[0]:
+                if i[2]< j[1] or i[1]> j[2]:
+                    continue
+                else:
+                    rec=rec+1
+        if rec ==0:
+            out.append(i[3])
     return out
 
 def cluster_INV(independent_INV):
@@ -107,52 +115,49 @@ def cluster_INV(independent_INV):
                 list_INV[i].append(inv_hash[i][j][k])   
     out = []
     for i in list_INV.keys():
-        out += _cluster_INV_list(list_INV[i])
+        out+=cluster_INV_list(list_INV[i])
     return out
 
-def _cluster_INV_list(independent_INV):
+def cluster_INV_list(independent_INV):
     out = []
-    rec = float('-inf') # be sure to add first element
+    rec = 0
     for i in independent_INV:
-        if i.pos > rec:
+        if out ==[]:
             out.append([i])
             rec = i.stop
         else:
-            out[-1].append(i)
-            if i.stop > rec:
+            if i.pos > rec:
+                out.append([i])
                 rec = i.stop
+            else:
+                out[-1].append(i)
+                if i.stop > rec:
+                    rec = i.stop
     return out
 
 
 def cluster_single_cleanup(cluster):
     #for clusters including both FF and RR inversions, only keep inversions for CPX resolution
+    cluster_index = [i for i in range(len(cluster))]
     cluster_svtype = [[i.info['SVTYPE'], i.info['STRANDS']] for i in cluster]
+    out=deque()
     if ['INV', '--'] in cluster_svtype and ['INV', '++'] in cluster_svtype:
-        return deque(
-            [
-                cluster[cluster_svtype.index(['INV', '--'])],
-                cluster[cluster_svtype.index(['INV', '++'])]
-            ]
-        )
+        out.append(cluster[cluster_svtype.index(['INV', '--'])])
+        out.append(cluster[cluster_svtype.index(['INV', '++'])])
     else:
-        return cluster
-
+        out=cluster
+    return out
 
 def clusters_cleanup(clusters):
-    return deque(cluster_single_cleanup(cluster) for cluster in clusters)
-
-
-def get_random_string(random_string_len):
-    """
-    Produce string of random upper-case characters and digits, of requested length
-    """
-    return ''.join(np.random.choice(list(string.ascii_uppercase + string.digits))
-                   for _ in range(random_string_len))
+    out=deque()
+    for cluster in clusters:
+        out.append(cluster_single_cleanup(cluster))
+    return out
 
 
 def resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed,variant_prefix='CPX_', 
                        min_rescan_support=4, pe_blacklist=None, quiet=False,
-                       SR_only_cutoff=1000, random_resolved_id_length=10):
+                       SR_only_cutoff=1000):
     """
     Resolve complex SV from CNV intervals and BCA breakpoints.
     Yields all resolved events, simple or complex, in sorted order.
@@ -194,7 +199,6 @@ def resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed,variant_prefix='CPX_'
 
     cpx_records = deque()
     cpx_record_ids = set()
-    np.random.seed(1) # arbitrary fixed seed for reproducibility
 
     for cluster in clusters:
         #Print status for each cluster
@@ -213,13 +217,13 @@ def resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed,variant_prefix='CPX_'
                 cluster = deque([rec, opp])
 
         # if cxsv overlap pulled in unrelated insertions, keep them separate
-        if all(r.info['SVTYPE'] == 'INS' for r in cluster):
+        if all([r.info['SVTYPE'] == 'INS' for r in cluster]):
             for record in cluster:
                 cpx = ComplexSV([record], cytobands, mei_bed, SR_only_cutoff)
                 cpx_record_ids = cpx_record_ids.union(cpx.record_ids)
                 
                 # Assign random string as resolved ID to handle sharding
-                cpx.vcf_record.id = variant_prefix + get_random_string(random_resolved_id_length)
+                cpx.vcf_record.id = variant_prefix + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
                 cpx_records.append(cpx.vcf_record)
                 # resolved_idx += 1
             outcome = 'treated as separate unrelated insertions'
@@ -228,8 +232,8 @@ def resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed,variant_prefix='CPX_'
             cpx_record_ids = cpx_record_ids.union(cpx.record_ids)
             if cpx.svtype == 'UNR':
                 # Assign random string as unresolved ID to handle sharding
-                unresolved_vid = 'UNRESOLVED_' + get_random_string(random_resolved_id_length)
-                for record in cpx.records:
+                unresolved_vid = 'UNRESOLVED_' + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
+                for i, record in enumerate(cpx.records):
                     record.info['EVENT'] = unresolved_vid
                     record.info['UNRESOLVED'] = True
                     cpx_records.append(record)
@@ -242,8 +246,8 @@ def resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed,variant_prefix='CPX_'
                 # the INS record
                 cnv_ids_to_append = []
                 for cnv in cpx.cnvs:
-                    if 'EVIDENCE' in cnv.info and 'RD' in cnv.info['EVIDENCE']:
-                        cnv.info['MEMBERS'] = (cnv.id,)
+                    if 'RD' in cnv.info['EVIDENCE']:
+                        cnv.info['MEMBERS'] = cnv.id
                         cpx_records.append(cnv)
                     else:
                         cnv_ids_to_append.append(cnv.id)
@@ -254,7 +258,7 @@ def resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed,variant_prefix='CPX_'
                           'The following records were merged into the INS record: ' + \
                           ', '.join(cnv_ids_to_append)
             else:
-                cpx.vcf_record.id = variant_prefix + get_random_string(random_resolved_id_length)
+                cpx.vcf_record.id = variant_prefix + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
                 cpx_records.append(cpx.vcf_record)
                 if 'CPX_TYPE' in cpx.vcf_record.info.keys():
                     outcome = 'resolved as ' + str(cpx.vcf_record.info['CPX_TYPE'])
@@ -294,8 +298,8 @@ def resolve_complex_sv(vcf, cytobands, disc_pairs, mei_bed,variant_prefix='CPX_'
             record.info.pop('RMSSTD')
         yield record
 
-
 def cluster_cleanup(clusters_v2):
+    rank  =  [i for i in range(len(clusters_v2))]
     cluster_pos = []
     cluster_info = []    
     for i in range(len(clusters_v2)):
@@ -306,17 +310,15 @@ def cluster_cleanup(clusters_v2):
             cluster_pos.append(i)
     return [clusters_v2[i] for i in cluster_pos]
 
-
 def resolve_complex_sv_v2(resolve_CPX, resolve_INV, resolve_CNV, cytobands,disc_pairs, 
                           mei_bed,variant_prefix='CPX_', min_rescan_support=4, 
-                          pe_blacklist=None, quiet=False, SR_only_cutoff=1000,
-                          random_resolved_id_length=10):
+                          pe_blacklist=None, quiet=False, SR_only_cutoff=1000):
+    #resolve_CPX = [i for i in out_rec if i.info['SVTYPE']=='CPX']
+    #resolve_INV = [i for i in out_rec if i.info['SVTYPE']=='INV']
     independent_INV = remove_CPX_from_INV(resolve_CPX, resolve_INV)
     linked_INV = cluster_INV(independent_INV)
     clusters_v2=link_cpx_V2(linked_INV,resolve_CNV,cpx_dist=2000)
     clusters_v2=cluster_cleanup(clusters_v2)
-
-    np.random.seed(0) # arbitrary fixed seed for reproducibility
 
     #Print number of candidate clusters identified
     if not quiet:
@@ -344,30 +346,30 @@ def resolve_complex_sv_v2(resolve_CPX, resolve_INV, resolve_CNV, cytobands,disc_
                 cluster = deque([rec, opp])
 
         # if cxsv overlap pulled in unrelated insertions, keep them separate
-        if all(r.info['SVTYPE'] == 'INS' for r in cluster):
+        if all([r.info['SVTYPE'] == 'INS' for r in cluster]):
             for record in cluster:
                 cpx = ComplexSV([record], cytobands, mei_bed, SR_only_cutoff)
-                cpx_record_ids_v2.update(cpx.record_ids)
+                cpx_record_ids = cpx_record_ids.union(cpx.record_ids)
                 
                 # Assign random string as resolved ID to handle sharding
-                cpx.vcf_record.id = variant_prefix + '_' + get_random_string(random_resolved_id_length)
-                cpx_records_v2.append(cpx.vcf_record)
+                cpx.vcf_record.id = variant_prefix + '_' + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
+                cpx_records.append(cpx.vcf_record)
                 # resolved_idx += 1
             outcome = 'treated as separate unrelated insertions'
         else:
             cpx = ComplexSV(cluster, cytobands, mei_bed, SR_only_cutoff)
-            cpx_record_ids_v2.update(cpx.record_ids)
+            cpx_record_ids_v2 = cpx_record_ids_v2.union(cpx.record_ids)
             if cpx.svtype == 'UNR':
                 # Assign random string as unresolved ID to handle sharding
-                unresolved_vid = 'UNRESOLVED_' + get_random_string(random_resolved_id_length)
-                for record in cpx.records:
+                unresolved_vid = 'UNRESOLVED_' + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
+                for i, record in enumerate(cpx.records):
                     record.info['EVENT'] = unresolved_vid
                     record.info['UNRESOLVED'] = True
                     cpx_records_v2.append(record)
                 # unresolved_idx += 1
                 outcome = 'is unresolved'
             else:
-                cpx.vcf_record.id = variant_prefix + '_' + get_random_string(random_resolved_id_length)
+                cpx.vcf_record.id = variant_prefix + '_' + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
                 cpx_records_v2.append(cpx.vcf_record)
                 if 'CPX_TYPE' in cpx.vcf_record.info.keys():
                     outcome = 'resolved as ' + str(cpx.vcf_record.info['CPX_TYPE'])
@@ -482,7 +484,7 @@ def main(argv):
         if record.info['SVTYPE'] != 'CPX' and args.prefix not in record.id:
             #Don't alter MEMBERS if the prefix of record.id is already in MEMBERS
             if 'MEMBERS' in record.info.keys() and record.id not in record.info['MEMBERS']:
-                record.info['MEMBERS'] = (record.id,)
+                record.info['MEMBERS'] = record.id
         #Passes unresolved single-ender inversions to second-pass,
         # otherwise writes resolved records to output files
         if record.info['UNRESOLVED']:
@@ -514,7 +516,7 @@ def main(argv):
         if record.info['SVTYPE'] != 'CPX' and 'CPX' not in record.id.split('_'):
             #Don't alter MEMBERS if record.id already in MEMBERS
             if 'MEMBERS' in record.info.keys() and record.id not in record.info['MEMBERS']:
-                record.info['MEMBERS'] = (record.id,)
+                record.info['MEMBERS'] = record.id
         if record.info['UNRESOLVED']:
             unresolved_records.append(record)
         else:
@@ -522,29 +524,33 @@ def main(argv):
 
     #Add back all unresolved inversions from first pass that were not used
     # or discarded by second pass
-    v2_used = {r.id for r in cpx_records_v2}
+    v2_used = [r.id for r in cpx_records_v2]
     for record in cpx_records_v2:
         if 'MEMBERS' in record.info.keys():
-            v2_used.update(record.info['MEMBERS'])
-    unresolved_records.extend(record for record in resolve_INV if record.id not in v2_used)
+            v2_used = v2_used + [i for i in record.info['MEMBERS']]
+    for record in resolve_INV:
+        if record.id not in v2_used:
+            unresolved_records.append(record)
 
     #Final pass as sanity check: iterate over original VCF, find records that 
     # do not appear in either resolved or unresolved VCFs
     k = 0
-    used_vids = {r.id for r in resolved_records}
-    used_vids.update(r.id for r in unresolved_records)
-    for r in resolved_records:
-        used_vids.update(r.info['MEMBERS'])
-    for r in unresolved_records:
-        used_vids.update(r.info['MEMBERS'])
-
+    used_vids = [r.id for r in resolved_records] + [r.id for r in unresolved_records]
+    for m in [list(r.info['MEMBERS']) for r in resolved_records]:
+        for vid in m:
+            if vid not in used_vids:
+                used_vids.append(m)
+    for m in [list(r.info['MEMBERS']) for r in unresolved_records]:
+        for vid in m:
+            if vid not in used_vids:
+                used_vids.append(m)
     for r in vcf:
         if r.id not in used_vids:
             k += 1
-            if r.info['SVTYPE'] in ('CNV', 'DEL', 'DUP', 'MCNV', 'INS'):
-                # remove unresolved tags if present
-                r.info.pop('UNRESOLVED', None)
-                r.info.pop('UNRESOLVED_TYPE', None)
+            if r.info['SVTYPE'] in 'CNV DEL DUP MCNV INS'.split():
+                for tag in 'UNRESOLVED UNRESOLVED_TYPE':
+                    if tag in r.info.keys():
+                        r.info.pop(tag)
                 resolved_records.append(r)
             else:
                 r.info['UNRESOLVED'] = True

@@ -16,6 +16,7 @@ import scipy.sparse as sps
 import natsort
 import pysam
 import svtk.utils as svu
+import re
 
 
 def samples_overlap(recA, recB, upper_thresh=0.5, lower_thresh=0.5):

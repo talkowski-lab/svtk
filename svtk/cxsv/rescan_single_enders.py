@@ -9,6 +9,7 @@
 """
 
 import argparse
+import itertools
 from collections import defaultdict
 import pysam
 from svtk.genomeslink import GenomeSLINK, GSNode
@@ -55,18 +56,20 @@ def match_cluster(record, cluster, dist=300):
     r_start, r_end = record.pos, record.stop
 
     if record.info['STRANDS'] == '++':
-        # Choose max start/end of ++ pairs
-        c_start = max((p.posA for p in cluster if (p.strandA == '+')), default=None)
-        if c_start is None:
-            # If no ++ pairs present, return False
+        # If no ++ pairs present, return False
+        if not any(p.strandA == '+' for p in cluster):
             return False
+
+        # Otherwise choose max start/end of ++ pairs
+        c_start = max(p.posA for p in cluster if (p.strandA == '+'))
         c_end = max(p.posB for p in cluster if (p.strandB == '+'))
     elif record.info['STRANDS'] == '--':
-        # Choose min start/end of -- pairs
-        c_start = min((p.posA for p in cluster if (p.strandA == '-')), default=None)
-        if c_start is None:
-            # If no -- pairs present, return False
+        # If no -- pairs present, return False
+        if not any(p.strandA == '-' for p in cluster):
             return False
+
+        # Otherwise choose min start/end of -- pairs
+        c_start = min(p.posA for p in cluster if (p.strandA == '-'))
         c_end = min(p.posB for p in cluster if (p.strandB == '-'))
     else:
         strands = record.info['STRANDS']
@@ -128,8 +131,10 @@ def rescan_single_ender(record, pe, min_support=4, window=1000, dist=300,
               record.id)
 
     # Select pairs nearby record
-    search_start = max(0, record.pos - window)
-    search_end = max(search_start + 1, record.pos + window)
+    search_start = max([0, record.pos - window])
+    search_end = max([0, record.pos + window])
+    if search_end <= search_start:
+        search_end = search_start + 1
     pairs = pe.fetch('{0}:{1}-{2}'.format(record.chrom, search_start, search_end))
     pairs = [DiscPair(*p.split()) for p in pairs]
 
@@ -143,39 +148,41 @@ def rescan_single_ender(record, pe, min_support=4, window=1000, dist=300,
     # Subset to only inversion pairs
     pairs = [p for p in pairs if p.is_inversion]
 
+    # Count number of pairs per sample for all samples
+    sample_support_precluster = defaultdict(int)
+    for pair in pairs:
+        sample_support_precluster[pair.sample] += 1
+    pairs_count_list = []
+    for s in record.samples.keys():
+        pairs_count_list.append(sample_support_precluster.get(s, 0))
+    
     # If median number of pairs per sample not called in the original record
     # > min_support, fail record. Otherwise, keep going.
     called = svu.get_called_samples(record)
+    not_called = [s for s in all_samples if s not in called]
     if len(called) < len(all_samples):
-        # Count number of pairs per sample for all samples
-        sample_support_precluster = defaultdict(int)
-        for pair in pairs:
-            sample_support_precluster[pair.sample] += 1
-        # compute median pairs per uncalled sample
-        median_pairs_not_called = median(
-            sample_support_precluster.get(s,0) for s in all_samples if s not in called
-        )
-        if median_pairs_not_called > min_support:
+        nocall_pairs_count_list = []
+        for s in not_called:
+            nocall_pairs_count_list.append(sample_support_precluster.get(s, 0))
+        if median(nocall_pairs_count_list) > min_support:
             return record, None
-    elif len(called) > max_samples:
-        # Randomly subset pairs from all samples to max_samples
-        np.random.seed(2)  # arbitrary fixed seed for reproducibility
-        called = np.random.choice(called, max_samples, replace=False).tolist()
 
     # Restrict to inversions in samples called in VCF record
-    pairs = [p for p in pairs if p.sample in called and p.is_inversion]
+    # Randomly subset pairs from all samples to max_samples
+    np.random.seed(123456789)
+    called_subset = np.random.choice(called, max_samples).tolist()
+    pairs = [p for p in pairs if p.sample in called_subset and p.is_inversion]
 
     # Cluster pairs
     slink = GenomeSLINK(pairs, dist, blacklist=pe_blacklist)
-    # choose the largest cluster
-    cluster = max(
-        (c for c in slink.cluster() if match_cluster(record, c, window)),
-        key=len, default=None
-    )
-    if cluster is None:
-        # if no clusters, fail site
-        return record, None
+    clusters = [c for c in slink.cluster() if match_cluster(record, c, window)]
 
+    # If no clusters, fail site, otherwise choose largest cluster
+    if len(clusters) == 0:
+        return record, None
+    else:
+        cluster = max(clusters, key=len)
+    
     # Select clustered pairs which support the opposite strand as the record
     missing_strand = '+' if record.info['STRANDS'] == '--' else '-'
     supporting_pairs = [p for p in cluster if p.strandA == missing_strand]
@@ -189,7 +196,7 @@ def rescan_single_ender(record, pe, min_support=4, window=1000, dist=300,
     maxB = round(np.percentile([p.posB for p in cluster], 90))
     spanB = maxB - minB
 
-    if min(spanA, spanB) < min_span:
+    if min([spanA, spanB]) < min_span:
         return record, None
 
     # Count number of supporting pairs in each called sample
@@ -198,8 +205,8 @@ def rescan_single_ender(record, pe, min_support=4, window=1000, dist=300,
         sample_support[pair.sample] += 1
    
     # If enough samples were found to have support, make new variant record
-    n_supported_samples = sum(sample_support[s] > min_support for s in called)
-    if n_supported_samples >= min_frac_samples * len(called):
+    n_supported_samples = sum(sample_support[s] > min_support for s in called_subset)
+    if n_supported_samples / len(called_subset) >= min_frac_samples:
         opp_strand = make_new_record(supporting_pairs, record)
 
         same_strand_pairs = [p for p in cluster if p.strandA != missing_strand]

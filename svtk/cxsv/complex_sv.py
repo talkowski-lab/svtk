@@ -156,16 +156,17 @@ class ComplexSV:
         """
         Merge and clean metadata
         """
-        sources = set(s for r in self.records for s in r.info['ALGORITHMS'])
+        sources = set([s for r in self.records for s in r.info['ALGORITHMS']])
 
         # some variants throw an error if you try to overwrite ALGORITHMS info
         # without removing it via `pop` first. don't remove with `del`, it
         # will break the ability to set ALGORITHMS at all (Invalid INFO field)
         # bcf_update_info: Assertion `!inf->vptr_free' failed.
         self.vcf_record.info.pop('ALGORITHMS')
-        self.vcf_record.info['ALGORITHMS'] = ','.join(sorted(sources))
+        self.vcf_record.info['ALGORITHMS'] = ','.join(tuple(sorted(sources)))
 
-        self.vcf_record.info['MEMBERS'] = tuple(sorted(r.id for r in self.records))
+        members = [r.id for r in self.records]
+        self.vcf_record.info['MEMBERS'] = tuple(sorted(members))
 
         varGQs = []
         for record in self.records:
@@ -413,6 +414,7 @@ class ComplexSV:
             self.vcf_record.info['ALGORITHMS'] = algs
 
     def report_simple_insertion(self):
+        members = [r.id for r in self.records]
         if len(self.cnvs) == 1:
             if self.cnvs[0].info['SVTYPE'] == 'DUP':
                 record = self.cnvs[0]
@@ -424,6 +426,7 @@ class ComplexSV:
                 self.vcf_record.info['SVTYPE'] = self.svtype
                 self.vcf_record.info['CHR2'] = record.info['CHR2']
                 self.vcf_record.info['SVLEN'] = record.info['SVLEN']
+                self.vcf_record.info['MEMBERS'] = members
             else:
                 record = self.insertions[0]
                 self.cpx_type = record.alts[0].strip('<>')
@@ -434,6 +437,7 @@ class ComplexSV:
                 self.vcf_record.info['CPX_TYPE'] = self.cpx_type
                 self.vcf_record.info['CHR2'] = record.info['CHR2']
                 self.vcf_record.info['SVLEN'] = record.info['SVLEN']
+                self.vcf_record.info['MEMBERS'] = members
         else:
             record = self.insertions[0]
             self.cpx_type = record.alts[0].strip('<>')
@@ -444,7 +448,7 @@ class ComplexSV:
             self.vcf_record.info['CPX_TYPE'] = self.cpx_type
             self.vcf_record.info['CHR2'] = record.info['CHR2']
             self.vcf_record.info['SVLEN'] = record.info['SVLEN']
-        self.vcf_record.info['MEMBERS'] = tuple(r.id for r in self.records)
+            self.vcf_record.info['MEMBERS'] = members
 
     # Handles situations where a single insertion clusters with one or more CNVs
     def report_insertion_strip_CNVs(self):
@@ -461,7 +465,7 @@ class ComplexSV:
                 self.vcf_record.info['SVTYPE'] = self.svtype
                 self.vcf_record.info['CHR2'] = record.info['CHR2']
                 self.vcf_record.info['SVLEN'] = record.info['SVLEN']
-                self.vcf_record.info['MEMBERS'] = tuple(r.id for r in self.records)
+                self.vcf_record.info['MEMBERS'] = [r.id for r in self.records]
         elif len(self.cnvs) > 0:
             self.svtype = 'SPLIT'
         else:
