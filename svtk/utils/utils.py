@@ -195,13 +195,13 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
             # Set start & end coordinates to appropriate sorted order
             # for all records (to not break bedtools)
             if no_sort_coords:
-                start = record.pos
-                end = record.stop
+                start = int(record.pos)
+                end = int(record.stop)
             else:
-                start, end = sorted([record.pos, record.stop])
+                start, end = sorted([int(record.pos), int(record.stop)])
 
             #Subtract 1bp from pos to convert to 0-based BED vs 1-based VCF
-            start = max([0, start - 1])
+            start = max([0, int(start) - 1])
             
             if report_alt:
                 svtype = record.alts[0].strip('<>')
@@ -234,14 +234,14 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
 
             if record.info.get('SVTYPE', None) == 'BND':
                 # First end of breakpoint
-                start = max([0, record.pos - 1])
+                start = max([0, int(record.pos) - 1])
                 end = record.pos
                 yield entry.format(**locals())
 
                 # Second end of breakpoint
                 if split_bnd:
                     chrom = record.info['CHR2']
-                    start = max([0, record.stop - 1])
+                    start = max([0, int(record.stop) - 1])
                     end = record.stop
                     yield entry.format(**locals())
 
@@ -265,7 +265,7 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
                 # Second end of breakpoint
                 if split_bnd:
                     chrom = record.info['CHR2']
-                    start = max([0, record.stop - 1])
+                    start = max([0, int(record.stop) - 1])
                     end = record.stop
                     yield entry.format(**locals())
 
@@ -276,13 +276,13 @@ def vcf2bedtool(vcf, split_bnd=True, include_samples=False,
                     svtype, region = interval.split('_')
                     chrom, coords = region.split(':')
                     start, end = coords.split('-')
-                    start = max([0, start - 1])
+                    start = max([0, int(start) - 1])
                     yield entry.format(**locals())
                 #If complex insertion, return insertion point as 1bp DEL
                 if record.info.get('CPX_TYPE', None) in cpx_ins_classes:
                     svtype = 'DEL'
                     chrom = record.chrom
-                    start = max([0, record.pos - 1])
+                    start = max([0, int(record.pos) - 1])
                     end = record.pos
                     entry.format(**locals())
 
